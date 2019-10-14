@@ -113,6 +113,9 @@ static void Page1_OnCmb1(HWND hwnd)
     g_settings.m_cyCap = rc.bottom - rc.top;
 
     g_settings.m_nMonitorID = i;
+
+    Page1_SetData(hwnd);
+
     g_settings.update(g_hMainWnd);
 }
 
