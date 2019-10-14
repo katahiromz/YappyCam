@@ -77,8 +77,13 @@ void Settings::init()
     m_cxCap = GetSystemMetrics(SM_CXSCREEN);
     m_cyCap = GetSystemMetrics(SM_CYSCREEN);
 
-    m_nWindowX = CW_USEDEFAULT;
-    m_nWindowY = CW_USEDEFAULT;
+    m_nWindow1X = m_nWindow1Y = CW_USEDEFAULT;
+    m_nWindow2X = m_nWindow2Y = CW_USEDEFAULT;
+    m_nWindow3X = m_nWindow3Y = CW_USEDEFAULT;
+
+    m_nWindow1CX = m_nWindow1CY = CW_USEDEFAULT;
+    m_nWindow2CX = m_nWindow2CY = CW_USEDEFAULT;
+    m_nWindow3CX = m_nWindow3CY = CW_USEDEFAULT;
 
     m_nFPSx100 = 5 * 100;
     m_bDrawCursor = TRUE;
@@ -128,8 +133,19 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"cxCap", (DWORD&)m_cxCap);
     app_key.QueryDword(L"cyCap", (DWORD&)m_cyCap);
 
-    app_key.QueryDword(L"WindowX", (DWORD&)m_nWindowX);
-    app_key.QueryDword(L"WindowY", (DWORD&)m_nWindowY);
+    app_key.QueryDword(L"Window1X", (DWORD&)m_nWindow1X);
+    app_key.QueryDword(L"Window1Y", (DWORD&)m_nWindow1Y);
+    app_key.QueryDword(L"Window2X", (DWORD&)m_nWindow2X);
+    app_key.QueryDword(L"Window2Y", (DWORD&)m_nWindow2Y);
+    app_key.QueryDword(L"Window3X", (DWORD&)m_nWindow3X);
+    app_key.QueryDword(L"Window3Y", (DWORD&)m_nWindow3Y);
+
+    app_key.QueryDword(L"Window1CX", (DWORD&)m_nWindow1CX);
+    app_key.QueryDword(L"Window1CY", (DWORD&)m_nWindow1CY);
+    app_key.QueryDword(L"Window2CX", (DWORD&)m_nWindow2CX);
+    app_key.QueryDword(L"Window2CY", (DWORD&)m_nWindow2CY);
+    app_key.QueryDword(L"Window3CX", (DWORD&)m_nWindow3CX);
+    app_key.QueryDword(L"Window3CY", (DWORD&)m_nWindow3CY);
 
     app_key.QueryDword(L"FPSx100", (DWORD&)m_nFPSx100);
     app_key.QueryDword(L"DrawCursor", (DWORD&)m_bDrawCursor);
@@ -193,8 +209,19 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"cxCap", m_cxCap);
     app_key.SetDword(L"cyCap", m_cyCap);
 
-    app_key.SetDword(L"WindowX", m_nWindowX);
-    app_key.SetDword(L"WindowY", m_nWindowY);
+    app_key.SetDword(L"Window1X", m_nWindow1X);
+    app_key.SetDword(L"Window1Y", m_nWindow1Y);
+    app_key.SetDword(L"Window2X", m_nWindow2X);
+    app_key.SetDword(L"Window2Y", m_nWindow2Y);
+    app_key.SetDword(L"Window3X", m_nWindow3X);
+    app_key.SetDword(L"Window3Y", m_nWindow3Y);
+
+    app_key.SetDword(L"Window1CX", m_nWindow1CX);
+    app_key.SetDword(L"Window1CY", m_nWindow1CY);
+    app_key.SetDword(L"Window2CX", m_nWindow2CX);
+    app_key.SetDword(L"Window2CY", m_nWindow2CY);
+    app_key.SetDword(L"Window3CX", m_nWindow3CX);
+    app_key.SetDword(L"Window3CY", m_nWindow3CY);
 
     app_key.SetDword(L"FPSx100", m_nFPSx100);
     app_key.SetDword(L"DrawCursor", m_bDrawCursor);
@@ -341,6 +368,48 @@ void DoFixWindowSize(HWND hwnd)
     GetWindowRect(hwnd, &rc);
     OnSizing(hwnd, WMSZ_BOTTOMRIGHT, &rc);
     MoveWindow(hwnd, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, TRUE);
+    SendMessage(hwnd, DM_REPOSITION, 0, 0);
+}
+
+void Settings::fix_size(HWND hwnd)
+{
+    INT x, y, cx, cy;
+    switch (GetPictureType())
+    {
+    case PT_BLACK:
+    case PT_WHITE:
+    case PT_STATUSTEXT:
+        x = m_nWindow1X;
+        y = m_nWindow1Y;
+        cx = m_nWindow1CX;
+        cy = m_nWindow1CY;
+        break;
+    case PT_SCREENCAP:
+        x = m_nWindow2X;
+        y = m_nWindow2Y;
+        cx = m_nWindow2CX;
+        cy = m_nWindow2CY;
+        break;
+    case PT_VIDEOCAP:
+        x = m_nWindow3X;
+        y = m_nWindow3Y;
+        cx = m_nWindow3CX;
+        cy = m_nWindow3CY;
+        break;
+    }
+
+    if (x != CW_USEDEFAULT && y != CW_USEDEFAULT)
+    {
+        SetWindowPos(hwnd, NULL, x, y, 0, 0,
+                     SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+    }
+    if (cx != CW_USEDEFAULT && cy != CW_USEDEFAULT)
+    {
+        SetWindowPos(hwnd, NULL, 0, 0, cx, cy,
+                     SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+    }
+
+    DoFixWindowSize(hwnd);
 }
 
 void DoStartStopTimers(HWND hwnd, BOOL bStart)
@@ -368,6 +437,31 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
     }
 
     g_cap.release();
+
+    INT x, y, cx, cy;
+    switch (type)
+    {
+    case PT_BLACK:
+    case PT_WHITE:
+    case PT_STATUSTEXT:
+        x = g_settings.m_nWindow1X;
+        y = g_settings.m_nWindow1Y;
+        cx = g_settings.m_nWindow1CX;
+        cy = g_settings.m_nWindow1CX;
+        break;
+    case PT_SCREENCAP:
+        x = g_settings.m_nWindow2X;
+        y = g_settings.m_nWindow2Y;
+        cx = g_settings.m_nWindow2CX;
+        cy = g_settings.m_nWindow2CX;
+        break;
+    case PT_VIDEOCAP:
+        x = g_settings.m_nWindow3X;
+        y = g_settings.m_nWindow3Y;
+        cx = g_settings.m_nWindow3CX;
+        cy = g_settings.m_nWindow3CX;
+        break;
+    }
 
     switch (type)
     {
@@ -449,7 +543,8 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
     }
 
     m_nPictureType = type;
-    DoFixWindowSize(hwnd);
+    fix_size(hwnd);
+
     DoStartStopTimers(hwnd, TRUE);
     return TRUE;
 }
@@ -576,20 +671,10 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     m_sound.SetInfo(format.channels, format.samples, format.bits);
     m_sound.SetDevice(m_sound_devices[g_settings.m_iSoundDev]);
 
-    DoFixWindowSize(hwnd);
-
     Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
 
-    if (g_settings.m_nWindowX != CW_USEDEFAULT &&
-        g_settings.m_nWindowY != CW_USEDEFAULT)
-    {
-        SetWindowPos(hwnd, NULL, g_settings.m_nWindowX, g_settings.m_nWindowY, 0, 0,
-                     SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER);
-    }
-
-    SendMessage(hwnd, DM_REPOSITION, 0, 0);
-
+    g_settings.fix_size(hwnd);
     PostMessage(hwnd, WM_SIZE, 0, 0);
 
     m_sound.StartHearing();
@@ -901,12 +986,36 @@ static void OnMove(HWND hwnd, int x, int y)
 
     RECT rc;
     GetWindowRect(hwnd, &rc);
-    g_settings.m_nWindowX = rc.left;
-    g_settings.m_nWindowY = rc.top;
+
+    switch (g_settings.GetPictureType())
+    {
+    case PT_BLACK:
+    case PT_WHITE:
+    case PT_STATUSTEXT:
+        g_settings.m_nWindow1X = rc.left;
+        g_settings.m_nWindow1Y = rc.top;
+        break;
+    case PT_SCREENCAP:
+        g_settings.m_nWindow2X = rc.left;
+        g_settings.m_nWindow2Y = rc.top;
+        break;
+    case PT_VIDEOCAP:
+        g_settings.m_nWindow3X = rc.left;
+        g_settings.m_nWindow3Y = rc.top;
+        break;
+    }
 }
 
 static void OnSize(HWND hwnd, UINT state, int cx, int cy)
 {
+    if (IsMaximized(hwnd))
+    {
+        InvalidateRect(hwnd, NULL, TRUE);
+        return;
+    }
+    if (IsMinimized(hwnd))
+        return;
+
     RECT rc;
     GetClientRect(hwnd, &rc);
     rc.right -= s_button_width + s_progress_width;
@@ -942,6 +1051,30 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
     x = cx + s_button_width;
     y = 0;
     MoveWindow(GetDlgItem(hwnd, scr1), x, y, s_progress_width, cy, TRUE);
+
+    {
+        RECT rcWnd;
+        GetWindowRect(hwnd, &rcWnd);
+        INT cxWnd = rcWnd.right - rcWnd.left;
+        INT cyWnd = rcWnd.bottom - rcWnd.top;
+        switch (g_settings.GetPictureType())
+        {
+        case PT_BLACK:
+        case PT_WHITE:
+        case PT_STATUSTEXT:
+            g_settings.m_nWindow1CX = cxWnd;
+            g_settings.m_nWindow1CY = cyWnd;
+            break;
+        case PT_SCREENCAP:
+            g_settings.m_nWindow2CX = cxWnd;
+            g_settings.m_nWindow2CY = cyWnd;
+            break;
+        case PT_VIDEOCAP:
+            g_settings.m_nWindow3CX = cxWnd;
+            g_settings.m_nWindow3CY = cyWnd;
+            break;
+        }
+    }
 
     InvalidateRect(hwnd, &rc, TRUE);
 }

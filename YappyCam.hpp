@@ -41,8 +41,18 @@ struct Settings
     INT m_yCap;
     INT m_cxCap;
     INT m_cyCap;
-    INT m_nWindowX;
-    INT m_nWindowY;
+    INT m_nWindow1X;
+    INT m_nWindow1Y;
+    INT m_nWindow2X;
+    INT m_nWindow2Y;
+    INT m_nWindow3X;
+    INT m_nWindow3Y;
+    INT m_nWindow1CX;
+    INT m_nWindow1CY;
+    INT m_nWindow2CX;
+    INT m_nWindow2CY;
+    INT m_nWindow3CX;
+    INT m_nWindow3CY;
     UINT m_nFPSx100;
     BOOL m_bDrawCursor;
     std::wstring m_strDir;
@@ -61,6 +71,7 @@ struct Settings
     bool save(HWND hwnd) const;
     bool create_dirs() const;
     void update(HWND hwnd);
+    void fix_size(HWND hwnd);
 
     DisplayMode GetDisplayMode() const
     {

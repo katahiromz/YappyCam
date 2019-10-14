@@ -29,8 +29,6 @@ static void OnCmb1(HWND hwnd)
         g_settings.SetPictureType(g_hMainWnd, PT_VIDEOCAP);
         break;
     }
-
-    PostMessage(g_hMainWnd, DM_REPOSITION, 0, 0);
 }
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
