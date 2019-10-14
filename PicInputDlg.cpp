@@ -2,7 +2,7 @@
 #include "SetDlgItemDouble/SetDlgItemDouble.h"
 
 #define MIN_FPS 0.1
-#define MAX_FPS 8.0
+#define MAX_FPS 7.0
 
 HWND g_hwndPictureInput = NULL;
 static BOOL s_bInit = FALSE;
