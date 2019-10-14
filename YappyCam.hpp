@@ -44,6 +44,7 @@ struct Settings
     INT m_nWindowX;
     INT m_nWindowY;
     UINT m_nFPSx100;
+    BOOL m_bDrawCursor;
     std::wstring m_strDir;
     std::wstring m_strMovieDir;
     std::wstring m_strImageFileName;

@@ -81,6 +81,7 @@ void Settings::init()
     m_nWindowY = CW_USEDEFAULT;
 
     m_nFPSx100 = 5 * 100;
+    m_bDrawCursor = TRUE;
 
     TCHAR szPath[MAX_PATH];
 
@@ -131,6 +132,7 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"WindowY", (DWORD&)m_nWindowY);
 
     app_key.QueryDword(L"FPSx100", (DWORD&)m_nFPSx100);
+    app_key.QueryDword(L"DrawCursor", (DWORD&)m_bDrawCursor);
 
     WCHAR szText[MAX_PATH];
 
@@ -195,6 +197,7 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"WindowY", m_nWindowY);
 
     app_key.SetDword(L"FPSx100", m_nFPSx100);
+    app_key.SetDword(L"DrawCursor", m_bDrawCursor);
 
     app_key.SetSz(L"Dir", m_strDir.c_str());
     app_key.SetSz(L"MovieDir", m_strMovieDir.c_str());
@@ -957,7 +960,25 @@ static void OnDestroy(HWND hwnd)
     g_hMainWnd = NULL;
 }
 
-void DoScreenCap(HWND hwnd)
+void DoDrawCursor(HDC hDC, INT dx, INT dy)
+{
+    INT x, y;
+    CURSORINFO ci;
+    ICONINFO ii;
+
+    ci.cbSize = sizeof(CURSORINFO);
+    ::GetCursorInfo(&ci);
+    if (!(ci.flags & CURSOR_SHOWING))
+        return;
+
+    ::GetIconInfo(ci.hCursor, &ii);
+
+    x = ci.ptScreenPos.x - ii.xHotspot - dx;
+    y = ci.ptScreenPos.y - ii.yHotspot - dy;
+    ::DrawIcon(hDC, x, y, ci.hCursor);
+}
+
+void DoScreenCap(HWND hwnd, BOOL bCursor)
 {
     if (HDC hdcMem = CreateCompatibleDC(g_hdcScreen))
     {
@@ -969,6 +990,10 @@ void DoScreenCap(HWND hwnd)
                    g_settings.m_xCap, g_settings.m_yCap,
                    g_settings.m_cxCap, g_settings.m_cyCap,
                    SRCCOPY | CAPTUREBLT);
+        if (bCursor)
+        {
+            DoDrawCursor(hdcMem, g_settings.m_xCap, g_settings.m_yCap);
+        }
         SelectObject(hdcMem, hbmOld);
         LeaveCriticalSection(&g_lock);
         DeleteDC(hdcMem);
@@ -987,7 +1012,7 @@ static void OnTimer(HWND hwnd, UINT id)
         case PT_STATUSTEXT:
             break;
         case PT_SCREENCAP:
-            DoScreenCap(hwnd);
+            DoScreenCap(hwnd, g_settings.m_bDrawCursor);
             break;
         case PT_VIDEOCAP:
             EnterCriticalSection(&g_lock);
