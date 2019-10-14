@@ -41,6 +41,7 @@ struct Settings
     INT m_yCap;
     INT m_cxCap;
     INT m_cyCap;
+    UINT m_nFPSx100;
     std::wstring m_strDir;
     std::wstring m_strMovieDir;
     std::wstring m_strImageFileName;

@@ -6,7 +6,6 @@
 #define SOUND_TIMER_ID  999
 #define CAP_TIMER_ID    888
 
-static double s_fps = 7;
 static cv::Mat s_frame;
 static INT s_button_width;
 static INT s_progress_width;
@@ -78,6 +77,8 @@ void Settings::init()
     m_cxCap = GetSystemMetrics(SM_CXSCREEN);
     m_cyCap = GetSystemMetrics(SM_CYSCREEN);
 
+    m_nFPSx100 = 5 * 100;
+
     TCHAR szPath[MAX_PATH];
 
     SHGetSpecialFolderPath(NULL, szPath, CSIDL_MYVIDEO, TRUE);
@@ -122,6 +123,7 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"yCap", (DWORD&)m_yCap);
     app_key.QueryDword(L"cxCap", (DWORD&)m_cxCap);
     app_key.QueryDword(L"cyCap", (DWORD&)m_cyCap);
+    app_key.QueryDword(L"FPSx100", (DWORD&)m_nFPSx100);
 
     WCHAR szText[MAX_PATH];
 
@@ -181,6 +183,7 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"yCap", m_yCap);
     app_key.SetDword(L"cxCap", m_cxCap);
     app_key.SetDword(L"cyCap", m_cyCap);
+    app_key.SetDword(L"FPSx100", m_nFPSx100);
 
     app_key.SetSz(L"Dir", m_strDir.c_str());
     app_key.SetSz(L"MovieDir", m_strMovieDir.c_str());
@@ -540,7 +543,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     m_sound.StartHearing();
     SetTimer(hwnd, SOUND_TIMER_ID, 300, NULL);
-    SetTimer(hwnd, CAP_TIMER_ID, 300, NULL);
+    SetTimer(hwnd, CAP_TIMER_ID, DWORD(1000 * 100 / g_settings.m_nFPSx100), NULL);
 
     return TRUE;
 }
