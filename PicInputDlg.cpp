@@ -3,6 +3,204 @@
 
 HWND g_hwndPictureInput = NULL;
 static BOOL s_bInit = FALSE;
+static HWND s_hPages[2] = { NULL };
+
+static void DoChoosePage(HWND hwnd, INT iPage)
+{
+    for (INT i = 0; i < ARRAYSIZE(s_hPages); ++i)
+    {
+        if (i == iPage)
+            ShowWindow(s_hPages[i], SW_SHOW);
+        else
+            ShowWindow(s_hPages[i], SW_HIDE);
+    }
+}
+
+void DoAdjustPages(HWND hwnd)
+{
+    HWND hStc1 = GetDlgItem(hwnd, stc1);
+
+    RECT rc;
+    GetWindowRect(hStc1, &rc);
+    MapWindowRect(NULL, hwnd, &rc);
+
+    for (INT i = 0; i < ARRAYSIZE(s_hPages); ++i)
+    {
+        MoveWindow(s_hPages[i], rc.left, rc.top,
+                   rc.right - rc.left, rc.bottom - rc.top, TRUE);
+    }
+}
+
+static BOOL s_bPage1Init = FALSE;
+
+static void Page1_SetData(HWND hwnd)
+{
+    SendDlgItemMessage(hwnd, scr1, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_xCap, 0));
+    SendDlgItemMessage(hwnd, scr2, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_yCap, 0));
+    SendDlgItemMessage(hwnd, scr3, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_cxCap, 0));
+    SendDlgItemMessage(hwnd, scr4, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_cyCap, 0));
+
+    if (g_settings.m_bDrawCursor)
+    {
+        CheckDlgButton(hwnd, chx1, BST_CHECKED);
+    }
+    else
+    {
+        CheckDlgButton(hwnd, chx1, BST_UNCHECKED);
+    }
+}
+
+static BOOL Page1_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
+{
+    SendDlgItemMessage(hwnd, scr1, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
+    SendDlgItemMessage(hwnd, scr2, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
+    SendDlgItemMessage(hwnd, scr3, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
+    SendDlgItemMessage(hwnd, scr4, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
+
+    Page1_SetData(hwnd);
+
+    s_bPage1Init = TRUE;
+    return TRUE;
+}
+
+static void Page1_OnEdt(HWND hwnd)
+{
+    if (!s_bPage1Init)
+        return;
+
+    BOOL bTranslated;
+    INT nValue;
+
+    bTranslated = FALSE;
+    nValue = GetDlgItemInt(hwnd, edt1, &bTranslated, TRUE);
+    if (bTranslated)
+    {
+        g_settings.m_xCap = nValue;
+    }
+
+    bTranslated = FALSE;
+    nValue = GetDlgItemInt(hwnd, edt2, &bTranslated, TRUE);
+    if (bTranslated)
+    {
+        g_settings.m_yCap = nValue;
+    }
+
+    bTranslated = FALSE;
+    nValue = GetDlgItemInt(hwnd, edt3, &bTranslated, TRUE);
+    if (bTranslated)
+    {
+        g_settings.m_cxCap = nValue;
+    }
+
+    bTranslated = FALSE;
+    nValue = GetDlgItemInt(hwnd, edt4, &bTranslated, TRUE);
+    if (bTranslated)
+    {
+        g_settings.m_cyCap = nValue;
+    }
+}
+
+static void Page1_OnChx1(HWND hwnd)
+{
+    if (IsDlgButtonChecked(hwnd, chx1) == BST_CHECKED)
+    {
+        g_settings.m_bDrawCursor = TRUE;
+    }
+    else
+    {
+        g_settings.m_bDrawCursor = FALSE;
+    }
+}
+
+static void Page1_OnPsh1(HWND hwnd)
+{
+    g_settings.m_xCap = 0;
+    g_settings.m_yCap = 0;
+    g_settings.m_cxCap = GetSystemMetrics(SM_CXSCREEN);
+    g_settings.m_cyCap = GetSystemMetrics(SM_CYSCREEN);
+
+    Page1_SetData(hwnd);
+}
+
+static void Page1_OnPsh2(HWND hwnd)
+{
+}
+
+static void Page1_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
+{
+    switch (id)
+    {
+    case edt1:
+    case edt2:
+    case edt3:
+    case edt4:
+        if (codeNotify == EN_CHANGE)
+        {
+            Page1_OnEdt(hwnd);
+        }
+        break;
+    case chx1:
+        if (codeNotify == BN_CLICKED)
+        {
+            Page1_OnChx1(hwnd);
+        }
+        break;
+    case psh1:
+        if (codeNotify == BN_CLICKED)
+        {
+            Page1_OnPsh1(hwnd);
+        }
+        break;
+    case psh2:
+        if (codeNotify == BN_CLICKED)
+        {
+            Page1_OnPsh2(hwnd);
+        }
+        break;
+    }
+}
+
+static void Page1_OnDestroy(HWND hwnd)
+{
+    s_bPage1Init = FALSE;
+}
+
+static INT_PTR CALLBACK
+Page1DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+        HANDLE_MSG(hwnd, WM_INITDIALOG, Page1_OnInitDialog);
+        HANDLE_MSG(hwnd, WM_COMMAND, Page1_OnCommand);
+        HANDLE_MSG(hwnd, WM_DESTROY, Page1_OnDestroy);
+    }
+    return 0;
+}
+
+static INT_PTR CALLBACK
+Page2DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+    }
+    return 0;
+}
+
+static void DoCreatePages(HWND hwnd)
+{
+    HINSTANCE hInst = GetModuleHandle(NULL);
+    s_hPages[0] = CreateDialog(hInst, MAKEINTRESOURCE(IDD_SCREEN), hwnd, Page1DialogProc);
+    s_hPages[1] = CreateDialog(hInst, MAKEINTRESOURCE(IDD_WEBCAMERA), hwnd, Page2DialogProc);
+}
+
+static void DoDestroyPages(HWND hwnd)
+{
+    for (INT i = 0; i < ARRAYSIZE(s_hPages); ++i)
+    {
+        DestroyWindow(s_hPages[i]);
+        s_hPages[i]  = NULL;
+    }
+}
 
 static void OnCmb1(HWND hwnd)
 {
@@ -18,17 +216,23 @@ static void OnCmb1(HWND hwnd)
     {
     case 0:
         g_settings.SetPictureType(g_hMainWnd, PT_BLACK);
+        DoChoosePage(hwnd, -1);
         break;
     case 1:
         g_settings.SetPictureType(g_hMainWnd, PT_WHITE);
+        DoChoosePage(hwnd, -1);
         break;
     case 2:
         g_settings.SetPictureType(g_hMainWnd, PT_SCREENCAP);
+        DoChoosePage(hwnd, 0);
         break;
     case 3:
         g_settings.SetPictureType(g_hMainWnd, PT_VIDEOCAP);
+        DoChoosePage(hwnd, 1);
         break;
     }
+
+    Page1_SetData(s_hPages[0]);
 }
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
@@ -75,6 +279,10 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
                      SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER);
         SendMessage(hwnd, DM_REPOSITION, 0, 0);
     }
+
+    DoCreatePages(hwnd);
+    DoAdjustPages(hwnd);
+    DoChoosePage(hwnd, 0);
 
     s_bInit = TRUE;
 
@@ -151,6 +359,8 @@ static void OnDestroy(HWND hwnd)
 {
     s_bInit = FALSE;
     g_hwndPictureInput = NULL;
+
+    DoDestroyPages(hwnd);
 
     PostMessage(g_hMainWnd, WM_COMMAND, ID_CONFIGCLOSED, 0);
 }
