@@ -417,7 +417,9 @@ void DoStartStopTimers(HWND hwnd, BOOL bStart)
     if (bStart)
     {
         SetTimer(hwnd, SOUND_TIMER_ID, 300, NULL);
-        SetTimer(hwnd, CAP_TIMER_ID, DWORD(1000 * 100 / g_settings.m_nFPSx100), NULL);
+
+        DWORD dwMSEC = DWORD(1000 * 100 / g_settings.m_nFPSx100);
+        SetTimer(hwnd, CAP_TIMER_ID, dwMSEC, NULL);
     }
     else
     {

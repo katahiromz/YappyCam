@@ -63,7 +63,6 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     }
 
     HWND hCmb2 = GetDlgItem(hwnd, cmb2);
-    ComboBox_AddString(hCmb2, L"0.1");
     ComboBox_AddString(hCmb2, L"0.5");
     ComboBox_AddString(hCmb2, L"1.0");
     ComboBox_AddString(hCmb2, L"2.0");
