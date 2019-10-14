@@ -98,6 +98,10 @@ FONT 9, "Tahoma"
 STRINGTABLE
 {
     IDS_FORMAT, "%lu Hz, %u-bit, %u channels"
+    IDS_BLACK, "Black"
+    IDS_WHITE, "White"
+    IDS_SCREEN, "Screen"
+    IDS_WEBCAMERA, "Web camera"
 }
 
 //////////////////////////////////////////////////////////////////////////////

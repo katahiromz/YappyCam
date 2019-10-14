@@ -13,6 +13,9 @@
 #include "resource.h"
 #include "MRegKey.hpp"
 
+#define MIN_FPS 0.1
+#define MAX_FPS 7.0
+
 enum DisplayMode
 {
     DM_CAPFRAME,

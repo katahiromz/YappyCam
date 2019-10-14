@@ -1,9 +1,6 @@
 #include "YappyCam.hpp"
 #include "SetDlgItemDouble/SetDlgItemDouble.h"
 
-#define MIN_FPS 0.1
-#define MAX_FPS 7.0
-
 HWND g_hwndPictureInput = NULL;
 static BOOL s_bInit = FALSE;
 
@@ -39,10 +36,10 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     g_hwndPictureInput = hwnd;
 
     HWND hCmb1 = GetDlgItem(hwnd, cmb1);
-    ComboBox_AddString(hCmb1, L"Black");
-    ComboBox_AddString(hCmb1, L"White");
-    ComboBox_AddString(hCmb1, L"Screen");
-    ComboBox_AddString(hCmb1, L"Web Camera");
+    ComboBox_AddString(hCmb1, LoadStringDx(IDS_BLACK));
+    ComboBox_AddString(hCmb1, LoadStringDx(IDS_WHITE));
+    ComboBox_AddString(hCmb1, LoadStringDx(IDS_SCREEN));
+    ComboBox_AddString(hCmb1, LoadStringDx(IDS_WEBCAMERA));
 
     switch (g_settings.GetPictureType())
     {

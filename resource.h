@@ -20,6 +20,10 @@
 #define IDR_MAINMENU                        1000
 
 #define IDS_FORMAT                          100
+#define IDS_BLACK                           101
+#define IDS_WHITE                           102
+#define IDS_SCREEN                          103
+#define IDS_WEBCAMERA                       104
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101
