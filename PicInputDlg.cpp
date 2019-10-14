@@ -1,6 +1,9 @@
 #include "YappyCam.hpp"
 #include "SetDlgItemDouble/SetDlgItemDouble.h"
 
+#define MIN_FPS 0.1
+#define MAX_FPS 8.0
+
 HWND g_hwndPictureInput = NULL;
 static BOOL s_bInit = FALSE;
 
@@ -59,33 +62,56 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
         break;
     }
 
-    SetDlgItemDouble(hwnd, edt1, (g_settings.m_nFPSx100 / 100.0), "%0.2f");
+    HWND hCmb2 = GetDlgItem(hwnd, cmb2);
+    ComboBox_AddString(hCmb2, L"0.1");
+    ComboBox_AddString(hCmb2, L"0.5");
+    ComboBox_AddString(hCmb2, L"1.0");
+    ComboBox_AddString(hCmb2, L"2.0");
+    ComboBox_AddString(hCmb2, L"3.0");
+    ComboBox_AddString(hCmb2, L"4.0");
+    SetDlgItemDouble(hwnd, cmb2, (g_settings.m_nFPSx100 / 100.0), "%0.1f");
 
     s_bInit = TRUE;
 
     return TRUE;
 }
 
-static void OnEdt1(HWND hwnd)
+static void OnCmb2(HWND hwnd)
 {
     if (!s_bInit)
         return;
 
     s_bInit = FALSE;
-    BOOL bTranslated = FALSE;
-    double e = GetDlgItemDouble(hwnd, edt1, &bTranslated);
+
+    TCHAR szText[MAX_PATH], *endptr = NULL;
+
+    HWND hCmb2 = GetDlgItem(hwnd, cmb2);
+    INT i = ComboBox_GetCurSel(hCmb2);
+    if (i < 0)
+    {
+        ComboBox_GetText(hCmb2, szText, ARRAYSIZE(szText));
+    }
+    else
+    {
+        ComboBox_GetLBText(hCmb2, i, szText);
+    }
+
+    double e = std::wcstod(szText, &endptr);
+    BOOL bTranslated = endptr - szText == wcslen(szText);
+
     if (bTranslated)
     {
-        if (e < 0.01)
+        if (e < MIN_FPS)
         {
-            e = 0.01;
+            e = MIN_FPS;
         }
-        else if (e > 8.00)
+        else if (e > MAX_FPS)
         {
-            e = 8.00;
+            e = MAX_FPS;
         }
 
         g_settings.m_nFPSx100 = UINT(e * 100 + 0.005);
+
         s_bInit = TRUE;
         DoStartStopTimers(g_hMainWnd, FALSE);
         DoStartStopTimers(g_hMainWnd, TRUE);
@@ -106,10 +132,10 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
             OnCmb1(hwnd);
         }
         break;
-    case edt1:
-        if (codeNotify == EN_CHANGE)
+    case cmb2:
+        if (codeNotify == CBN_SELCHANGE || codeNotify == CBN_EDITCHANGE)
         {
-            OnEdt1(hwnd);
+            OnCmb2(hwnd);
         }
         break;
     }
