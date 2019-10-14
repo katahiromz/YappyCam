@@ -1,9 +1,7 @@
 #include "YappyCam.hpp"
 
 HWND g_hwndSoundInput = NULL;
-static BOOL m_bInit = FALSE;
-static INT s_iDevOld;
-static INT s_iFormatOld;
+static BOOL s_bInit = FALSE;
 
 BOOL get_device_name(CComPtr<IMMDevice> pMMDevice, std::wstring& name)
 {
@@ -50,7 +48,7 @@ void DoUpdateDeviceEx(HWND hwnd, INT iDev, INT iFormat)
 
 void DoUpdateDevice(HWND hwnd)
 {
-    if (!m_bInit)
+    if (!s_bInit)
         return;
 
     HWND hCmb1 = GetDlgItem(hwnd, cmb1);
@@ -83,8 +81,6 @@ void OnCmb2(HWND hwnd)
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
     g_hwndSoundInput = hwnd;
-    s_iDevOld = g_settings.m_iSoundDev;
-    s_iFormatOld = g_settings.m_iWaveFormat;
 
     HWND hCmb1 = GetDlgItem(hwnd, cmb1);
     std::wstring name;
@@ -106,13 +102,8 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     }
     ComboBox_SetCurSel(hCmb2, g_settings.m_iWaveFormat);
 
-    m_bInit = TRUE;
+    s_bInit = TRUE;
 
-    return TRUE;
-}
-
-static BOOL OnOK(HWND hwnd)
-{
     return TRUE;
 }
 
@@ -121,13 +112,7 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     switch (id)
     {
     case IDOK:
-        if (OnOK(hwnd))
-        {
-            DestroyWindow(hwnd);
-        }
-        break;
     case IDCANCEL:
-        DoUpdateDeviceEx(hwnd, s_iDevOld, s_iFormatOld);
         DestroyWindow(hwnd);
         break;
     case cmb1:
@@ -141,7 +126,7 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 
 static void OnDestroy(HWND hwnd)
 {
-    m_bInit = FALSE;
+    s_bInit = FALSE;
     g_hwndSoundInput = NULL;
 }
 

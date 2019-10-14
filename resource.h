@@ -16,11 +16,11 @@
 #define IDR_SILENT_WAV                      1
 #define IDR_MAINMENU                        1000
 
+#define IDS_FORMAT                          100
+
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101
 #define ID_ABOUT                            102
-
-#define IDS_FORMAT                          100
 
 #ifdef APSTUDIO_INVOKED
     #ifndef APSTUDIO_READONLY_SYMBOLS
