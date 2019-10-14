@@ -1,4 +1,5 @@
 #include "YappyCam.hpp"
+#include "SetDlgItemDouble/SetDlgItemDouble.h"
 
 HWND g_hwndPictureInput = NULL;
 static BOOL s_bInit = FALSE;
@@ -28,6 +29,8 @@ static void OnCmb1(HWND hwnd)
         g_settings.SetPictureType(g_hMainWnd, PT_VIDEOCAP);
         break;
     }
+
+    PostMessage(g_hMainWnd, DM_REPOSITION, 0, 0);
 }
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
@@ -58,9 +61,37 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
         break;
     }
 
+    SetDlgItemDouble(hwnd, edt1, (g_settings.m_nFPSx100 / 100.0), "%0.2f");
+
     s_bInit = TRUE;
 
     return TRUE;
+}
+
+static void OnEdt1(HWND hwnd)
+{
+    if (!s_bInit)
+        return;
+
+    s_bInit = FALSE;
+    BOOL bTranslated = FALSE;
+    double e = GetDlgItemDouble(hwnd, edt1, &bTranslated);
+    if (bTranslated)
+    {
+        if (e < 0.01)
+        {
+            e = 0.01;
+        }
+        else if (e > 8.00)
+        {
+            e = 8.00;
+        }
+
+        g_settings.m_nFPSx100 = UINT(e * 100 + 0.005);
+        s_bInit = TRUE;
+        DoStartStopTimers(g_hMainWnd, FALSE);
+        DoStartStopTimers(g_hMainWnd, TRUE);
+    }
 }
 
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
@@ -75,6 +106,12 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         if (codeNotify == CBN_SELCHANGE)
         {
             OnCmb1(hwnd);
+        }
+        break;
+    case edt1:
+        if (codeNotify == EN_CHANGE)
+        {
+            OnEdt1(hwnd);
         }
         break;
     }

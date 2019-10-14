@@ -204,6 +204,12 @@ bool Settings::save(HWND hwnd) const
     return true;
 }
 
+void Settings::update(HWND hwnd)
+{
+    PictureType type = GetPictureType();
+    SetPictureType(hwnd, type);
+}
+
 bool Settings::create_dirs() const
 {
     CreateDirectory(m_strDir.c_str(), NULL);
@@ -334,8 +340,24 @@ void DoFixWindowSize(HWND hwnd)
     MoveWindow(hwnd, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, TRUE);
 }
 
+void DoStartStopTimers(HWND hwnd, BOOL bStart)
+{
+    if (bStart)
+    {
+        SetTimer(hwnd, SOUND_TIMER_ID, 300, NULL);
+        SetTimer(hwnd, CAP_TIMER_ID, DWORD(1000 * 100 / g_settings.m_nFPSx100), NULL);
+    }
+    else
+    {
+        KillTimer(hwnd, SOUND_TIMER_ID);
+        KillTimer(hwnd, CAP_TIMER_ID);
+    }
+}
+
 BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
 {
+    DoStartStopTimers(hwnd, FALSE);
+
     if (g_hbm)
     {
         DeleteObject(g_hbm);
@@ -366,6 +388,7 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         g_cap.open(0);
         if (!g_cap.isOpened())
         {
+            DoStartStopTimers(hwnd, TRUE);
             return FALSE;
         }
         m_nWidth = (int)g_cap.get(cv::CAP_PROP_FRAME_WIDTH);
@@ -424,6 +447,7 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
 
     m_nPictureType = type;
     DoFixWindowSize(hwnd);
+    DoStartStopTimers(hwnd, TRUE);
     return TRUE;
 }
 
@@ -566,8 +590,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     PostMessage(hwnd, WM_SIZE, 0, 0);
 
     m_sound.StartHearing();
-    SetTimer(hwnd, SOUND_TIMER_ID, 300, NULL);
-    SetTimer(hwnd, CAP_TIMER_ID, DWORD(1000 * 100 / g_settings.m_nFPSx100), NULL);
+    DoStartStopTimers(hwnd, TRUE);
 
     return TRUE;
 }
@@ -647,7 +670,7 @@ static void OnConfig(HWND hwnd)
 
 static void OnStop(HWND hwnd)
 {
-    KillTimer(hwnd, SOUND_TIMER_ID);
+    DoStartStopTimers(hwnd, FALSE);
     m_sound.StopHearing();
     g_writer.release();
     g_bWriting = FALSE;
@@ -661,7 +684,7 @@ static void OnStop(HWND hwnd)
     SendDlgItemMessage(hwnd, scr1, PBM_SETPOS, 0, 0);
 
     m_sound.StartHearing();
-    SetTimer(hwnd, SOUND_TIMER_ID, 300, NULL);
+    DoStartStopTimers(hwnd, TRUE);
 }
 
 static void OnRec(HWND hwnd)
@@ -754,12 +777,16 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         OnAbout(hwnd);
         break;
     case ID_SOUNDINPUT:
+        SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+        EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
         EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
         DoSoundInputDialogBox(NULL);
         break;
     case ID_PICTUREINPUT:
+        SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+        EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
         EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
         DoPictureInputDialogBox(NULL);
         break;
@@ -767,7 +794,9 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         if (!IsWindow(g_hwndSoundInput) &&
             !IsWindow(g_hwndPictureInput))
         {
+            SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
             SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
+            EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
             EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
         }
         break;
@@ -910,7 +939,7 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
 
 static void OnDestroy(HWND hwnd)
 {
-    KillTimer(hwnd, SOUND_TIMER_ID);
+    DoStartStopTimers(hwnd, FALSE);
     m_sound.StopHearing();
 
     g_settings.save(hwnd);

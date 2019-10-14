@@ -59,6 +59,7 @@ struct Settings
     bool load(HWND hwnd);
     bool save(HWND hwnd) const;
     bool create_dirs() const;
+    void update(HWND hwnd);
 
     DisplayMode GetDisplayMode() const
     {
@@ -93,5 +94,6 @@ LPSTR ansi_from_wide(LPCWSTR pszWide);
 
 BOOL DoSoundInputDialogBox(HWND hwndParent);
 BOOL DoPictureInputDialogBox(HWND hwndParent);
+void DoStartStopTimers(HWND hwnd, BOOL bStart);
 
 #endif  // ndef YAPPYCAM_HPP_
