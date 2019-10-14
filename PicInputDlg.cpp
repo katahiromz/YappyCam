@@ -277,11 +277,61 @@ Page1DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
+static BOOL s_bPage2Init = FALSE;
+
+static BOOL Page2_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
+{
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+
+    TCHAR szText[64];
+    for (INT i = 0; i < 10; ++i)
+    {
+        StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_CAMERA), i);
+        ComboBox_AddString(hCmb1, szText);
+    }
+    ComboBox_SetCurSel(hCmb1, g_settings.m_nCameraID);
+
+    s_bPage2Init = TRUE;
+    return TRUE;
+}
+
+static void Page2_OnCmb1(HWND hwnd)
+{
+    if (!s_bPage2Init)
+        return;
+
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+    g_settings.m_nCameraID = ComboBox_GetCurSel(hCmb1);
+
+    g_settings.update(g_hMainWnd);
+}
+
+static void Page2_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
+{
+    switch (id)
+    {
+    case cmb1:
+        if (codeNotify == CBN_SELCHANGE)
+        {
+            Page2_OnCmb1(hwnd);
+        }
+        break;
+    }
+}
+
+static void Page2_OnDestroy(HWND hwnd)
+{
+    s_bPage2Init = FALSE;
+}
+
 static INT_PTR CALLBACK
 Page2DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
+        HANDLE_MSG(hwnd, WM_INITDIALOG, Page2_OnInitDialog);
+        HANDLE_MSG(hwnd, WM_COMMAND, Page2_OnCommand);
+        HANDLE_MSG(hwnd, WM_DESTROY, Page2_OnDestroy);
     }
     return 0;
 }

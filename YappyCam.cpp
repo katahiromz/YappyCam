@@ -92,6 +92,7 @@ void Settings::init()
     m_bDrawCursor = TRUE;
     m_bNoSound = FALSE;
     m_nMonitorID = 0;
+    m_nCameraID = 0;
 
     TCHAR szPath[MAX_PATH];
 
@@ -161,6 +162,7 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"DrawCursor", (DWORD&)m_bDrawCursor);
     app_key.QueryDword(L"NoSound", (DWORD&)m_bNoSound);
     app_key.QueryDword(L"MonitorID", (DWORD&)m_nMonitorID);
+    app_key.QueryDword(L"CameraID", (DWORD&)m_nCameraID);
 
     WCHAR szText[MAX_PATH];
 
@@ -244,6 +246,7 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"DrawCursor", m_bDrawCursor);
     app_key.SetDword(L"NoSound", m_bNoSound);
     app_key.SetDword(L"MonitorID", m_nMonitorID);
+    app_key.SetDword(L"CameraID", m_nCameraID);
 
     app_key.SetSz(L"Dir", m_strDir.c_str());
     app_key.SetSz(L"MovieDir", m_strMovieDir.c_str());
@@ -503,7 +506,7 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         break;
     case PT_VIDEOCAP:
         SetDisplayMode(DM_CAPFRAME);
-        g_cap.open(0);
+        g_cap.open(m_nCameraID);
         if (!g_cap.isOpened())
         {
             DoStartStopTimers(hwnd, TRUE);

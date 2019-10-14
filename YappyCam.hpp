@@ -65,6 +65,7 @@ struct Settings
     BOOL m_bDrawCursor;
     BOOL m_bNoSound;
     INT m_nMonitorID;
+    INT m_nCameraID;
     std::wstring m_strDir;
     std::wstring m_strMovieDir;
     std::wstring m_strImageFileName;
