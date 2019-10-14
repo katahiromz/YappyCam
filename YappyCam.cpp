@@ -85,6 +85,9 @@ void Settings::init()
     m_nWindow2CX = m_nWindow2CY = CW_USEDEFAULT;
     m_nWindow3CX = m_nWindow3CY = CW_USEDEFAULT;
 
+    m_nSoundDlgX = m_nSoundDlgY = CW_USEDEFAULT;
+    m_nPicDlgX = m_nPicDlgY = CW_USEDEFAULT;
+
     m_nFPSx100 = UINT(DEFAULT_FPS * 100);
     m_bDrawCursor = TRUE;
     m_bNoSound = FALSE;
@@ -147,6 +150,11 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"Window2CY", (DWORD&)m_nWindow2CY);
     app_key.QueryDword(L"Window3CX", (DWORD&)m_nWindow3CX);
     app_key.QueryDword(L"Window3CY", (DWORD&)m_nWindow3CY);
+
+    app_key.QueryDword(L"SoundDlgX", (DWORD&)m_nSoundDlgX);
+    app_key.QueryDword(L"SoundDlgY", (DWORD&)m_nSoundDlgY);
+    app_key.QueryDword(L"PicDlgX", (DWORD&)m_nPicDlgX);
+    app_key.QueryDword(L"PicDlgY", (DWORD&)m_nPicDlgY);
 
     app_key.QueryDword(L"FPSx100", (DWORD&)m_nFPSx100);
     app_key.QueryDword(L"DrawCursor", (DWORD&)m_bDrawCursor);
@@ -224,6 +232,11 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"Window2CY", m_nWindow2CY);
     app_key.SetDword(L"Window3CX", m_nWindow3CX);
     app_key.SetDword(L"Window3CY", m_nWindow3CY);
+
+    app_key.SetDword(L"SoundDlgX", m_nSoundDlgX);
+    app_key.SetDword(L"SoundDlgY", m_nSoundDlgY);
+    app_key.SetDword(L"PicDlgX", m_nPicDlgX);
+    app_key.SetDword(L"PicDlgY", m_nPicDlgY);
 
     app_key.SetDword(L"FPSx100", m_nFPSx100);
     app_key.SetDword(L"DrawCursor", m_bDrawCursor);

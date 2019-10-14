@@ -102,12 +102,21 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     }
     ComboBox_SetCurSel(hCmb2, g_settings.m_iWaveFormat);
 
+    INT x = g_settings.m_nSoundDlgX;
+    INT y = g_settings.m_nSoundDlgY;
+    if (x != CW_USEDEFAULT && y != CW_USEDEFAULT)
+    {
+        SetWindowPos(hwnd, NULL, x, y, 0, 0,
+                     SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+        SendMessage(hwnd, DM_REPOSITION, 0, 0);
+    }
+
     s_bInit = TRUE;
 
     return TRUE;
 }
 
-void OnChx1(HWND hwnd)
+static void OnChx1(HWND hwnd)
 {
     g_settings.m_bNoSound = (IsDlgButtonChecked(hwnd, chx1) == BST_CHECKED);
 }
@@ -143,6 +152,17 @@ static void OnDestroy(HWND hwnd)
     PostMessage(g_hMainWnd, WM_COMMAND, ID_CONFIGCLOSED, 0);
 }
 
+static void OnMove(HWND hwnd, int x, int y)
+{
+    if (IsMaximized(hwnd) || IsMinimized(hwnd))
+        return;
+
+    RECT rc;
+    GetWindowRect(hwnd, &rc);
+    g_settings.m_nSoundDlgX = rc.left;
+    g_settings.m_nSoundDlgY = rc.top;
+}
+
 static INT_PTR CALLBACK
 DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -151,6 +171,7 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HANDLE_MSG(hwnd, WM_INITDIALOG, OnInitDialog);
         HANDLE_MSG(hwnd, WM_COMMAND, OnCommand);
         HANDLE_MSG(hwnd, WM_DESTROY, OnDestroy);
+        HANDLE_MSG(hwnd, WM_MOVE, OnMove);
     }
     return 0;
 }

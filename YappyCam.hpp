@@ -57,6 +57,10 @@ struct Settings
     INT m_nWindow2CY;
     INT m_nWindow3CX;
     INT m_nWindow3CY;
+    INT m_nSoundDlgX;
+    INT m_nSoundDlgY;
+    INT m_nPicDlgX;
+    INT m_nPicDlgY;
     UINT m_nFPSx100;
     BOOL m_bDrawCursor;
     BOOL m_bNoSound;

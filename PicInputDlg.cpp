@@ -67,6 +67,15 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     ComboBox_AddString(hCmb2, L"4.0");
     SetDlgItemDouble(hwnd, cmb2, (g_settings.m_nFPSx100 / 100.0), "%0.1f");
 
+    INT x = g_settings.m_nPicDlgX;
+    INT y = g_settings.m_nPicDlgY;
+    if (x != CW_USEDEFAULT && y != CW_USEDEFAULT)
+    {
+        SetWindowPos(hwnd, NULL, x, y, 0, 0,
+                     SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+        SendMessage(hwnd, DM_REPOSITION, 0, 0);
+    }
+
     s_bInit = TRUE;
 
     return TRUE;
@@ -146,6 +155,17 @@ static void OnDestroy(HWND hwnd)
     PostMessage(g_hMainWnd, WM_COMMAND, ID_CONFIGCLOSED, 0);
 }
 
+static void OnMove(HWND hwnd, int x, int y)
+{
+    if (IsMaximized(hwnd) || IsMinimized(hwnd))
+        return;
+
+    RECT rc;
+    GetWindowRect(hwnd, &rc);
+    g_settings.m_nPicDlgX = rc.left;
+    g_settings.m_nPicDlgY = rc.top;
+}
+
 static INT_PTR CALLBACK
 DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -154,6 +174,7 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HANDLE_MSG(hwnd, WM_INITDIALOG, OnInitDialog);
         HANDLE_MSG(hwnd, WM_COMMAND, OnCommand);
         HANDLE_MSG(hwnd, WM_DESTROY, OnDestroy);
+        HANDLE_MSG(hwnd, WM_MOVE, OnMove);
     }
     return 0;
 }
