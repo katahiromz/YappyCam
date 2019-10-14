@@ -90,7 +90,6 @@ FONT 9, "Tahoma"
     LTEXT "", stc1, 5, 25, 265, 79, NOT WS_VISIBLE | NOT WS_GROUP
     LTEXT "&FPS:", IDC_STATIC, 6, 112, 25, 12
     EDITTEXT edt1, 35, 111, 40, 14, ES_AUTOHSCROLL | ES_RIGHT
-    CONTROL "", scr1, "msctls_updown32", UDS_ARROWKEYS | UDS_AUTOBUDDY | UDS_ALIGNRIGHT, 173, 113, 12, 20
 }
 
 //////////////////////////////////////////////////////////////////////////////
