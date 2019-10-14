@@ -12,6 +12,7 @@
 
 #define IDD_MAIN                            100
 #define IDD_SOUNDINPUT                      101
+#define IDD_SCREEN                          102
 
 #define IDR_SILENT_WAV                      1
 #define IDR_MAINMENU                        1000
