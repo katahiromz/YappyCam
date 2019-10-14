@@ -85,7 +85,7 @@ void Settings::init()
     m_nWindow2CX = m_nWindow2CY = CW_USEDEFAULT;
     m_nWindow3CX = m_nWindow3CY = CW_USEDEFAULT;
 
-    m_nFPSx100 = 5 * 100;
+    m_nFPSx100 = UINT(DEFAULT_FPS * 100);
     m_bDrawCursor = TRUE;
 
     TCHAR szPath[MAX_PATH];
