@@ -148,6 +148,7 @@ BOOL DoSoundInputDialogBox(HWND hwndParent)
 {
     if (g_hwndSoundInput)
     {
+        SendMessage(g_hwndSoundInput, DM_REPOSITION, 0, 0);
         SetForegroundWindow(g_hwndSoundInput);
         return TRUE;
     }

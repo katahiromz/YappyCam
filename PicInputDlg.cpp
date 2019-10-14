@@ -139,6 +139,7 @@ BOOL DoPictureInputDialogBox(HWND hwndParent)
 {
     if (g_hwndPictureInput)
     {
+        SendMessage(g_hwndPictureInput, DM_REPOSITION, 0, 0);
         SetForegroundWindow(g_hwndPictureInput);
         return TRUE;
     }
