@@ -111,10 +111,11 @@ static void OnCmb2(HWND hwnd)
 
         g_settings.m_nFPSx100 = UINT(e * 100 + 0.005);
 
-        s_bInit = TRUE;
         DoStartStopTimers(g_hMainWnd, FALSE);
         DoStartStopTimers(g_hMainWnd, TRUE);
     }
+
+    s_bInit = TRUE;
 }
 
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
