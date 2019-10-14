@@ -77,6 +77,9 @@ void Settings::init()
     m_cxCap = GetSystemMetrics(SM_CXSCREEN);
     m_cyCap = GetSystemMetrics(SM_CYSCREEN);
 
+    m_nWindowX = CW_USEDEFAULT;
+    m_nWindowY = CW_USEDEFAULT;
+
     m_nFPSx100 = 5 * 100;
 
     TCHAR szPath[MAX_PATH];
@@ -123,6 +126,10 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"yCap", (DWORD&)m_yCap);
     app_key.QueryDword(L"cxCap", (DWORD&)m_cxCap);
     app_key.QueryDword(L"cyCap", (DWORD&)m_cyCap);
+
+    app_key.QueryDword(L"WindowX", (DWORD&)m_nWindowX);
+    app_key.QueryDword(L"WindowY", (DWORD&)m_nWindowY);
+
     app_key.QueryDword(L"FPSx100", (DWORD&)m_nFPSx100);
 
     WCHAR szText[MAX_PATH];
@@ -183,6 +190,10 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"yCap", m_yCap);
     app_key.SetDword(L"cxCap", m_cxCap);
     app_key.SetDword(L"cyCap", m_cyCap);
+
+    app_key.SetDword(L"WindowX", m_nWindowX);
+    app_key.SetDword(L"WindowY", m_nWindowY);
+
     app_key.SetDword(L"FPSx100", m_nFPSx100);
 
     app_key.SetSz(L"Dir", m_strDir.c_str());
@@ -543,6 +554,15 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
 
+    if (g_settings.m_nWindowX != CW_USEDEFAULT &&
+        g_settings.m_nWindowY != CW_USEDEFAULT)
+    {
+        SetWindowPos(hwnd, NULL, g_settings.m_nWindowX, g_settings.m_nWindowY, 0, 0,
+                     SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+    }
+
+    SendMessage(hwnd, DM_REPOSITION, 0, 0);
+
     PostMessage(hwnd, WM_SIZE, 0, 0);
 
     m_sound.StartHearing();
@@ -836,6 +856,17 @@ static void OnGetMinMaxInfo(HWND hwnd, LPMINMAXINFO lpMinMaxInfo)
     lpMinMaxInfo->ptMinTrackSize.y = rc.bottom - rc.top;
 }
 
+static void OnMove(HWND hwnd, int x, int y)
+{
+    if (IsMaximized(hwnd) || IsMinimized(hwnd))
+        return;
+
+    RECT rc;
+    GetWindowRect(hwnd, &rc);
+    g_settings.m_nWindowX = rc.left;
+    g_settings.m_nWindowY = rc.top;
+}
+
 static void OnSize(HWND hwnd, UINT state, int cx, int cy)
 {
     RECT rc;
@@ -959,6 +990,7 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HANDLE_MSG(hwnd, WM_ERASEBKGND, OnEraseBkgnd);
         HANDLE_MSG(hwnd, WM_PAINT, OnPaint);
         HANDLE_MSG(hwnd, WM_GETMINMAXINFO, OnGetMinMaxInfo);
+        HANDLE_MSG(hwnd, WM_MOVE, OnMove);
         HANDLE_MSG(hwnd, WM_SIZE, OnSize);
         HANDLE_MSG(hwnd, WM_TIMER, OnTimer);
         case WM_SIZING:
