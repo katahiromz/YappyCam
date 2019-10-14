@@ -685,11 +685,6 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
 static void OnConfig(HWND hwnd)
 {
-    if (g_hwndSoundInput)
-    {
-        SendMessage(g_hwndSoundInput, WM_COMMAND, MAKEWPARAM(IDCANCEL, BN_CLICKED), 0);
-    }
-
     HWND hButton = GetDlgItem(hwnd, psh4);
 
     if (GetAsyncKeyState(VK_MENU) < 0 &&
@@ -872,16 +867,12 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         break;
     case ID_SOUNDINPUT:
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
-        SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
         EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
-        EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
         DoSoundInputDialogBox(hwnd);
         break;
     case ID_PICTUREINPUT:
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
-        SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
         EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
-        EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
         DoPictureInputDialogBox(hwnd);
         break;
     case ID_CONFIGCLOSED:
@@ -889,9 +880,7 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
             !IsWindow(g_hwndPictureInput))
         {
             SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
-            SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
             EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
-            EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
         }
         break;
     }
