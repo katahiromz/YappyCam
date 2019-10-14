@@ -736,12 +736,12 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     case ID_SOUNDINPUT:
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
         EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
-        DoSoundInputDialogBox(hwnd);
+        DoSoundInputDialogBox(NULL);
         break;
     case ID_PICTUREINPUT:
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
         EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
-        DoPictureInputDialogBox(hwnd);
+        DoPictureInputDialogBox(NULL);
         break;
     case ID_CONFIGCLOSED:
         if (!IsWindow(g_hwndSoundInput) &&
