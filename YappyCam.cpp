@@ -101,11 +101,11 @@ bool Settings::load(HWND hwnd)
 {
     init();
 
-    MRegKey author_key(HKEY_CURRENT_USER, L"Software\\Katayama Hirofumi MZ", TRUE);
+    MRegKey author_key(HKEY_CURRENT_USER, L"Software\\Katayama Hirofumi MZ", FALSE);
     if (!author_key)
         return false;
 
-    MRegKey app_key(author_key, L"YappyCam", TRUE);
+    MRegKey app_key(author_key, L"YappyCam", FALSE);
     if (!app_key)
         return false;
 
@@ -160,11 +160,11 @@ bool Settings::load(HWND hwnd)
 
 bool Settings::save(HWND hwnd) const
 {
-    MRegKey author_key(HKEY_CURRENT_USER, L"Software\\Katayama Hirofumi MZ", FALSE);
+    MRegKey author_key(HKEY_CURRENT_USER, L"Software\\Katayama Hirofumi MZ", TRUE);
     if (!author_key)
         return false;
 
-    MRegKey app_key(author_key, L"YappyCam", FALSE);
+    MRegKey app_key(author_key, L"YappyCam", TRUE);
     if (!app_key)
         return false;
 
