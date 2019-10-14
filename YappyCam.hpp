@@ -64,6 +64,7 @@ struct Settings
     UINT m_nFPSx100;
     BOOL m_bDrawCursor;
     BOOL m_bNoSound;
+    INT m_nMonitorID;
     std::wstring m_strDir;
     std::wstring m_strMovieDir;
     std::wstring m_strImageFileName;

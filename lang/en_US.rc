@@ -108,6 +108,8 @@ STRINGTABLE
     IDS_WHITE, "White"
     IDS_SCREEN, "Screen"
     IDS_WEBCAMERA, "Web camera"
+    IDS_MONITOR, "Monitor #%u"
+    IDS_CAMERA, "Camera #%u"
 }
 
 //////////////////////////////////////////////////////////////////////////////

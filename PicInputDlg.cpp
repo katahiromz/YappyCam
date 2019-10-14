@@ -4,6 +4,25 @@
 HWND g_hwndPictureInput = NULL;
 static BOOL s_bInit = FALSE;
 static HWND s_hPages[2] = { NULL };
+static std::vector<MONITORINFO> s_monitors;
+
+static BOOL CALLBACK
+MyMonitorEnumProc(HMONITOR hMonitor, HDC hdc, LPRECT prc, LPARAM lParam)
+{
+    MONITORINFO mi = { sizeof(mi) };
+
+    GetMonitorInfo(hMonitor, &mi);
+    s_monitors.push_back(mi);
+
+    return TRUE;
+}
+
+static BOOL DoGetMonitors(void)
+{
+    s_monitors.clear();
+
+    return EnumDisplayMonitors(NULL, NULL, MyMonitorEnumProc, 0);
+}
 
 static void DoChoosePage(HWND hwnd, INT iPage)
 {
@@ -52,6 +71,20 @@ static void Page1_SetData(HWND hwnd)
 
 static BOOL Page1_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
+    DoGetMonitors();
+
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+
+    TCHAR szText[64];
+    INT iMonitor = 0;
+    for (auto& info : s_monitors)
+    {
+        StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_MONITOR), iMonitor);
+        ComboBox_AddString(hCmb1, szText);
+        ++iMonitor;
+    }
+    ComboBox_SetCurSel(hCmb1, g_settings.m_nMonitorID);
+
     SendDlgItemMessage(hwnd, scr1, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
     SendDlgItemMessage(hwnd, scr2, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
     SendDlgItemMessage(hwnd, scr3, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
@@ -61,6 +94,26 @@ static BOOL Page1_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     s_bPage1Init = TRUE;
     return TRUE;
+}
+
+static void Page1_OnCmb1(HWND hwnd)
+{
+    if (!s_bPage1Init)
+        return;
+
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+    INT i = ComboBox_GetCurSel(hCmb1);
+    if (i < 0 || i >= INT(s_monitors.size()))
+        return;
+
+    auto& rc = s_monitors[i].rcMonitor;
+    g_settings.m_xCap = rc.left;
+    g_settings.m_yCap = rc.top;
+    g_settings.m_cxCap = rc.right - rc.left;
+    g_settings.m_cyCap = rc.bottom - rc.top;
+
+    g_settings.m_nMonitorID = i;
+    g_settings.update(g_hMainWnd);
 }
 
 static void Page1_OnEdt(HWND hwnd)
@@ -114,10 +167,15 @@ static void Page1_OnChx1(HWND hwnd)
 
 static void Page1_OnPsh1(HWND hwnd)
 {
-    g_settings.m_xCap = 0;
-    g_settings.m_yCap = 0;
-    g_settings.m_cxCap = GetSystemMetrics(SM_CXSCREEN);
-    g_settings.m_cyCap = GetSystemMetrics(SM_CYSCREEN);
+    INT i = g_settings.m_nMonitorID;
+    if (i < 0 || i >= INT(s_monitors.size()))
+        return;
+
+    const auto& rc = s_monitors[i].rcMonitor;
+    g_settings.m_xCap = rc.left;
+    g_settings.m_yCap = rc.top;
+    g_settings.m_cxCap = rc.right - rc.left;
+    g_settings.m_cyCap = rc.bottom - rc.top;
 
     Page1_SetData(hwnd);
 }
@@ -157,6 +215,12 @@ static void Page1_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
     {
+    case cmb1:
+        if (codeNotify == CBN_SELCHANGE)
+        {
+            Page1_OnCmb1(hwnd);
+        }
+        break;
     case edt1:
     case edt2:
     case edt3:

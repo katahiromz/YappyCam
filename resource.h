@@ -24,6 +24,8 @@
 #define IDS_WHITE                           102
 #define IDS_SCREEN                          103
 #define IDS_WEBCAMERA                       104
+#define IDS_MONITOR                         105
+#define IDS_CAMERA                          106
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101

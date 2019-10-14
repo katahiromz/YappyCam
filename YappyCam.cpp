@@ -91,6 +91,7 @@ void Settings::init()
     m_nFPSx100 = UINT(DEFAULT_FPS * 100);
     m_bDrawCursor = TRUE;
     m_bNoSound = FALSE;
+    m_nMonitorID = 0;
 
     TCHAR szPath[MAX_PATH];
 
@@ -159,6 +160,7 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"FPSx100", (DWORD&)m_nFPSx100);
     app_key.QueryDword(L"DrawCursor", (DWORD&)m_bDrawCursor);
     app_key.QueryDword(L"NoSound", (DWORD&)m_bNoSound);
+    app_key.QueryDword(L"MonitorID", (DWORD&)m_nMonitorID);
 
     WCHAR szText[MAX_PATH];
 
@@ -241,6 +243,7 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"FPSx100", m_nFPSx100);
     app_key.SetDword(L"DrawCursor", m_bDrawCursor);
     app_key.SetDword(L"NoSound", m_bNoSound);
+    app_key.SetDword(L"MonitorID", m_nMonitorID);
 
     app_key.SetSz(L"Dir", m_strDir.c_str());
     app_key.SetSz(L"MovieDir", m_strMovieDir.c_str());
