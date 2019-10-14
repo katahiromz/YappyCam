@@ -126,6 +126,33 @@ static void Page1_OnPsh2(HWND hwnd)
 {
 }
 
+static void Page1_OnPsh3(HWND hwnd)
+{
+    if (HDC hdc = CreateDC(L"DISPLAY", NULL, NULL, NULL))
+    {
+        const INT PEN_WIDTH = 5;
+        if (HPEN hPen = CreatePen(PS_SOLID, PEN_WIDTH, RGB(0, 255, 255)))
+        {
+            SetROP2(hdc, R2_XORPEN);
+            SelectObject(hdc, hPen);
+            SelectObject(hdc, GetStockObject(NULL_BRUSH));
+
+            for (INT i = 0; i < 4; ++i)
+            {
+                Rectangle(hdc,
+                          g_settings.m_xCap,
+                          g_settings.m_yCap,
+                          g_settings.m_xCap + g_settings.m_cxCap,
+                          g_settings.m_yCap + g_settings.m_cyCap);
+                Sleep(200);
+            }
+
+            DeleteObject(hPen);
+        }
+        DeleteDC(hdc);
+    }
+}
+
 static void Page1_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
@@ -155,6 +182,12 @@ static void Page1_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         if (codeNotify == BN_CLICKED)
         {
             Page1_OnPsh2(hwnd);
+        }
+        break;
+    case psh3:
+        if (codeNotify == BN_CLICKED)
+        {
+            Page1_OnPsh3(hwnd);
         }
         break;
     }
