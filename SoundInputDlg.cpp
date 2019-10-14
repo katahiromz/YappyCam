@@ -107,6 +107,11 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     return TRUE;
 }
 
+void OnChx1(HWND hwnd)
+{
+    g_settings.m_bNoSound = (IsDlgButtonChecked(hwnd, chx1) == BST_CHECKED);
+}
+
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
@@ -120,6 +125,12 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         break;
     case cmb2:
         OnCmb2(hwnd);
+        break;
+    case chx1:
+        if (codeNotify == BN_CLICKED)
+        {
+            OnChx1(hwnd);
+        }
         break;
     }
 }

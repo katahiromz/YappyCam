@@ -87,6 +87,7 @@ void Settings::init()
 
     m_nFPSx100 = UINT(DEFAULT_FPS * 100);
     m_bDrawCursor = TRUE;
+    m_bNoSound = FALSE;
 
     TCHAR szPath[MAX_PATH];
 
@@ -149,6 +150,7 @@ bool Settings::load(HWND hwnd)
 
     app_key.QueryDword(L"FPSx100", (DWORD&)m_nFPSx100);
     app_key.QueryDword(L"DrawCursor", (DWORD&)m_bDrawCursor);
+    app_key.QueryDword(L"NoSound", (DWORD&)m_bNoSound);
 
     WCHAR szText[MAX_PATH];
 
@@ -175,7 +177,7 @@ bool Settings::load(HWND hwnd)
     for (INT i = m_nMovieID; i <= 999; ++i)
     {
         StringCbPrintf(szPath, sizeof(szPath), m_strMovieDir.c_str(), i);
-        if (!PathFileExists(szPath))
+        if (!PathIsDirectory(szPath))
         {
             m_nMovieID = i;
             break;
@@ -225,6 +227,7 @@ bool Settings::save(HWND hwnd) const
 
     app_key.SetDword(L"FPSx100", m_nFPSx100);
     app_key.SetDword(L"DrawCursor", m_bDrawCursor);
+    app_key.SetDword(L"NoSound", m_bNoSound);
 
     app_key.SetSz(L"Dir", m_strDir.c_str());
     app_key.SetSz(L"MovieDir", m_strMovieDir.c_str());
@@ -802,7 +805,13 @@ static void OnRec(HWND hwnd)
         EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
 
-        m_sound.SetRecording(TRUE);
+        g_settings.create_dirs();
+        ++g_settings.m_nMovieID;
+
+        if (!g_settings.m_bNoSound)
+        {
+            m_sound.SetRecording(TRUE);
+        }
     }
     else
     {
@@ -815,12 +824,18 @@ static void OnPause(HWND hwnd)
     if (Button_GetCheck(GetDlgItem(hwnd, psh2)) & BST_CHECKED)
     {
         g_bWriting = FALSE;
-        m_sound.SetRecording(FALSE);
+        if (!g_settings.m_bNoSound)
+        {
+            m_sound.SetRecording(FALSE);
+        }
     }
     else
     {
         g_bWriting = TRUE;
-        m_sound.SetRecording(TRUE);
+        if (!g_settings.m_bNoSound)
+        {
+            m_sound.SetRecording(TRUE);
+        }
     }
 }
 
@@ -1153,11 +1168,17 @@ static void OnTimer(HWND hwnd, UINT id)
         InvalidateRect(hwnd, NULL, TRUE);
         break;
     case SOUND_TIMER_ID:
+        if (!g_settings.m_bNoSound)
         {
             LONG nValue = m_sound.m_nValue;
             LONG nMax = m_sound.m_nMax;
             SendDlgItemMessage(hwnd, scr1, PBM_SETRANGE32, 0, nMax);
             SendDlgItemMessage(hwnd, scr1, PBM_SETPOS, nValue, 0);
+        }
+        else
+        {
+            SendDlgItemMessage(hwnd, scr1, PBM_SETRANGE32, 0, 0);
+            SendDlgItemMessage(hwnd, scr1, PBM_SETPOS, 0, 0);
         }
         break;
     }

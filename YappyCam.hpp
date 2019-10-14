@@ -59,6 +59,7 @@ struct Settings
     INT m_nWindow3CY;
     UINT m_nFPSx100;
     BOOL m_bDrawCursor;
+    BOOL m_bNoSound;
     std::wstring m_strDir;
     std::wstring m_strMovieDir;
     std::wstring m_strImageFileName;
