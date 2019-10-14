@@ -14,6 +14,7 @@
 #define IDD_SOUNDINPUT                      101
 #define IDD_SCREEN                          102
 #define IDD_WEBCAMERA                       103
+#define IDD_PICINPUT                        104
 
 #define IDR_SILENT_WAV                      1
 #define IDR_MAINMENU                        1000
