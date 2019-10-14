@@ -73,21 +73,19 @@ void Settings::init()
     m_iSoundDev = 0;
     m_iWaveFormat = 0;
 
-    SetRect(&m_rcScreen, 0, 0,
-            GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+    m_xCap = 0;
+    m_yCap = 0;
+    m_cxCap = GetSystemMetrics(SM_CXSCREEN);
+    m_cyCap = GetSystemMetrics(SM_CYSCREEN);
 
     TCHAR szPath[MAX_PATH];
 
     SHGetSpecialFolderPath(NULL, szPath, CSIDL_MYVIDEO, TRUE);
     PathAppend(szPath, TEXT("YappyCam"));
     m_strDir = szPath;
-    CreateDirectory(m_strDir.c_str(), NULL);
 
     PathAppend(szPath, TEXT("movie-%03u"));
     m_strMovieDir = szPath;
-
-    StringCbPrintf(szPath, sizeof(szPath), m_strMovieDir.c_str(), m_nMovieID);
-    CreateDirectory(szPath, NULL);
 
     m_strImageFileName = TEXT("img-%04u.png");
 
@@ -99,14 +97,107 @@ void Settings::init()
     m_strStatusText = TEXT("No image");
 }
 
-bool Settings::load()
+bool Settings::load(HWND hwnd)
 {
     init();
+
+    MRegKey author_key(HKEY_CURRENT_USER, L"Software\\Katayama Hirofumi MZ", TRUE);
+    if (!author_key)
+        return false;
+
+    MRegKey app_key(author_key, L"YappyCam", TRUE);
+    if (!app_key)
+        return false;
+
+    PictureType type;
+    app_key.QueryDword(L"PicType", (DWORD&)type);
+
+    app_key.QueryDword(L"Width", (DWORD&)m_nWidth);
+    app_key.QueryDword(L"Height", (DWORD&)m_nHeight);
+    app_key.QueryDword(L"MovieID", (DWORD&)m_nMovieID);
+    app_key.QueryDword(L"SoundDevice", (DWORD&)m_iSoundDev);
+    app_key.QueryDword(L"WaveFormat", (DWORD&)m_iWaveFormat);
+
+    app_key.QueryDword(L"xCap", (DWORD&)m_xCap);
+    app_key.QueryDword(L"yCap", (DWORD&)m_yCap);
+    app_key.QueryDword(L"cxCap", (DWORD&)m_cxCap);
+    app_key.QueryDword(L"cyCap", (DWORD&)m_cyCap);
+
+    WCHAR szText[MAX_PATH];
+
+    if (ERROR_SUCCESS == app_key.QuerySz(L"Dir", szText, ARRAYSIZE(szText)))
+    {
+        m_strDir = szText;
+    }
+    if (ERROR_SUCCESS == app_key.QuerySz(L"MovieDir", szText, ARRAYSIZE(szText)))
+    {
+        m_strMovieDir = szText;
+    }
+    if (ERROR_SUCCESS == app_key.QuerySz(L"ImageFileName", szText, ARRAYSIZE(szText)))
+    {
+        m_strImageFileName = szText;
+    }
+    if (ERROR_SUCCESS == app_key.QuerySz(L"MovieFileName", szText, ARRAYSIZE(szText)))
+    {
+        m_strMovieFileName = szText;
+    }
+
+    SetPictureType(hwnd, type);
+
+    TCHAR szPath[MAX_PATH];
+    for (INT i = m_nMovieID; i <= 999; ++i)
+    {
+        StringCbPrintf(szPath, sizeof(szPath), m_strMovieDir.c_str(), i);
+        if (!PathFileExists(szPath))
+        {
+            m_nMovieID = i;
+            break;
+        }
+    }
+
     return true;
 }
 
-bool Settings::save() const
+bool Settings::save(HWND hwnd) const
 {
+    MRegKey author_key(HKEY_CURRENT_USER, L"Software\\Katayama Hirofumi MZ", FALSE);
+    if (!author_key)
+        return false;
+
+    MRegKey app_key(author_key, L"YappyCam", FALSE);
+    if (!app_key)
+        return false;
+
+    PictureType type = GetPictureType();
+    app_key.SetDword(L"PicType", type);
+
+    app_key.SetDword(L"Width", m_nWidth);
+    app_key.SetDword(L"Height", m_nHeight);
+    app_key.SetDword(L"MovieID", m_nMovieID);
+    app_key.SetDword(L"SoundDevice", m_iSoundDev);
+    app_key.SetDword(L"WaveFormat", m_iWaveFormat);
+
+    app_key.SetDword(L"xCap", m_xCap);
+    app_key.SetDword(L"yCap", m_yCap);
+    app_key.SetDword(L"cxCap", m_cxCap);
+    app_key.SetDword(L"cyCap", m_cyCap);
+
+    app_key.SetSz(L"Dir", m_strDir.c_str());
+    app_key.SetSz(L"MovieDir", m_strMovieDir.c_str());
+    app_key.SetSz(L"ImageFileName", m_strImageFileName.c_str());
+    app_key.SetSz(L"MovieFileName", m_strMovieFileName.c_str());
+
+    return true;
+}
+
+bool Settings::create_dirs() const
+{
+    CreateDirectory(m_strDir.c_str(), NULL);
+
+    TCHAR szPath[MAX_PATH];
+    StringCbPrintf(szPath, sizeof(szPath), m_strMovieDir.c_str(), m_nMovieID);
+    CreateDirectory(szPath, NULL);
+
     return true;
 }
 
@@ -122,19 +213,18 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
     {
     case PT_BLACK:
         SetDisplayMode(DM_BITMAP);
-        m_nWidth = 320;
-        m_nHeight = 240;
+        m_cxCap = m_nWidth = 320;
+        m_cyCap = m_nHeight = 240;
         break;
     case PT_WHITE:
         SetDisplayMode(DM_BITMAP);
-        m_nWidth = 320;
-        m_nHeight = 240;
+        m_cxCap = m_nWidth = 320;
+        m_cyCap = m_nHeight = 240;
         break;
     case PT_SCREENCAP:
         SetDisplayMode(DM_BITMAP);
-        m_nWidth = GetSystemMetrics(SM_CXSCREEN);
-        m_nHeight = GetSystemMetrics(SM_CYSCREEN);
-        SetRect(&m_rcScreen, 0, 0, m_nWidth, m_nHeight);
+        m_cxCap = m_nWidth = GetSystemMetrics(SM_CXSCREEN);
+        m_cyCap = m_nHeight = GetSystemMetrics(SM_CYSCREEN);
         break;
     case PT_VIDEOCAP:
         g_cap.open(0);
@@ -401,7 +491,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     g_hdcScreen = CreateDC(TEXT("DISPLAY"), NULL, NULL, NULL);
 
-    g_settings.load();
+    g_settings.load(hwnd);
 
     get_sound_devices(m_sound_devices);
     get_wave_formats(m_wave_formats);
@@ -770,6 +860,8 @@ static void OnDestroy(HWND hwnd)
     KillTimer(hwnd, SOUND_TIMER_ID);
     m_sound.StopHearing();
 
+    g_settings.save(hwnd);
+
     DeleteCriticalSection(&g_lock);
 
     DeleteObject(s_hbmRec);
@@ -792,10 +884,8 @@ void DoScreenCap(HWND hwnd)
         HGDIOBJ hbmOld = SelectObject(hdcMem, g_hbm);
         StretchBlt(hdcMem, 0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
                    g_hdcScreen,
-                   g_settings.m_rcScreen.left,
-                   g_settings.m_rcScreen.top,
-                   g_settings.m_rcScreen.right - g_settings.m_rcScreen.left,
-                   g_settings.m_rcScreen.bottom - g_settings.m_rcScreen.top,
+                   g_settings.m_xCap, g_settings.m_yCap,
+                   g_settings.m_cxCap, g_settings.m_cyCap,
                    SRCCOPY | CAPTUREBLT);
         SelectObject(hdcMem, hbmOld);
         LeaveCriticalSection(&g_lock);

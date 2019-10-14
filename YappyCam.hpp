@@ -37,7 +37,10 @@ struct Settings
     INT m_nMovieID;
     INT m_iSoundDev;
     INT m_iWaveFormat;
-    RECT m_rcScreen;
+    INT m_xCap;
+    INT m_yCap;
+    INT m_cxCap;
+    INT m_cyCap;
     std::wstring m_strDir;
     std::wstring m_strMovieDir;
     std::wstring m_strImageFileName;
@@ -50,8 +53,9 @@ struct Settings
     }
 
     void init();
-    bool load();
-    bool save() const;
+    bool load(HWND hwnd);
+    bool save(HWND hwnd) const;
+    bool create_dirs() const;
 
     DisplayMode GetDisplayMode() const
     {
