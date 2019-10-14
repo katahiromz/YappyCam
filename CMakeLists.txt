@@ -59,7 +59,12 @@ find_package(OpenCV REQUIRED)
 add_definitions(-DUNICODE -D_UNICODE)
 
 # YappyCam.exe
-add_executable(YappyCam WIN32 YappyCam.cpp Sound.cpp SoundInputDlg.cpp YappyCam_res.rc)
+add_executable(YappyCam WIN32
+    YappyCam.cpp
+    Sound.cpp
+    SoundInputDlg.cpp
+    PicInputDlg.cpp
+    YappyCam_res.rc)
 target_link_libraries(YappyCam ${OpenCV_LIBS} comctl32 shlwapi winmm ole32 avrt ksuser)
 
 ##############################################################################

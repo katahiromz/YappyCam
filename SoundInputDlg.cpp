@@ -60,7 +60,7 @@ void DoUpdateDevice(HWND hwnd)
     DoUpdateDeviceEx(hwnd, iDev, iFormat);
 }
 
-void OnCmb1(HWND hwnd)
+static void OnCmb1(HWND hwnd)
 {
     m_sound.StopHearing();
 
@@ -69,7 +69,7 @@ void OnCmb1(HWND hwnd)
     m_sound.StartHearing();
 }
 
-void OnCmb2(HWND hwnd)
+static void OnCmb2(HWND hwnd)
 {
     m_sound.StopHearing();
 
@@ -128,6 +128,8 @@ static void OnDestroy(HWND hwnd)
 {
     s_bInit = FALSE;
     g_hwndSoundInput = NULL;
+
+    PostMessage(g_hMainWnd, WM_COMMAND, ID_CONFIGCLOSED, 0);
 }
 
 static INT_PTR CALLBACK

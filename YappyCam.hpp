@@ -79,6 +79,7 @@ extern Settings g_settings;
 extern Sound m_sound;
 extern HWND g_hMainWnd;
 extern HWND g_hwndSoundInput;
+extern HWND g_hwndPictureInput;
 
 typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
 extern sound_devices_t m_sound_devices;
@@ -89,5 +90,6 @@ LPTSTR LoadStringDx(INT nID);
 LPSTR ansi_from_wide(LPCWSTR pszWide);
 
 BOOL DoSoundInputDialogBox(HWND hwndParent);
+BOOL DoPictureInputDialogBox(HWND hwndParent);
 
 #endif  // ndef YAPPYCAM_HPP_

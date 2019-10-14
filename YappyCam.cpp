@@ -204,143 +204,6 @@ bool Settings::create_dirs() const
     return true;
 }
 
-BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
-{
-    if (g_hbm)
-    {
-        DeleteObject(g_hbm);
-        g_hbm = NULL;
-    }
-
-    switch (type)
-    {
-    case PT_BLACK:
-        SetDisplayMode(DM_BITMAP);
-        m_cxCap = m_nWidth = 320;
-        m_cyCap = m_nHeight = 240;
-        break;
-    case PT_WHITE:
-        SetDisplayMode(DM_BITMAP);
-        m_cxCap = m_nWidth = 320;
-        m_cyCap = m_nHeight = 240;
-        break;
-    case PT_SCREENCAP:
-        SetDisplayMode(DM_BITMAP);
-        m_cxCap = m_nWidth = GetSystemMetrics(SM_CXSCREEN);
-        m_cyCap = m_nHeight = GetSystemMetrics(SM_CYSCREEN);
-        break;
-    case PT_VIDEOCAP:
-        g_cap.open(0);
-        if (!g_cap.isOpened())
-        {
-            return FALSE;
-        }
-        m_nWidth = (int)g_cap.get(cv::CAP_PROP_FRAME_WIDTH);
-        m_nHeight = (int)g_cap.get(cv::CAP_PROP_FRAME_HEIGHT);
-        break;
-    case PT_STATUSTEXT:
-        SetDisplayMode(DM_BITMAP);
-        m_nWidth = 320;
-        m_nHeight = 240;
-        break;
-    }
-
-    g_bi.bmiHeader.biWidth = m_nWidth;
-    g_bi.bmiHeader.biHeight = -m_nHeight;
-    g_bi.bmiHeader.biBitCount = 24;
-    g_bi.bmiHeader.biCompression = BI_RGB;
-    if (GetDisplayMode() == DM_BITMAP)
-    {
-        if (HDC hdc = CreateCompatibleDC(NULL))
-        {
-            LPVOID pvBits;
-            HGDIOBJ hbmOld;
-            RECT rc;
-
-            g_hbm = CreateDIBSection(hdc, &g_bi, DIB_RGB_COLORS, &pvBits, NULL, 0);
-
-            switch (type)
-            {
-            case PT_BLACK:
-                hbmOld = SelectObject(hdc, g_hbm);
-                PatBlt(hdc, 0, 0, m_nWidth, m_nHeight, BLACKNESS);
-                SelectObject(hdc, hbmOld);
-                break;
-            case PT_WHITE:
-            case PT_SCREENCAP:
-                hbmOld = SelectObject(hdc, g_hbm);
-                PatBlt(hdc, 0, 0, m_nWidth, m_nHeight, WHITENESS);
-                SelectObject(hdc, hbmOld);
-                break;
-            case PT_VIDEOCAP:
-                DeleteObject(g_hbm);
-                g_hbm = NULL;
-                break;
-            case PT_STATUSTEXT:
-                SetRect(&rc, 0, 0, m_nWidth, m_nHeight);
-                hbmOld = SelectObject(hdc, g_hbm);
-                DrawText(hdc, TEXT("No Image"), -1, &rc,
-                         DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_NOPREFIX);
-                SelectObject(hdc, hbmOld);
-                break;
-            }
-
-            DeleteDC(hdc);
-        }
-    }
-
-    m_nPictureType = type;
-    return TRUE;
-}
-
-BOOL get_sound_devices(sound_devices_t& devices)
-{
-    devices.clear();
-
-    // get an IMMDeviceEnumerator
-    HRESULT hr;
-    CComPtr<IMMDeviceEnumerator> pMMDeviceEnumerator;
-    hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL,
-                          __uuidof(IMMDeviceEnumerator), (void**)&pMMDeviceEnumerator);
-    if (FAILED(hr))
-    {
-        return FALSE;
-    }
-
-    // get an IMMDeviceCollection
-    CComPtr<IMMDeviceCollection> pMMDeviceCollection;
-    hr = pMMDeviceEnumerator->EnumAudioEndpoints(eAll, DEVICE_STATE_ACTIVE,
-                                                 &pMMDeviceCollection);
-    if (FAILED(hr))
-    {
-        return FALSE;
-    }
-
-    // get the number of devices
-    UINT nCount = 0;
-    hr = pMMDeviceCollection->GetCount(&nCount);
-    if (FAILED(hr) || nCount == 0)
-    {
-        return FALSE;
-    }
-
-    // enumerate devices
-    for (UINT i = 0; i < nCount; ++i)
-    {
-        // get a device
-        CComPtr<IMMDevice> pMMDevice;
-        hr = pMMDeviceCollection->Item(i, &pMMDevice);
-        if (FAILED(hr))
-        {
-            return FALSE;
-        }
-
-        devices.push_back(pMMDevice);
-    }
-
-    return TRUE;
-}
-
 INT GetHeightFromWidth(INT cx)
 {
     return cx * g_settings.m_nHeight / g_settings.m_nWidth;
@@ -452,6 +315,155 @@ static BOOL OnSizing(HWND hwnd, DWORD fwSide, LPRECT prc)
     return TRUE;
 }
 
+void DoFixWindowSize(HWND hwnd)
+{
+    RECT rc;
+    GetWindowRect(hwnd, &rc);
+    OnSizing(hwnd, WMSZ_BOTTOMRIGHT, &rc);
+    MoveWindow(hwnd, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, TRUE);
+}
+
+BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
+{
+    if (g_hbm)
+    {
+        DeleteObject(g_hbm);
+        g_hbm = NULL;
+    }
+
+    g_cap.release();
+
+    switch (type)
+    {
+    case PT_BLACK:
+        SetDisplayMode(DM_BITMAP);
+        m_cxCap = m_nWidth = 320;
+        m_cyCap = m_nHeight = 240;
+        break;
+    case PT_WHITE:
+        SetDisplayMode(DM_BITMAP);
+        m_cxCap = m_nWidth = 320;
+        m_cyCap = m_nHeight = 240;
+        break;
+    case PT_SCREENCAP:
+        SetDisplayMode(DM_BITMAP);
+        m_cxCap = m_nWidth = GetSystemMetrics(SM_CXSCREEN);
+        m_cyCap = m_nHeight = GetSystemMetrics(SM_CYSCREEN);
+        break;
+    case PT_VIDEOCAP:
+        SetDisplayMode(DM_CAPFRAME);
+        g_cap.open(0);
+        if (!g_cap.isOpened())
+        {
+            return FALSE;
+        }
+        m_nWidth = (int)g_cap.get(cv::CAP_PROP_FRAME_WIDTH);
+        m_nHeight = (int)g_cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+        break;
+    case PT_STATUSTEXT:
+        SetDisplayMode(DM_BITMAP);
+        m_nWidth = 320;
+        m_nHeight = 240;
+        break;
+    }
+
+    g_bi.bmiHeader.biWidth = m_nWidth;
+    g_bi.bmiHeader.biHeight = -m_nHeight;
+    g_bi.bmiHeader.biBitCount = 24;
+    g_bi.bmiHeader.biCompression = BI_RGB;
+    if (GetDisplayMode() == DM_BITMAP)
+    {
+        if (HDC hdc = CreateCompatibleDC(NULL))
+        {
+            LPVOID pvBits;
+            HGDIOBJ hbmOld;
+            RECT rc;
+
+            g_hbm = CreateDIBSection(hdc, &g_bi, DIB_RGB_COLORS, &pvBits, NULL, 0);
+
+            switch (type)
+            {
+            case PT_BLACK:
+                hbmOld = SelectObject(hdc, g_hbm);
+                PatBlt(hdc, 0, 0, m_nWidth, m_nHeight, BLACKNESS);
+                SelectObject(hdc, hbmOld);
+                break;
+            case PT_WHITE:
+            case PT_SCREENCAP:
+                hbmOld = SelectObject(hdc, g_hbm);
+                PatBlt(hdc, 0, 0, m_nWidth, m_nHeight, WHITENESS);
+                SelectObject(hdc, hbmOld);
+                break;
+            case PT_VIDEOCAP:
+                DeleteObject(g_hbm);
+                g_hbm = NULL;
+                break;
+            case PT_STATUSTEXT:
+                SetRect(&rc, 0, 0, m_nWidth, m_nHeight);
+                hbmOld = SelectObject(hdc, g_hbm);
+                DrawText(hdc, TEXT("No Image"), -1, &rc,
+                         DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_NOPREFIX);
+                SelectObject(hdc, hbmOld);
+                break;
+            }
+
+            DeleteDC(hdc);
+        }
+    }
+
+    m_nPictureType = type;
+    DoFixWindowSize(hwnd);
+    return TRUE;
+}
+
+BOOL get_sound_devices(sound_devices_t& devices)
+{
+    devices.clear();
+
+    // get an IMMDeviceEnumerator
+    HRESULT hr;
+    CComPtr<IMMDeviceEnumerator> pMMDeviceEnumerator;
+    hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL,
+                          __uuidof(IMMDeviceEnumerator), (void**)&pMMDeviceEnumerator);
+    if (FAILED(hr))
+    {
+        return FALSE;
+    }
+
+    // get an IMMDeviceCollection
+    CComPtr<IMMDeviceCollection> pMMDeviceCollection;
+    hr = pMMDeviceEnumerator->EnumAudioEndpoints(eAll, DEVICE_STATE_ACTIVE,
+                                                 &pMMDeviceCollection);
+    if (FAILED(hr))
+    {
+        return FALSE;
+    }
+
+    // get the number of devices
+    UINT nCount = 0;
+    hr = pMMDeviceCollection->GetCount(&nCount);
+    if (FAILED(hr) || nCount == 0)
+    {
+        return FALSE;
+    }
+
+    // enumerate devices
+    for (UINT i = 0; i < nCount; ++i)
+    {
+        // get a device
+        CComPtr<IMMDevice> pMMDevice;
+        hr = pMMDeviceCollection->Item(i, &pMMDevice);
+        if (FAILED(hr))
+        {
+            return FALSE;
+        }
+
+        devices.push_back(pMMDevice);
+    }
+
+    return TRUE;
+}
+
 LRESULT CALLBACK
 AlwaysHideFocusRectangleSubclassProc(
     HWND hwnd,
@@ -494,20 +506,8 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     g_hdcScreen = CreateDC(TEXT("DISPLAY"), NULL, NULL, NULL);
 
-    g_settings.load(hwnd);
-
     get_sound_devices(m_sound_devices);
     get_wave_formats(m_wave_formats);
-
-    if (!g_settings.SetPictureType(hwnd, PT_SCREENCAP))
-    {
-        EndDialog(hwnd, IDCLOSE);
-        return FALSE;
-    }
-
-    auto& format = m_wave_formats[g_settings.m_iWaveFormat];
-    m_sound.SetInfo(format.channels, format.samples, format.bits);
-    m_sound.SetDevice(m_sound_devices[g_settings.m_iSoundDev]);
 
     HINSTANCE hInst = GetModuleHandle(NULL);
     s_hbmRec = DoLoadBitmap(hInst, IDB_REC);
@@ -532,9 +532,13 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     GetWindowRect(GetDlgItem(hwnd, scr1), &rc);
     s_progress_width = rc.right - rc.left;
 
-    GetWindowRect(hwnd, &rc);
-    OnSizing(hwnd, WMSZ_BOTTOMRIGHT, &rc);
-    MoveWindow(hwnd, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, TRUE);
+    g_settings.load(hwnd);
+
+    auto& format = m_wave_formats[g_settings.m_iWaveFormat];
+    m_sound.SetInfo(format.channels, format.samples, format.bits);
+    m_sound.SetDevice(m_sound_devices[g_settings.m_iSoundDev]);
+
+    DoFixWindowSize(hwnd);
 
     Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
@@ -630,6 +634,7 @@ static void OnStop(HWND hwnd)
 
     Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
+
     EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
     SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
 
@@ -729,7 +734,22 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         OnAbout(hwnd);
         break;
     case ID_SOUNDINPUT:
+        SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+        EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
         DoSoundInputDialogBox(hwnd);
+        break;
+    case ID_PICTUREINPUT:
+        SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+        EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
+        DoPictureInputDialogBox(hwnd);
+        break;
+    case ID_CONFIGCLOSED:
+        if (!IsWindow(g_hwndSoundInput) &&
+            !IsWindow(g_hwndPictureInput))
+        {
+            SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
+            EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
+        }
         break;
     }
 }
@@ -773,7 +793,6 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
                 g_writer << mat;
             }
         }
-        assert(g_hbm);
         break;
     }
 

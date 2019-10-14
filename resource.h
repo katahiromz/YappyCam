@@ -24,12 +24,13 @@
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101
 #define ID_ABOUT                            102
+#define ID_CONFIGCLOSED                     103
 
 #ifdef APSTUDIO_INVOKED
     #ifndef APSTUDIO_READONLY_SYMBOLS
         #define _APS_NO_MFC                 1
         #define _APS_NEXT_RESOURCE_VALUE    1001
-        #define _APS_NEXT_COMMAND_VALUE     103
+        #define _APS_NEXT_COMMAND_VALUE     104
         #define _APS_NEXT_CONTROL_VALUE     1000
         #define _APS_NEXT_SYMED_VALUE       300
     #endif
