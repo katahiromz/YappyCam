@@ -681,8 +681,14 @@ static void OnStop(HWND hwnd)
     Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
 
-    EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
-    SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
+    if (!IsWindow(g_hwndSoundInput) &&
+        !IsWindow(g_hwndPictureInput))
+    {
+        SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
+        SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
+        EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
+        EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
+    }
 
     SendDlgItemMessage(hwnd, scr1, PBM_SETPOS, 0, 0);
 
@@ -784,14 +790,14 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
         EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
         EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
-        DoSoundInputDialogBox(NULL);
+        DoSoundInputDialogBox(hwnd);
         break;
     case ID_PICTUREINPUT:
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
         EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
         EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
-        DoPictureInputDialogBox(NULL);
+        DoPictureInputDialogBox(hwnd);
         break;
     case ID_CONFIGCLOSED:
         if (!IsWindow(g_hwndSoundInput) &&
