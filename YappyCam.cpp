@@ -819,7 +819,11 @@ static void OnRec(HWND hwnd)
             Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
             return;
         }
-        g_bWriting = TRUE;
+
+        if (IsWindow(g_hwndSoundInput))
+            PostMessage(g_hwndSoundInput, WM_CLOSE, 0, 0);
+        if (IsWindow(g_hwndPictureInput))
+            PostMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
 
         EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
@@ -827,6 +831,7 @@ static void OnRec(HWND hwnd)
         g_settings.create_dirs();
         ++g_settings.m_nMovieID;
 
+        g_bWriting = TRUE;
         if (!g_settings.m_bNoSound)
         {
             m_sound.SetRecording(TRUE);
@@ -902,21 +907,30 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         OnAbout(hwnd);
         break;
     case ID_SOUNDINPUT:
-        SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
-        EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
+        if (0)
+        {
+            SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+            EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
+        }
         DoSoundInputDialogBox(hwnd);
         break;
     case ID_PICTUREINPUT:
-        SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
-        EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
+        if (0)
+        {
+            SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+            EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
+        }
         DoPictureInputDialogBox(hwnd);
         break;
     case ID_CONFIGCLOSED:
-        if (!IsWindow(g_hwndSoundInput) &&
-            !IsWindow(g_hwndPictureInput))
+        if (0)
         {
-            SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
-            EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
+            if (!IsWindow(g_hwndSoundInput) &&
+                !IsWindow(g_hwndPictureInput))
+            {
+                SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
+                EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
+            }
         }
         break;
     }
