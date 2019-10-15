@@ -515,8 +515,6 @@ static BOOL s_bPage1Init = FALSE;
 static BOOL Page1_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
     HWND hCmb1 = GetDlgItem(hwnd, cmb1);
-    HWND hCmb2 = GetDlgItem(hwnd, cmb2);
-    HWND hCmb3 = GetDlgItem(hwnd, cmb3);
 
     TCHAR szText[64];
     for (INT i = 0; i < 10; ++i)
@@ -583,12 +581,14 @@ static void Page1_OnPsh1(HWND hwnd)
 {
     SetDlgItemInt(hwnd, edt1, 0, TRUE);
     Page1_OnEdt1(hwnd);
+    g_settings.update(g_hMainWnd);
 }
 
 static void Page1_OnPsh2(HWND hwnd)
 {
     SetDlgItemInt(hwnd, edt2, 100, TRUE);
     Page1_OnEdt2(hwnd);
+    g_settings.update(g_hMainWnd);
 }
 
 static void Page1_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
@@ -704,27 +704,32 @@ static void OnCmb1(HWND hwnd)
     if (i < 0)
         return;
 
+    PictureType type;
     switch (i)
     {
     case 0:
-        g_settings.SetPictureType(g_hMainWnd, PT_BLACK);
+        type = PT_BLACK;
         DoChoosePage(hwnd, -1);
         break;
     case 1:
-        g_settings.SetPictureType(g_hMainWnd, PT_WHITE);
+        type = PT_WHITE;
         DoChoosePage(hwnd, -1);
         break;
     case 2:
-        g_settings.SetPictureType(g_hMainWnd, PT_SCREENCAP);
+        type = PT_SCREENCAP;
         DoChoosePage(hwnd, 0);
         break;
     case 3:
-        g_settings.SetPictureType(g_hMainWnd, PT_VIDEOCAP);
+        type = PT_VIDEOCAP;
         DoChoosePage(hwnd, 1);
         break;
     }
 
+    s_bInit = FALSE;
     Page0_SetData(s_hPages[0]);
+    s_bInit = TRUE;
+
+    g_settings.SetPictureType(g_hMainWnd, type);
 }
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
