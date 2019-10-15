@@ -227,8 +227,188 @@ static void Page0_OnPsh1(HWND hwnd)
     Page0_SetMonitorID(hwnd, g_settings.m_nMonitorID);
 }
 
+static INT s_SBD_x = 0;
+static INT s_SBD_y = 0;
+static INT s_SBD_cx = 0;
+static INT s_SBD_cy = 0;
+static HBITMAP s_SBD_hbm = NULL;
+static LPVOID s_SBD_pvBits = NULL;
+static BOOL s_SBD_bDragging = FALSE;
+static POINT s_SBD_pt[2];
+
+static BOOL SBD_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
+{
+    s_SBD_x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    s_SBD_y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    s_SBD_cx = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    s_SBD_cy = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+    s_SBD_hbm = NULL;
+    s_SBD_bDragging = FALSE;
+    if (HDC hdc = CreateDC(L"DISPLAY", NULL, NULL, NULL))
+    {
+        if (HDC hdcMem = CreateCompatibleDC(hdc))
+        {
+            BITMAPINFO bi;
+            ZeroMemory(&bi, sizeof(bi));
+            bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+            bi.bmiHeader.biWidth = s_SBD_cx;
+            bi.bmiHeader.biHeight = s_SBD_cy;
+            bi.bmiHeader.biPlanes = 1;
+            bi.bmiHeader.biBitCount = 32;
+            s_SBD_hbm = CreateDIBSection(hdcMem, &bi, DIB_RGB_COLORS, &s_SBD_pvBits, NULL, 0);
+            HGDIOBJ hbmOld = SelectObject(hdcMem, s_SBD_hbm);
+            BitBlt(hdcMem, 0, 0, s_SBD_cx, s_SBD_cy,
+                   hdc, s_SBD_x, s_SBD_y, SRCCOPY | CAPTUREBLT);
+            SelectObject(hdcMem, hbmOld);
+
+            LPDWORD pdwBits = (LPDWORD)s_SBD_pvBits;
+            BOOL b = FALSE;
+            for (INT y = 0; y < s_SBD_cy; ++y)
+            {
+                b = (y & 1);
+                for (INT x = 0; x < s_SBD_cx; ++x)
+                {
+                    if (b)
+                        *pdwBits = 0;
+                    b = !b;
+                    ++pdwBits;
+                }
+            }
+            DeleteDC(hdcMem);
+        }
+        DeleteDC(hdc);
+    }
+    MoveWindow(hwnd, s_SBD_x, s_SBD_y, s_SBD_cx, s_SBD_cy, TRUE);
+    return TRUE;
+}
+
+static void SBD_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
+{
+    switch (id)
+    {
+    case IDOK:
+    case IDCANCEL:
+        EndDialog(hwnd, id);
+        break;
+    }
+}
+
+static BOOL SBD_OnEraseBkgnd(HWND hwnd, HDC hdc)
+{
+    return TRUE;
+}
+
+static void SBD_OnPaint(HWND hwnd)
+{
+    PAINTSTRUCT ps;
+    if (HDC hdc = BeginPaint(hwnd, &ps))
+    {
+        if (HDC hdcMem = CreateCompatibleDC(hdc))
+        {
+            HGDIOBJ hbmOld = SelectObject(hdcMem, s_SBD_hbm);
+            BitBlt(hdc, s_SBD_x, s_SBD_y, s_SBD_cx, s_SBD_cy, hdcMem, 0, 0, SRCCOPY);
+            
+            if (s_SBD_bDragging)
+            {
+#undef min
+                INT x = std::min(s_SBD_pt[0].x, s_SBD_pt[1].x);
+                INT y = std::min(s_SBD_pt[0].y, s_SBD_pt[1].y);
+                INT cx = abs(s_SBD_pt[1].x - s_SBD_pt[0].x);
+                INT cy = abs(s_SBD_pt[1].y - s_SBD_pt[0].y);
+                if (HPEN hPen = CreatePen(PS_SOLID, 1, RGB(255, 0, 0)))
+                {
+                    if (HBRUSH hbr = CreateSolidBrush(RGB(192, 0, 0)))
+                    {
+                        HGDIOBJ hPenOld = SelectObject(hdc, hPen);
+                        HGDIOBJ hbrOld = SelectObject(hdc, hbr);
+                        {
+                            Rectangle(hdc, x, y, x + cx, y + cy);
+                        }
+                        SelectObject(hdc, hbrOld);
+                        SelectObject(hdc, hPenOld);
+                        DeleteObject(hbr);
+                    }
+                    DeleteObject(hPen);
+                }
+            }
+            SelectObject(hdcMem, hbmOld);
+            DeleteDC(hdcMem);
+        }
+        EndPaint(hwnd, &ps);
+    }
+}
+
+static void SBD_OnLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFlags)
+{
+    GetCursorPos(&s_SBD_pt[0]);
+    s_SBD_pt[1] = s_SBD_pt[0];
+    SetCapture(hwnd);
+    s_SBD_bDragging = TRUE;
+}
+
+static void SBD_OnMouseMove(HWND hwnd, int x, int y, UINT keyFlags)
+{
+    if (s_SBD_bDragging)
+    {
+        GetCursorPos(&s_SBD_pt[1]);
+        InvalidateRect(hwnd, NULL, TRUE);
+    }
+}
+
+static void SBD_OnLButtonUp(HWND hwnd, int x, int y, UINT keyFlags)
+{
+    if (s_SBD_bDragging)
+    {
+        GetCursorPos(&s_SBD_pt[1]);
+        InvalidateRect(hwnd, NULL, TRUE);
+    }
+    EndDialog(hwnd, IDOK);
+}
+
+static void SBD_OnDestroy(HWND hwnd)
+{
+    DeleteObject(s_SBD_hbm);
+    s_SBD_hbm = NULL;
+}
+
+static INT_PTR CALLBACK
+SetByDragDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+        HANDLE_MSG(hwnd, WM_INITDIALOG, SBD_OnInitDialog);
+        HANDLE_MSG(hwnd, WM_COMMAND, SBD_OnCommand);
+        HANDLE_MSG(hwnd, WM_ERASEBKGND, SBD_OnEraseBkgnd);
+        HANDLE_MSG(hwnd, WM_PAINT, SBD_OnPaint);
+        HANDLE_MSG(hwnd, WM_LBUTTONDOWN, SBD_OnLButtonDown);
+        HANDLE_MSG(hwnd, WM_MOUSEMOVE, SBD_OnMouseMove);
+        HANDLE_MSG(hwnd, WM_LBUTTONUP, SBD_OnLButtonUp);
+        case WM_CAPTURECHANGED:
+        case WM_CANCELMODE:
+            EndDialog(hwnd, IDCANCEL);
+            break;
+        HANDLE_MSG(hwnd, WM_DESTROY, SBD_OnDestroy);
+    }
+    return 0;
+}
+
 static void Page0_OnPsh2(HWND hwnd)
 {
+    INT nID = DialogBox(GetModuleHandle(NULL),
+                        MAKEINTRESOURCE(IDD_SETBYDRAG),
+                        NULL, SetByDragDlgProc);
+    if (nID == IDOK)
+    {
+        INT x = std::min(s_SBD_pt[0].x, s_SBD_pt[1].x);
+        INT y = std::min(s_SBD_pt[0].y, s_SBD_pt[1].y);
+        INT cx = abs(s_SBD_pt[1].x - s_SBD_pt[0].x);
+        INT cy = abs(s_SBD_pt[1].y - s_SBD_pt[0].y);
+        g_settings.m_xCap = x;
+        g_settings.m_yCap = y;
+        g_settings.m_cxCap = cx;
+        g_settings.m_cyCap = cy;
+        Page0_SetData(hwnd);
+    }
 }
 
 static void Page0_OnPsh3(HWND hwnd)

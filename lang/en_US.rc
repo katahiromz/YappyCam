@@ -94,6 +94,14 @@ FONT 9, "Tahoma"
     COMBOBOX cmb2, 35, 110, 60, 300, CBS_HASSTRINGS | CBS_AUTOHSCROLL | CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 }
 
+IDD_SETBYDRAG DIALOG 0, 0, 160, 120
+CAPTION "Setting area by dragging"
+STYLE WS_POPUP | NOT WS_CAPTION
+EXSTYLE WS_EX_PALETTEWINDOW
+FONT 9, "Tahoma"
+{
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // RT_STRING
 
