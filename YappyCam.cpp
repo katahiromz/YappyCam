@@ -455,41 +455,14 @@ void DoStartStopTimers(HWND hwnd, BOOL bStart)
 BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
 {
     DoStartStopTimers(hwnd, FALSE);
-
+    g_cap.release();
     if (g_hbm)
     {
         DeleteObject(g_hbm);
         g_hbm = NULL;
     }
 
-    g_cap.release();
-
-    INT x, y, cx, cy;
-    switch (type)
-    {
-    case PT_BLACK:
-    case PT_WHITE:
-    case PT_STATUSTEXT:
-        x = g_settings.m_nWindow1X;
-        y = g_settings.m_nWindow1Y;
-        cx = g_settings.m_nWindow1CX;
-        cy = g_settings.m_nWindow1CX;
-        break;
-    case PT_SCREENCAP:
-        x = g_settings.m_nWindow2X;
-        y = g_settings.m_nWindow2Y;
-        cx = g_settings.m_nWindow2CX;
-        cy = g_settings.m_nWindow2CX;
-        break;
-    case PT_VIDEOCAP:
-        x = g_settings.m_nWindow3X;
-        y = g_settings.m_nWindow3Y;
-        cx = g_settings.m_nWindow3CX;
-        cy = g_settings.m_nWindow3CX;
-        break;
-    }
-
-    switch (type)
+    switch (m_nPictureType)
     {
     case PT_BLACK:
         SetDisplayMode(DM_BITMAP);
@@ -524,51 +497,49 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         break;
     }
 
-    g_bi.bmiHeader.biWidth = m_nWidth;
-    g_bi.bmiHeader.biHeight = -m_nHeight;
-    g_bi.bmiHeader.biBitCount = 24;
-    g_bi.bmiHeader.biCompression = BI_RGB;
-    if (GetDisplayMode() == DM_BITMAP)
+    m_nPictureType = type;
+
+    if (HDC hdc = CreateCompatibleDC(NULL))
     {
-        if (HDC hdc = CreateCompatibleDC(NULL))
+        LPVOID pvBits;
+        HGDIOBJ hbmOld;
+        RECT rc;
+
+        g_bi.bmiHeader.biWidth = m_nWidth;
+        g_bi.bmiHeader.biHeight = -m_nHeight;
+        g_bi.bmiHeader.biBitCount = 24;
+        g_bi.bmiHeader.biCompression = BI_RGB;
+        g_hbm = CreateDIBSection(hdc, &g_bi, DIB_RGB_COLORS, &pvBits, NULL, 0);
+
+        switch (m_nPictureType)
         {
-            LPVOID pvBits;
-            HGDIOBJ hbmOld;
-            RECT rc;
-
-            g_hbm = CreateDIBSection(hdc, &g_bi, DIB_RGB_COLORS, &pvBits, NULL, 0);
-
-            switch (type)
-            {
-            case PT_BLACK:
-                hbmOld = SelectObject(hdc, g_hbm);
-                PatBlt(hdc, 0, 0, m_nWidth, m_nHeight, BLACKNESS);
-                SelectObject(hdc, hbmOld);
-                break;
-            case PT_WHITE:
-            case PT_SCREENCAP:
-                hbmOld = SelectObject(hdc, g_hbm);
-                PatBlt(hdc, 0, 0, m_nWidth, m_nHeight, WHITENESS);
-                SelectObject(hdc, hbmOld);
-                break;
-            case PT_VIDEOCAP:
-                DeleteObject(g_hbm);
-                g_hbm = NULL;
-                break;
-            case PT_STATUSTEXT:
-                SetRect(&rc, 0, 0, m_nWidth, m_nHeight);
-                hbmOld = SelectObject(hdc, g_hbm);
-                DrawText(hdc, TEXT("No Image"), -1, &rc,
-                         DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_NOPREFIX);
-                SelectObject(hdc, hbmOld);
-                break;
-            }
-
-            DeleteDC(hdc);
+        case PT_BLACK:
+        case PT_WHITE:
+            hbmOld = SelectObject(hdc, g_hbm);
+            PatBlt(hdc, 0, 0, m_nWidth, m_nHeight, BLACKNESS);
+            SelectObject(hdc, hbmOld);
+            break;
+        case PT_SCREENCAP:
+            hbmOld = SelectObject(hdc, g_hbm);
+            PatBlt(hdc, 0, 0, m_nWidth, m_nHeight, WHITENESS);
+            SelectObject(hdc, hbmOld);
+            break;
+        case PT_VIDEOCAP:
+            DeleteObject(g_hbm);
+            g_hbm = NULL;
+            break;
+        case PT_STATUSTEXT:
+            SetRect(&rc, 0, 0, m_nWidth, m_nHeight);
+            hbmOld = SelectObject(hdc, g_hbm);
+            DrawText(hdc, TEXT("No Image"), -1, &rc,
+                     DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_NOPREFIX);
+            SelectObject(hdc, hbmOld);
+            break;
         }
+
+        DeleteDC(hdc);
     }
 
-    m_nPictureType = type;
     fix_size(hwnd);
 
     DoStartStopTimers(hwnd, TRUE);
@@ -966,26 +937,34 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
         {
             SetStretchBltMode(hdcMem, COLORONCOLOR);
             BITMAP bm;
-            GetObject(g_hbm, sizeof(bm), &bm);
-
-            if (g_hbm)
+            if (GetObject(g_hbm, sizeof(bm), &bm))
             {
-                HGDIOBJ hbmOld = SelectObject(hdcMem, g_hbm);
-                StretchBlt(hdc, 0, 0, cx, cy,
-                           hdcMem, 0, 0, bm.bmWidth, bm.bmHeight,
-                           SRCCOPY);
-                SelectObject(hdcMem, hbmOld);
+                assert(bm.bmWidth == g_settings.m_cxCap);
+                assert(bm.bmHeight == g_settings.m_cyCap);
+
+                if (g_hbm)
+                {
+                    HGDIOBJ hbmOld = SelectObject(hdcMem, g_hbm);
+                    StretchBlt(hdc, 0, 0, cx, cy,
+                               hdcMem, 0, 0, bm.bmWidth, bm.bmHeight,
+                               SRCCOPY);
+                    SelectObject(hdcMem, hbmOld);
+                }
+                else
+                {
+                    PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
+                }
+
+                if (g_bWriting && g_writer.isOpened())
+                {
+                    cv::Size size(bm.bmWidth, bm.bmHeight);
+                    cv::Mat mat(size, CV_8UC3, bm.bmBits, bm.bmWidthBytes);
+                    g_writer << mat;
+                }
             }
             else
             {
                 PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
-            }
-
-            if (g_bWriting && g_writer.isOpened())
-            {
-                cv::Size size(bm.bmWidth, bm.bmHeight);
-                cv::Mat mat(size, CV_8UC3, bm.bmBits, bm.bmWidthBytes);
-                g_writer << mat;
             }
 
             DeleteDC(hdcMem);
@@ -1173,16 +1152,22 @@ void DoDrawCursor(HDC hDC, INT dx, INT dy)
 
 void DoScreenCap(HWND hwnd, BOOL bCursor)
 {
+    if (g_settings.m_nWidth != g_settings.m_cxCap ||
+        g_settings.m_nHeight != g_settings.m_cyCap)
+    {
+        return;
+    }
+
     if (HDC hdcMem = CreateCompatibleDC(g_hdcScreen))
     {
-        SetStretchBltMode(hdcMem, COLORONCOLOR);
         EnterCriticalSection(&g_lock);
         HGDIOBJ hbmOld = SelectObject(hdcMem, g_hbm);
-        StretchBlt(hdcMem, 0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
-                   g_hdcScreen,
-                   g_settings.m_xCap, g_settings.m_yCap,
-                   g_settings.m_cxCap, g_settings.m_cyCap,
-                   SRCCOPY | CAPTUREBLT);
+        BitBlt(hdcMem,
+               0, 0,
+               g_settings.m_cxCap, g_settings.m_cxCap,
+               g_hdcScreen,
+               g_settings.m_xCap, g_settings.m_yCap,
+               SRCCOPY | CAPTUREBLT);
         if (bCursor)
         {
             DoDrawCursor(hdcMem, g_settings.m_xCap, g_settings.m_yCap);

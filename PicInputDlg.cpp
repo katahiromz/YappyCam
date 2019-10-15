@@ -408,6 +408,7 @@ static void Page0_OnPsh2(HWND hwnd)
         g_settings.m_cxCap = cx;
         g_settings.m_cyCap = cy;
         Page0_SetData(hwnd);
+        g_settings.update(g_hMainWnd);
     }
 }
 
