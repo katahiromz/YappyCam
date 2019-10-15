@@ -465,10 +465,6 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
     switch (type)
     {
     case PT_BLACK:
-        SetDisplayMode(DM_BITMAP);
-        m_nWidth = 320;
-        m_nHeight = 240;
-        break;
     case PT_WHITE:
         SetDisplayMode(DM_BITMAP);
         m_nWidth = 320;
@@ -514,12 +510,12 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         switch (m_nPictureType)
         {
         case PT_BLACK:
-        case PT_WHITE:
+        case PT_SCREENCAP:
             hbmOld = SelectObject(hdc, g_hbm);
             PatBlt(hdc, 0, 0, m_nWidth, m_nHeight, BLACKNESS);
             SelectObject(hdc, hbmOld);
             break;
-        case PT_SCREENCAP:
+        case PT_WHITE:
             hbmOld = SelectObject(hdc, g_hbm);
             PatBlt(hdc, 0, 0, m_nWidth, m_nHeight, WHITENESS);
             SelectObject(hdc, hbmOld);
@@ -939,9 +935,6 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             BITMAP bm;
             if (GetObject(g_hbm, sizeof(bm), &bm))
             {
-                assert(bm.bmWidth == g_settings.m_cxCap);
-                assert(bm.bmHeight == g_settings.m_cyCap);
-
                 if (g_hbm)
                 {
                     HGDIOBJ hbmOld = SelectObject(hdcMem, g_hbm);
