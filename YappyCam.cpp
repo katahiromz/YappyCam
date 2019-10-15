@@ -497,7 +497,6 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         break;
     case PT_VIDEOCAP:
         SetDisplayMode(DM_CAPFRAME);
-        g_cap.set(cv::CAP_PROP_FORMAT, CV_MAKETYPE(CV_8U, 3));
         g_cap.open(m_nCameraID);
         if (!g_cap.isOpened())
         {
