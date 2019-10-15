@@ -284,11 +284,15 @@ bool Settings::create_dirs() const
 
 INT GetHeightFromWidth(INT cx)
 {
+    if (g_settings.m_nWidth == 0)
+        return 1;
     return cx * g_settings.m_nHeight / g_settings.m_nWidth;
 }
 
 INT GetWidthFromHeight(INT cy)
 {
+    if (g_settings.m_nHeight == 0)
+        return 1;
     return cy * g_settings.m_nWidth / g_settings.m_nHeight;
 }
 
@@ -1009,6 +1013,9 @@ static BOOL OnEraseBkgnd(HWND hwnd, HDC hdc)
 
 static void OnGetMinMaxInfo(HWND hwnd, LPMINMAXINFO lpMinMaxInfo)
 {
+    if (g_settings.m_nWidth == 0 || g_settings.m_nHeight == 0)
+        return;
+
     RECT rc;
     DWORD style = GetWindowStyle(hwnd);
     DWORD exstyle = GetWindowExStyle(hwnd);

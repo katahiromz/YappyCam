@@ -240,8 +240,8 @@ static void Page0_SetData(HWND hwnd)
 
     SetDlgItemInt(hwnd, edt1, g_settings.m_xCap, TRUE);
     SetDlgItemInt(hwnd, edt2, g_settings.m_yCap, TRUE);
-    SetDlgItemInt(hwnd, edt3, g_settings.m_cxCap, TRUE);
-    SetDlgItemInt(hwnd, edt4, g_settings.m_cyCap, TRUE);
+    SetDlgItemInt(hwnd, edt3, g_settings.m_xCap + g_settings.m_cxCap, TRUE);
+    SetDlgItemInt(hwnd, edt4, g_settings.m_yCap + g_settings.m_cyCap, TRUE);
 
     if (g_settings.m_bDrawCursor)
     {
@@ -365,14 +365,14 @@ static void Page0_OnEdt(HWND hwnd)
     nValue = GetDlgItemInt(hwnd, edt3, &bTranslated, TRUE);
     if (bTranslated)
     {
-        g_settings.m_cxCap = nValue;
+        g_settings.m_cxCap = nValue - g_settings.m_xCap;
     }
 
     bTranslated = FALSE;
     nValue = GetDlgItemInt(hwnd, edt4, &bTranslated, TRUE);
     if (bTranslated)
     {
-        g_settings.m_cyCap = nValue;
+        g_settings.m_cyCap = nValue - g_settings.m_yCap;
     }
 
     g_settings.m_nWidth = g_settings.m_cxCap;
