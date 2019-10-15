@@ -1,10 +1,6 @@
 #include "YappyCam.hpp"
 #include "SetDlgItemDouble/SetDlgItemDouble.h"
 
-HWND g_hwndPictureInput = NULL;
-static BOOL s_bInit = FALSE;
-static HWND s_hPages[2] = { NULL };
-
 ////////////////////////////////////////////////////////////////////////////
 // monitor info
 
@@ -575,6 +571,10 @@ Page1DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 ////////////////////////////////////////////////////////////////////////////
 // DoPictureInputDialogBox
+
+HWND g_hwndPictureInput = NULL;
+static BOOL s_bInit = FALSE;
+static HWND s_hPages[2] = { NULL };
 
 static void DoChoosePage(HWND hwnd, INT iPage)
 {
