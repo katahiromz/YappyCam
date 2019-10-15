@@ -260,6 +260,8 @@ void Settings::update(HWND hwnd)
 {
     PictureType type = GetPictureType();
     SetPictureType(hwnd, type);
+
+    fix_size(hwnd);
 }
 
 bool Settings::create_dirs() const
@@ -384,7 +386,7 @@ static BOOL OnSizing(HWND hwnd, DWORD fwSide, LPRECT prc)
     return TRUE;
 }
 
-void DoFixWindowSize(HWND hwnd)
+void Settings::fix_size0(HWND hwnd)
 {
     RECT rc;
     GetWindowRect(hwnd, &rc);
@@ -431,7 +433,7 @@ void Settings::fix_size(HWND hwnd)
                      SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
     }
 
-    DoFixWindowSize(hwnd);
+    fix_size0(hwnd);
 }
 
 void DoStartStopTimers(HWND hwnd, BOOL bStart)
@@ -491,18 +493,18 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
     {
     case PT_BLACK:
         SetDisplayMode(DM_BITMAP);
-        m_cxCap = m_nWidth = 320;
-        m_cyCap = m_nHeight = 240;
+        m_nWidth = 320;
+        m_nHeight = 240;
         break;
     case PT_WHITE:
         SetDisplayMode(DM_BITMAP);
-        m_cxCap = m_nWidth = 320;
-        m_cyCap = m_nHeight = 240;
+        m_nWidth = 320;
+        m_nHeight = 240;
         break;
     case PT_SCREENCAP:
         SetDisplayMode(DM_BITMAP);
-        m_cxCap = m_nWidth = GetSystemMetrics(SM_CXSCREEN);
-        m_cyCap = m_nHeight = GetSystemMetrics(SM_CYSCREEN);
+        m_nWidth = m_cxCap;
+        m_nHeight = m_cyCap;
         break;
     case PT_VIDEOCAP:
         SetDisplayMode(DM_CAPFRAME);
@@ -953,6 +955,10 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             {
                 g_writer << s_frame;
             }
+        }
+        else
+        {
+            PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
         }
         break;
     case DM_BITMAP:

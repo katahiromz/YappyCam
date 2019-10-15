@@ -66,13 +66,12 @@ static BOOL s_bPage0Init = FALSE;
 
 static void Page0_SetData(HWND hwnd)
 {
-    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
-    ComboBox_SetCurSel(hCmb1, g_settings.m_nMonitorID);
+    s_bPage0Init = FALSE;
 
-    SendDlgItemMessage(hwnd, scr1, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_xCap, 0));
-    SendDlgItemMessage(hwnd, scr2, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_yCap, 0));
-    SendDlgItemMessage(hwnd, scr3, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_cxCap, 0));
-    SendDlgItemMessage(hwnd, scr4, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_cyCap, 0));
+    SetDlgItemInt(hwnd, edt1, g_settings.m_xCap, TRUE);
+    SetDlgItemInt(hwnd, edt2, g_settings.m_yCap, TRUE);
+    SetDlgItemInt(hwnd, edt3, g_settings.m_cxCap, TRUE);
+    SetDlgItemInt(hwnd, edt4, g_settings.m_cyCap, TRUE);
 
     if (g_settings.m_bDrawCursor)
     {
@@ -82,6 +81,11 @@ static void Page0_SetData(HWND hwnd)
     {
         CheckDlgButton(hwnd, chx1, BST_UNCHECKED);
     }
+
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+    ComboBox_SetCurSel(hCmb1, g_settings.m_nMonitorID);
+
+    s_bPage0Init = TRUE;
 }
 
 static BOOL Page0_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
@@ -148,9 +152,10 @@ static void Page0_SetMonitorID(HWND hwnd, INT i)
     }
 
     g_settings.m_nMonitorID = i;
+    g_settings.m_nWidth = g_settings.m_cxCap;
+    g_settings.m_nHeight = g_settings.m_cyCap;
 
     Page0_SetData(hwnd);
-
     g_settings.update(g_hMainWnd);
 }
 
@@ -199,6 +204,10 @@ static void Page0_OnEdt(HWND hwnd)
     {
         g_settings.m_cyCap = nValue;
     }
+
+    g_settings.m_nWidth = g_settings.m_cxCap;
+    g_settings.m_nHeight = g_settings.m_cyCap;
+    g_settings.update(g_hMainWnd);
 }
 
 static void Page0_OnChx1(HWND hwnd)

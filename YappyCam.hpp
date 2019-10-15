@@ -83,6 +83,7 @@ struct Settings
     bool create_dirs() const;
     void update(HWND hwnd);
     void fix_size(HWND hwnd);
+    void fix_size0(HWND hwnd);
 
     DisplayMode GetDisplayMode() const
     {
