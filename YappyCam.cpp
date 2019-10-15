@@ -462,7 +462,7 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         g_hbm = NULL;
     }
 
-    switch (m_nPictureType)
+    switch (type)
     {
     case PT_BLACK:
         SetDisplayMode(DM_BITMAP);
