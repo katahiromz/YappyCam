@@ -4,6 +4,10 @@
 HWND g_hwndPictureInput = NULL;
 static BOOL s_bInit = FALSE;
 static HWND s_hPages[2] = { NULL };
+
+////////////////////////////////////////////////////////////////////////////
+// monitor info
+
 static std::vector<MONITORINFO> s_monitors;
 static MONITORINFO s_primary;
 
@@ -36,196 +40,8 @@ static BOOL DoGetMonitors(void)
     return TRUE;
 }
 
-static void DoChoosePage(HWND hwnd, INT iPage)
-{
-    for (INT i = 0; i < ARRAYSIZE(s_hPages); ++i)
-    {
-        if (i == iPage)
-            ShowWindow(s_hPages[i], SW_SHOW);
-        else
-            ShowWindow(s_hPages[i], SW_HIDE);
-    }
-}
-
-void DoAdjustPages(HWND hwnd)
-{
-    HWND hStc1 = GetDlgItem(hwnd, stc1);
-
-    RECT rc;
-    GetWindowRect(hStc1, &rc);
-    MapWindowRect(NULL, hwnd, &rc);
-
-    for (INT i = 0; i < ARRAYSIZE(s_hPages); ++i)
-    {
-        MoveWindow(s_hPages[i], rc.left, rc.top,
-                   rc.right - rc.left, rc.bottom - rc.top, TRUE);
-    }
-}
-
-static BOOL s_bPage0Init = FALSE;
-
-static void Page0_SetData(HWND hwnd)
-{
-    s_bPage0Init = FALSE;
-
-    SetDlgItemInt(hwnd, edt1, g_settings.m_xCap, TRUE);
-    SetDlgItemInt(hwnd, edt2, g_settings.m_yCap, TRUE);
-    SetDlgItemInt(hwnd, edt3, g_settings.m_cxCap, TRUE);
-    SetDlgItemInt(hwnd, edt4, g_settings.m_cyCap, TRUE);
-
-    if (g_settings.m_bDrawCursor)
-    {
-        CheckDlgButton(hwnd, chx1, BST_CHECKED);
-    }
-    else
-    {
-        CheckDlgButton(hwnd, chx1, BST_UNCHECKED);
-    }
-
-    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
-    ComboBox_SetCurSel(hCmb1, g_settings.m_nMonitorID);
-
-    s_bPage0Init = TRUE;
-}
-
-static BOOL Page0_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
-{
-    DoGetMonitors();
-
-    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
-
-    ComboBox_AddString(hCmb1, LoadStringDx(IDS_PRIMARYMONITOR));
-    ComboBox_AddString(hCmb1, LoadStringDx(IDS_VIRTUALSCREEN));
-
-    TCHAR szText[64];
-    INT iMonitor = 0;
-    for (auto& info : s_monitors)
-    {
-        StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_MONITOR), iMonitor);
-        ComboBox_AddString(hCmb1, szText);
-        ++iMonitor;
-    }
-    ComboBox_SetCurSel(hCmb1, g_settings.m_nMonitorID);
-
-    SendDlgItemMessage(hwnd, scr1, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
-    SendDlgItemMessage(hwnd, scr2, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
-    SendDlgItemMessage(hwnd, scr3, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
-    SendDlgItemMessage(hwnd, scr4, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
-
-    Page0_SetData(hwnd);
-
-    s_bPage0Init = TRUE;
-    return TRUE;
-}
-
-static void Page0_SetMonitorID(HWND hwnd, INT i)
-{
-    if (i < 0 || i >= INT(s_monitors.size() + 2))
-        return;
-
-    switch (i)
-    {
-    case 0:
-        {
-            auto& rc = s_primary.rcMonitor;
-            g_settings.m_xCap = rc.left;
-            g_settings.m_yCap = rc.top;
-            g_settings.m_cxCap = rc.right - rc.left;
-            g_settings.m_cyCap = rc.bottom - rc.top;
-        }
-        break;
-    case 1:
-        g_settings.m_xCap = GetSystemMetrics(SM_XVIRTUALSCREEN);
-        g_settings.m_yCap = GetSystemMetrics(SM_YVIRTUALSCREEN);
-        g_settings.m_cxCap = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-        g_settings.m_cyCap = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-        break;
-    default:
-        {
-            auto& rc = s_monitors[i - 2].rcMonitor;
-            g_settings.m_xCap = rc.left;
-            g_settings.m_yCap = rc.top;
-            g_settings.m_cxCap = rc.right - rc.left;
-            g_settings.m_cyCap = rc.bottom - rc.top;
-        }
-        break;
-    }
-
-    g_settings.m_nMonitorID = i;
-    g_settings.m_nWidth = g_settings.m_cxCap;
-    g_settings.m_nHeight = g_settings.m_cyCap;
-
-    Page0_SetData(hwnd);
-    g_settings.update(g_hMainWnd);
-}
-
-static void Page0_OnCmb1(HWND hwnd)
-{
-    if (!s_bPage0Init)
-        return;
-
-    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
-    INT i = ComboBox_GetCurSel(hCmb1);
-    Page0_SetMonitorID(hwnd, i);
-}
-
-static void Page0_OnEdt(HWND hwnd)
-{
-    if (!s_bPage0Init)
-        return;
-
-    BOOL bTranslated;
-    INT nValue;
-
-    bTranslated = FALSE;
-    nValue = GetDlgItemInt(hwnd, edt1, &bTranslated, TRUE);
-    if (bTranslated)
-    {
-        g_settings.m_xCap = nValue;
-    }
-
-    bTranslated = FALSE;
-    nValue = GetDlgItemInt(hwnd, edt2, &bTranslated, TRUE);
-    if (bTranslated)
-    {
-        g_settings.m_yCap = nValue;
-    }
-
-    bTranslated = FALSE;
-    nValue = GetDlgItemInt(hwnd, edt3, &bTranslated, TRUE);
-    if (bTranslated)
-    {
-        g_settings.m_cxCap = nValue;
-    }
-
-    bTranslated = FALSE;
-    nValue = GetDlgItemInt(hwnd, edt4, &bTranslated, TRUE);
-    if (bTranslated)
-    {
-        g_settings.m_cyCap = nValue;
-    }
-
-    g_settings.m_nWidth = g_settings.m_cxCap;
-    g_settings.m_nHeight = g_settings.m_cyCap;
-    g_settings.update(g_hMainWnd);
-}
-
-static void Page0_OnChx1(HWND hwnd)
-{
-    if (IsDlgButtonChecked(hwnd, chx1) == BST_CHECKED)
-    {
-        g_settings.m_bDrawCursor = TRUE;
-    }
-    else
-    {
-        g_settings.m_bDrawCursor = FALSE;
-    }
-}
-
-static void Page0_OnPsh1(HWND hwnd)
-{
-    Page0_SetMonitorID(hwnd, g_settings.m_nMonitorID);
-}
+////////////////////////////////////////////////////////////////////////////
+// SetByDragDlgProc
 
 static INT s_SBD_x = 0;
 static INT s_SBD_y = 0;
@@ -417,6 +233,174 @@ SetByDragDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////
+// Page0DialogProc
+
+static BOOL s_bPage0Init = FALSE;
+
+static void Page0_SetData(HWND hwnd)
+{
+    s_bPage0Init = FALSE;
+
+    SetDlgItemInt(hwnd, edt1, g_settings.m_xCap, TRUE);
+    SetDlgItemInt(hwnd, edt2, g_settings.m_yCap, TRUE);
+    SetDlgItemInt(hwnd, edt3, g_settings.m_cxCap, TRUE);
+    SetDlgItemInt(hwnd, edt4, g_settings.m_cyCap, TRUE);
+
+    if (g_settings.m_bDrawCursor)
+    {
+        CheckDlgButton(hwnd, chx1, BST_CHECKED);
+    }
+    else
+    {
+        CheckDlgButton(hwnd, chx1, BST_UNCHECKED);
+    }
+
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+    ComboBox_SetCurSel(hCmb1, g_settings.m_nMonitorID);
+
+    s_bPage0Init = TRUE;
+}
+
+static BOOL Page0_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
+{
+    DoGetMonitors();
+
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+
+    ComboBox_AddString(hCmb1, LoadStringDx(IDS_PRIMARYMONITOR));
+    ComboBox_AddString(hCmb1, LoadStringDx(IDS_VIRTUALSCREEN));
+
+    TCHAR szText[64];
+    INT iMonitor = 0;
+    for (auto& info : s_monitors)
+    {
+        StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_MONITOR), iMonitor);
+        ComboBox_AddString(hCmb1, szText);
+        ++iMonitor;
+    }
+    ComboBox_SetCurSel(hCmb1, g_settings.m_nMonitorID);
+
+    SendDlgItemMessage(hwnd, scr1, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
+    SendDlgItemMessage(hwnd, scr2, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
+    SendDlgItemMessage(hwnd, scr3, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
+    SendDlgItemMessage(hwnd, scr4, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
+
+    Page0_SetData(hwnd);
+
+    s_bPage0Init = TRUE;
+    return TRUE;
+}
+
+static void Page0_SetMonitorID(HWND hwnd, INT i)
+{
+    if (i < 0 || i >= INT(s_monitors.size() + 2))
+        return;
+
+    switch (i)
+    {
+    case 0:
+        {
+            auto& rc = s_primary.rcMonitor;
+            g_settings.m_xCap = rc.left;
+            g_settings.m_yCap = rc.top;
+            g_settings.m_cxCap = rc.right - rc.left;
+            g_settings.m_cyCap = rc.bottom - rc.top;
+        }
+        break;
+    case 1:
+        g_settings.m_xCap = GetSystemMetrics(SM_XVIRTUALSCREEN);
+        g_settings.m_yCap = GetSystemMetrics(SM_YVIRTUALSCREEN);
+        g_settings.m_cxCap = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+        g_settings.m_cyCap = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+        break;
+    default:
+        {
+            auto& rc = s_monitors[i - 2].rcMonitor;
+            g_settings.m_xCap = rc.left;
+            g_settings.m_yCap = rc.top;
+            g_settings.m_cxCap = rc.right - rc.left;
+            g_settings.m_cyCap = rc.bottom - rc.top;
+        }
+        break;
+    }
+
+    g_settings.m_nMonitorID = i;
+    g_settings.m_nWidth = g_settings.m_cxCap;
+    g_settings.m_nHeight = g_settings.m_cyCap;
+
+    Page0_SetData(hwnd);
+    g_settings.update(g_hMainWnd);
+}
+
+static void Page0_OnCmb1(HWND hwnd)
+{
+    if (!s_bPage0Init)
+        return;
+
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+    INT i = ComboBox_GetCurSel(hCmb1);
+    Page0_SetMonitorID(hwnd, i);
+}
+
+static void Page0_OnEdt(HWND hwnd)
+{
+    if (!s_bPage0Init)
+        return;
+
+    BOOL bTranslated;
+    INT nValue;
+
+    bTranslated = FALSE;
+    nValue = GetDlgItemInt(hwnd, edt1, &bTranslated, TRUE);
+    if (bTranslated)
+    {
+        g_settings.m_xCap = nValue;
+    }
+
+    bTranslated = FALSE;
+    nValue = GetDlgItemInt(hwnd, edt2, &bTranslated, TRUE);
+    if (bTranslated)
+    {
+        g_settings.m_yCap = nValue;
+    }
+
+    bTranslated = FALSE;
+    nValue = GetDlgItemInt(hwnd, edt3, &bTranslated, TRUE);
+    if (bTranslated)
+    {
+        g_settings.m_cxCap = nValue;
+    }
+
+    bTranslated = FALSE;
+    nValue = GetDlgItemInt(hwnd, edt4, &bTranslated, TRUE);
+    if (bTranslated)
+    {
+        g_settings.m_cyCap = nValue;
+    }
+
+    g_settings.m_nWidth = g_settings.m_cxCap;
+    g_settings.m_nHeight = g_settings.m_cyCap;
+    g_settings.update(g_hMainWnd);
+}
+
+static void Page0_OnChx1(HWND hwnd)
+{
+    if (IsDlgButtonChecked(hwnd, chx1) == BST_CHECKED)
+    {
+        g_settings.m_bDrawCursor = TRUE;
+    }
+    else
+    {
+        g_settings.m_bDrawCursor = FALSE;
+    }
+}
+
+static void Page0_OnPsh1(HWND hwnd)
+{
+    Page0_SetMonitorID(hwnd, g_settings.m_nMonitorID);
+}
+
 static void Page0_OnPsh2(HWND hwnd)
 {
     INT nID = DialogBox(GetModuleHandle(NULL),
@@ -527,6 +511,9 @@ Page0DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////
+// Page1DialogProc
+
 static BOOL s_bPage1Init = FALSE;
 
 static BOOL Page1_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
@@ -584,6 +571,35 @@ Page1DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HANDLE_MSG(hwnd, WM_DESTROY, Page1_OnDestroy);
     }
     return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////
+// DoPictureInputDialogBox
+
+static void DoChoosePage(HWND hwnd, INT iPage)
+{
+    for (INT i = 0; i < ARRAYSIZE(s_hPages); ++i)
+    {
+        if (i == iPage)
+            ShowWindow(s_hPages[i], SW_SHOW);
+        else
+            ShowWindow(s_hPages[i], SW_HIDE);
+    }
+}
+
+void DoAdjustPages(HWND hwnd)
+{
+    HWND hStc1 = GetDlgItem(hwnd, stc1);
+
+    RECT rc;
+    GetWindowRect(hStc1, &rc);
+    MapWindowRect(NULL, hwnd, &rc);
+
+    for (INT i = 0; i < ARRAYSIZE(s_hPages); ++i)
+    {
+        MoveWindow(s_hPages[i], rc.left, rc.top,
+                   rc.right - rc.left, rc.bottom - rc.top, TRUE);
+    }
 }
 
 static void DoCreatePages(HWND hwnd)
