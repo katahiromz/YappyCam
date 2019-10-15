@@ -5,6 +5,7 @@ HWND g_hwndPictureInput = NULL;
 static BOOL s_bInit = FALSE;
 static HWND s_hPages[2] = { NULL };
 static std::vector<MONITORINFO> s_monitors;
+static MONITORINFO s_primary;
 
 static BOOL CALLBACK
 MyMonitorEnumProc(HMONITOR hMonitor, HDC hdc, LPRECT prc, LPARAM lParam)
@@ -21,7 +22,18 @@ static BOOL DoGetMonitors(void)
 {
     s_monitors.clear();
 
-    return EnumDisplayMonitors(NULL, NULL, MyMonitorEnumProc, 0);
+    EnumDisplayMonitors(NULL, NULL, MyMonitorEnumProc, 0);
+
+    for (auto& info : s_monitors)
+    {
+        if (info.dwFlags & MONITORINFOF_PRIMARY)
+        {
+            s_primary = info;
+            break;
+        }
+    }
+
+    return TRUE;
 }
 
 static void DoChoosePage(HWND hwnd, INT iPage)
@@ -50,10 +62,13 @@ void DoAdjustPages(HWND hwnd)
     }
 }
 
-static BOOL s_bPage1Init = FALSE;
+static BOOL s_bPage0Init = FALSE;
 
-static void Page1_SetData(HWND hwnd)
+static void Page0_SetData(HWND hwnd)
 {
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+    ComboBox_SetCurSel(hCmb1, g_settings.m_nMonitorID);
+
     SendDlgItemMessage(hwnd, scr1, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_xCap, 0));
     SendDlgItemMessage(hwnd, scr2, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_yCap, 0));
     SendDlgItemMessage(hwnd, scr3, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_cxCap, 0));
@@ -69,11 +84,14 @@ static void Page1_SetData(HWND hwnd)
     }
 }
 
-static BOOL Page1_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
+static BOOL Page0_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
     DoGetMonitors();
 
     HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+
+    ComboBox_AddString(hCmb1, LoadStringDx(IDS_PRIMARYMONITOR));
+    ComboBox_AddString(hCmb1, LoadStringDx(IDS_VIRTUALSCREEN));
 
     TCHAR szText[64];
     INT iMonitor = 0;
@@ -90,38 +108,65 @@ static BOOL Page1_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     SendDlgItemMessage(hwnd, scr3, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
     SendDlgItemMessage(hwnd, scr4, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
 
-    Page1_SetData(hwnd);
+    Page0_SetData(hwnd);
 
-    s_bPage1Init = TRUE;
+    s_bPage0Init = TRUE;
     return TRUE;
 }
 
-static void Page1_OnCmb1(HWND hwnd)
+static void Page0_SetMonitorID(HWND hwnd, INT i)
 {
-    if (!s_bPage1Init)
+    if (i < 0 || i >= INT(s_monitors.size() + 2))
         return;
 
-    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
-    INT i = ComboBox_GetCurSel(hCmb1);
-    if (i < 0 || i >= INT(s_monitors.size()))
-        return;
-
-    auto& rc = s_monitors[i].rcMonitor;
-    g_settings.m_xCap = rc.left;
-    g_settings.m_yCap = rc.top;
-    g_settings.m_cxCap = rc.right - rc.left;
-    g_settings.m_cyCap = rc.bottom - rc.top;
+    switch (i)
+    {
+    case 0:
+        {
+            auto& rc = s_primary.rcMonitor;
+            g_settings.m_xCap = rc.left;
+            g_settings.m_yCap = rc.top;
+            g_settings.m_cxCap = rc.right - rc.left;
+            g_settings.m_cyCap = rc.bottom - rc.top;
+        }
+        break;
+    case 1:
+        g_settings.m_xCap = GetSystemMetrics(SM_XVIRTUALSCREEN);
+        g_settings.m_yCap = GetSystemMetrics(SM_YVIRTUALSCREEN);
+        g_settings.m_cxCap = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+        g_settings.m_cyCap = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+        break;
+    default:
+        {
+            auto& rc = s_monitors[i - 2].rcMonitor;
+            g_settings.m_xCap = rc.left;
+            g_settings.m_yCap = rc.top;
+            g_settings.m_cxCap = rc.right - rc.left;
+            g_settings.m_cyCap = rc.bottom - rc.top;
+        }
+        break;
+    }
 
     g_settings.m_nMonitorID = i;
 
-    Page1_SetData(hwnd);
+    Page0_SetData(hwnd);
 
     g_settings.update(g_hMainWnd);
 }
 
-static void Page1_OnEdt(HWND hwnd)
+static void Page0_OnCmb1(HWND hwnd)
 {
-    if (!s_bPage1Init)
+    if (!s_bPage0Init)
+        return;
+
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+    INT i = ComboBox_GetCurSel(hCmb1);
+    Page0_SetMonitorID(hwnd, i);
+}
+
+static void Page0_OnEdt(HWND hwnd)
+{
+    if (!s_bPage0Init)
         return;
 
     BOOL bTranslated;
@@ -156,7 +201,7 @@ static void Page1_OnEdt(HWND hwnd)
     }
 }
 
-static void Page1_OnChx1(HWND hwnd)
+static void Page0_OnChx1(HWND hwnd)
 {
     if (IsDlgButtonChecked(hwnd, chx1) == BST_CHECKED)
     {
@@ -168,26 +213,16 @@ static void Page1_OnChx1(HWND hwnd)
     }
 }
 
-static void Page1_OnPsh1(HWND hwnd)
+static void Page0_OnPsh1(HWND hwnd)
 {
-    INT i = g_settings.m_nMonitorID;
-    if (i < 0 || i >= INT(s_monitors.size()))
-        return;
-
-    const auto& rc = s_monitors[i].rcMonitor;
-    g_settings.m_xCap = rc.left;
-    g_settings.m_yCap = rc.top;
-    g_settings.m_cxCap = rc.right - rc.left;
-    g_settings.m_cyCap = rc.bottom - rc.top;
-
-    Page1_SetData(hwnd);
+    Page0_SetMonitorID(hwnd, g_settings.m_nMonitorID);
 }
 
-static void Page1_OnPsh2(HWND hwnd)
+static void Page0_OnPsh2(HWND hwnd)
 {
 }
 
-static void Page1_OnPsh3(HWND hwnd)
+static void Page0_OnPsh3(HWND hwnd)
 {
     if (HDC hdc = CreateDC(L"DISPLAY", NULL, NULL, NULL))
     {
@@ -214,14 +249,14 @@ static void Page1_OnPsh3(HWND hwnd)
     }
 }
 
-static void Page1_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
+static void Page0_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
     {
     case cmb1:
         if (codeNotify == CBN_SELCHANGE)
         {
-            Page1_OnCmb1(hwnd);
+            Page0_OnCmb1(hwnd);
         }
         break;
     case edt1:
@@ -230,31 +265,90 @@ static void Page1_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     case edt4:
         if (codeNotify == EN_CHANGE)
         {
-            Page1_OnEdt(hwnd);
+            Page0_OnEdt(hwnd);
         }
         break;
     case chx1:
         if (codeNotify == BN_CLICKED)
         {
-            Page1_OnChx1(hwnd);
+            Page0_OnChx1(hwnd);
         }
         break;
     case psh1:
         if (codeNotify == BN_CLICKED)
         {
-            Page1_OnPsh1(hwnd);
+            Page0_OnPsh1(hwnd);
         }
         break;
     case psh2:
         if (codeNotify == BN_CLICKED)
         {
-            Page1_OnPsh2(hwnd);
+            Page0_OnPsh2(hwnd);
         }
         break;
     case psh3:
         if (codeNotify == BN_CLICKED)
         {
-            Page1_OnPsh3(hwnd);
+            Page0_OnPsh3(hwnd);
+        }
+        break;
+    }
+}
+
+static void Page0_OnDestroy(HWND hwnd)
+{
+    s_bPage0Init = FALSE;
+}
+
+static INT_PTR CALLBACK
+Page0DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+        HANDLE_MSG(hwnd, WM_INITDIALOG, Page0_OnInitDialog);
+        HANDLE_MSG(hwnd, WM_COMMAND, Page0_OnCommand);
+        HANDLE_MSG(hwnd, WM_DESTROY, Page0_OnDestroy);
+    }
+    return 0;
+}
+
+static BOOL s_bPage1Init = FALSE;
+
+static BOOL Page1_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
+{
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+
+    TCHAR szText[64];
+    for (INT i = 0; i < 10; ++i)
+    {
+        StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_CAMERA), i);
+        ComboBox_AddString(hCmb1, szText);
+    }
+    ComboBox_SetCurSel(hCmb1, g_settings.m_nCameraID);
+
+    s_bPage1Init = TRUE;
+    return TRUE;
+}
+
+static void Page1_OnCmb1(HWND hwnd)
+{
+    if (!s_bPage1Init)
+        return;
+
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+    g_settings.m_nCameraID = ComboBox_GetCurSel(hCmb1);
+
+    g_settings.update(g_hMainWnd);
+}
+
+static void Page1_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
+{
+    switch (id)
+    {
+    case cmb1:
+        if (codeNotify == CBN_SELCHANGE)
+        {
+            Page1_OnCmb1(hwnd);
         }
         break;
     }
@@ -277,70 +371,11 @@ Page1DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-static BOOL s_bPage2Init = FALSE;
-
-static BOOL Page2_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
-{
-    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
-
-    TCHAR szText[64];
-    for (INT i = 0; i < 10; ++i)
-    {
-        StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_CAMERA), i);
-        ComboBox_AddString(hCmb1, szText);
-    }
-    ComboBox_SetCurSel(hCmb1, g_settings.m_nCameraID);
-
-    s_bPage2Init = TRUE;
-    return TRUE;
-}
-
-static void Page2_OnCmb1(HWND hwnd)
-{
-    if (!s_bPage2Init)
-        return;
-
-    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
-    g_settings.m_nCameraID = ComboBox_GetCurSel(hCmb1);
-
-    g_settings.update(g_hMainWnd);
-}
-
-static void Page2_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
-{
-    switch (id)
-    {
-    case cmb1:
-        if (codeNotify == CBN_SELCHANGE)
-        {
-            Page2_OnCmb1(hwnd);
-        }
-        break;
-    }
-}
-
-static void Page2_OnDestroy(HWND hwnd)
-{
-    s_bPage2Init = FALSE;
-}
-
-static INT_PTR CALLBACK
-Page2DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    switch (uMsg)
-    {
-        HANDLE_MSG(hwnd, WM_INITDIALOG, Page2_OnInitDialog);
-        HANDLE_MSG(hwnd, WM_COMMAND, Page2_OnCommand);
-        HANDLE_MSG(hwnd, WM_DESTROY, Page2_OnDestroy);
-    }
-    return 0;
-}
-
 static void DoCreatePages(HWND hwnd)
 {
     HINSTANCE hInst = GetModuleHandle(NULL);
-    s_hPages[0] = CreateDialog(hInst, MAKEINTRESOURCE(IDD_SCREEN), hwnd, Page1DialogProc);
-    s_hPages[1] = CreateDialog(hInst, MAKEINTRESOURCE(IDD_WEBCAMERA), hwnd, Page2DialogProc);
+    s_hPages[0] = CreateDialog(hInst, MAKEINTRESOURCE(IDD_SCREEN), hwnd, Page0DialogProc);
+    s_hPages[1] = CreateDialog(hInst, MAKEINTRESOURCE(IDD_WEBCAMERA), hwnd, Page1DialogProc);
 }
 
 static void DoDestroyPages(HWND hwnd)
@@ -382,7 +417,7 @@ static void OnCmb1(HWND hwnd)
         break;
     }
 
-    Page1_SetData(s_hPages[0]);
+    Page0_SetData(s_hPages[0]);
 }
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
@@ -432,7 +467,24 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     DoCreatePages(hwnd);
     DoAdjustPages(hwnd);
-    DoChoosePage(hwnd, 0);
+
+    switch (g_settings.GetPictureType())
+    {
+    case PT_BLACK:
+        DoChoosePage(hwnd, -1);
+        break;
+    case PT_WHITE:
+        DoChoosePage(hwnd, -1);
+        break;
+    case PT_SCREENCAP:
+        DoChoosePage(hwnd, 0);
+        break;
+    case PT_VIDEOCAP:
+        DoChoosePage(hwnd, 1);
+        break;
+    default:
+        break;
+    }
 
     s_bInit = TRUE;
 

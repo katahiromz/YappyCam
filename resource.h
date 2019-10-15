@@ -26,6 +26,8 @@
 #define IDS_WEBCAMERA                       104
 #define IDS_MONITOR                         105
 #define IDS_CAMERA                          106
+#define IDS_PRIMARYMONITOR                  107
+#define IDS_VIRTUALSCREEN                   108
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101
