@@ -66,6 +66,8 @@ struct Settings
     BOOL m_bNoSound;
     INT m_nMonitorID;
     INT m_nCameraID;
+    INT m_nBrightness;
+    INT m_nContrast;
     std::wstring m_strDir;
     std::wstring m_strMovieDir;
     std::wstring m_strImageFileName;
@@ -108,6 +110,8 @@ extern Sound m_sound;
 extern HWND g_hMainWnd;
 extern HWND g_hwndSoundInput;
 extern HWND g_hwndPictureInput;
+extern cv::VideoCapture g_cap;
+extern CRITICAL_SECTION g_lock;
 
 typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
 extern sound_devices_t m_sound_devices;

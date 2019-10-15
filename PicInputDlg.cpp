@@ -515,6 +515,8 @@ static BOOL s_bPage1Init = FALSE;
 static BOOL Page1_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
     HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+    HWND hCmb2 = GetDlgItem(hwnd, cmb2);
+    HWND hCmb3 = GetDlgItem(hwnd, cmb3);
 
     TCHAR szText[64];
     for (INT i = 0; i < 10; ++i)
@@ -523,6 +525,12 @@ static BOOL Page1_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
         ComboBox_AddString(hCmb1, szText);
     }
     ComboBox_SetCurSel(hCmb1, g_settings.m_nCameraID);
+
+    SendDlgItemMessage(hwnd, scr1, UDM_SETRANGE, 0, MAKELPARAM(500, -500));
+    SendDlgItemMessage(hwnd, scr2, UDM_SETRANGE, 0, MAKELPARAM(500, -500));
+
+    SendDlgItemMessage(hwnd, scr1, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_nBrightness, 0));
+    SendDlgItemMessage(hwnd, scr2, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_nContrast, 0));
 
     s_bPage1Init = TRUE;
     return TRUE;
@@ -539,14 +547,82 @@ static void Page1_OnCmb1(HWND hwnd)
     g_settings.update(g_hMainWnd);
 }
 
+static void Page1_OnEdt1(HWND hwnd)
+{
+    if (!s_bPage1Init)
+        return;
+
+    BOOL bTranslated = FALSE;
+    INT nValue = GetDlgItemInt(hwnd, edt1, &bTranslated, TRUE);
+
+    if (bTranslated)
+    {
+        EnterCriticalSection(&g_lock);
+        g_settings.m_nBrightness = nValue;
+        LeaveCriticalSection(&g_lock);
+    }
+}
+
+static void Page1_OnEdt2(HWND hwnd)
+{
+    if (!s_bPage1Init)
+        return;
+
+    BOOL bTranslated = FALSE;
+    INT nValue = GetDlgItemInt(hwnd, edt2, &bTranslated, TRUE);
+
+    if (bTranslated)
+    {
+        EnterCriticalSection(&g_lock);
+        g_settings.m_nContrast = nValue;
+        LeaveCriticalSection(&g_lock);
+    }
+}
+
+static void Page1_OnPsh1(HWND hwnd)
+{
+    SetDlgItemInt(hwnd, edt1, 0, TRUE);
+    Page1_OnEdt1(hwnd);
+}
+
+static void Page1_OnPsh2(HWND hwnd)
+{
+    SetDlgItemInt(hwnd, edt2, 100, TRUE);
+    Page1_OnEdt2(hwnd);
+}
+
 static void Page1_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
     {
+    case psh1:
+        if (codeNotify == BN_CLICKED)
+        {
+            Page1_OnPsh1(hwnd);
+        }
+        break;
+    case psh2:
+        if (codeNotify == BN_CLICKED)
+        {
+            Page1_OnPsh2(hwnd);
+        }
+        break;
     case cmb1:
         if (codeNotify == CBN_SELCHANGE)
         {
             Page1_OnCmb1(hwnd);
+        }
+        break;
+    case edt1:
+        if (codeNotify == EN_CHANGE)
+        {
+            Page1_OnEdt1(hwnd);
+        }
+        break;
+    case edt2:
+        if (codeNotify == EN_CHANGE)
+        {
+            Page1_OnEdt2(hwnd);
         }
         break;
     }

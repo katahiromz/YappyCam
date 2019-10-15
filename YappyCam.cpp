@@ -93,6 +93,8 @@ void Settings::init()
     m_bNoSound = FALSE;
     m_nMonitorID = 0;
     m_nCameraID = 0;
+    m_nBrightness = 0;
+    m_nContrast = 0;
 
     TCHAR szPath[MAX_PATH];
 
@@ -165,6 +167,9 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"NoSound", (DWORD&)m_bNoSound);
     app_key.QueryDword(L"MonitorID", (DWORD&)m_nMonitorID);
     app_key.QueryDword(L"CameraID", (DWORD&)m_nCameraID);
+
+    app_key.QueryDword(L"Brightness", (DWORD&)m_nBrightness);
+    app_key.QueryDword(L"Contrast", (DWORD&)m_nContrast);
 
     WCHAR szText[MAX_PATH];
 
@@ -253,6 +258,9 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"NoSound", m_bNoSound);
     app_key.SetDword(L"MonitorID", m_nMonitorID);
     app_key.SetDword(L"CameraID", m_nCameraID);
+
+    app_key.SetDword(L"Brightness", m_nBrightness);
+    app_key.SetDword(L"Contrast", m_nContrast);
 
     app_key.SetSz(L"Dir", m_strDir.c_str());
     app_key.SetSz(L"MovieDir", m_strMovieDir.c_str());
@@ -937,12 +945,31 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
     case DM_CAPFRAME:
         if (s_frame.data)
         {
-            StretchDIBits(hdc, 0, 0, cx, cy,
-                          0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
-                          s_frame.data, &g_bi, DIB_RGB_COLORS, SRCCOPY);
-            if (g_bWriting && g_writer.isOpened())
+            if (g_settings.m_nBrightness != 0 ||
+                g_settings.m_nContrast != 100)
             {
-                g_writer << s_frame;
+                double alpha = g_settings.m_nContrast / 100.0;
+                double beta = g_settings.m_nBrightness;
+
+                cv::Mat image;
+                s_frame.convertTo(image, -1, alpha, beta);
+                StretchDIBits(hdc, 0, 0, cx, cy,
+                              0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
+                              image.data, &g_bi, DIB_RGB_COLORS, SRCCOPY);
+                if (g_bWriting && g_writer.isOpened())
+                {
+                    g_writer << image;
+                }
+            }
+            else
+            {
+                StretchDIBits(hdc, 0, 0, cx, cy,
+                              0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
+                              s_frame.data, &g_bi, DIB_RGB_COLORS, SRCCOPY);
+                if (g_bWriting && g_writer.isOpened())
+                {
+                    g_writer << s_frame;
+                }
             }
         }
         else
