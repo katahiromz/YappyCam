@@ -284,7 +284,7 @@ static BOOL SBD_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
             if (hFont)
             {
                 HGDIOBJ hFontOld = SelectObject(hdcMem, hFont);
-                UINT uFormat = DT_SINGLELINE | DT_CENTER | DT_VCENTER;
+                const UINT uFormat = DT_SINGLELINE | DT_CENTER | DT_VCENTER;
                 hbmOld = SelectObject(hdcMem, s_SBD_hbm);
                 for (auto& monitor : s_monitors)
                 {
