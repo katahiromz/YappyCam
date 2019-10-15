@@ -117,6 +117,7 @@ STRINGTABLE
     IDS_PRIMARYMONITOR, "Primary Monitor"
     IDS_VIRTUALSCREEN, "Virtual Screen"
     IDS_APPTITLE, "YappyCam"
+    IDS_DRAGONME, "(Please drag area on the screen... Press Esc to quit)"
 }
 
 //////////////////////////////////////////////////////////////////////////////

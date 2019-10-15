@@ -30,6 +30,7 @@
 #define IDS_PRIMARYMONITOR                  107
 #define IDS_VIRTUALSCREEN                   108
 #define IDS_APPTITLE                        109
+#define IDS_DRAGONME                        110
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101

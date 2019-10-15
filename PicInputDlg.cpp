@@ -274,6 +274,31 @@ static BOOL SBD_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
                     ++pdwBits;
                 }
             }
+
+            LOGFONT lf;
+            HFONT hFont = GetStockFont(DEFAULT_GUI_FONT);
+            GetObject(hFont, sizeof(lf), &lf);
+            lf.lfHeight = -24;
+            lf.lfWeight = FW_BOLD;
+            hFont = CreateFontIndirect(&lf);
+            if (hFont)
+            {
+                HGDIOBJ hFontOld = SelectObject(hdcMem, hFont);
+                UINT uFormat = DT_SINGLELINE | DT_CENTER | DT_VCENTER;
+                hbmOld = SelectObject(hdcMem, s_SBD_hbm);
+                for (auto& monitor : s_monitors)
+                {
+                    SetBkMode(hdcMem, OPAQUE);
+                    SetTextColor(hdcMem, RGB(0, 0, 0));
+                    SetBkColor(hdcMem, RGB(255, 192, 192));
+                    DrawText(hdcMem, LoadStringDx(IDS_DRAGONME), -1,
+                             &monitor.rcMonitor, uFormat);
+                }
+                SelectObject(hdcMem, hbmOld);
+                SelectObject(hdcMem, hFontOld);
+                DeleteObject(hFont);
+            }
+
             DeleteDC(hdcMem);
         }
         DeleteDC(hdc);
