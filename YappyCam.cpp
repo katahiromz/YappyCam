@@ -1269,6 +1269,13 @@ WinMain(HINSTANCE   hInstance,
         LPSTR       lpCmdLine,
         int         nCmdShow)
 {
+    if (HWND hwnd = FindWindow(L"#32770", LoadStringDx(IDS_APPTITLE)))
+    {
+        PostMessage(hwnd, DM_REPOSITION, 0, 0);
+        SetForegroundWindow(hwnd);
+        return EXIT_SUCCESS;
+    }
+
     HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     if (FAILED(hr))
     {

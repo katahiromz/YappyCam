@@ -116,6 +116,7 @@ STRINGTABLE
     IDS_CAMERA, "Camera #%u"
     IDS_PRIMARYMONITOR, "Primary Monitor"
     IDS_VIRTUALSCREEN, "Virtual Screen"
+    IDS_APPTITLE, "YappyCam"
 }
 
 //////////////////////////////////////////////////////////////////////////////
