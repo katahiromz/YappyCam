@@ -968,18 +968,27 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             BITMAP bm;
             GetObject(g_hbm, sizeof(bm), &bm);
 
-            HGDIOBJ hbmOld = SelectObject(hdcMem, g_hbm);
-            StretchBlt(hdc, 0, 0, cx, cy,
-                       hdcMem, 0, 0, bm.bmWidth, bm.bmHeight,
-                       SRCCOPY);
-            SelectObject(hdcMem, hbmOld);
-            DeleteDC(hdcMem);
+            if (g_hbm)
+            {
+                HGDIOBJ hbmOld = SelectObject(hdcMem, g_hbm);
+                StretchBlt(hdc, 0, 0, cx, cy,
+                           hdcMem, 0, 0, bm.bmWidth, bm.bmHeight,
+                           SRCCOPY);
+                SelectObject(hdcMem, hbmOld);
+            }
+            else
+            {
+                PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
+            }
+
             if (g_bWriting && g_writer.isOpened())
             {
                 cv::Size size(bm.bmWidth, bm.bmHeight);
                 cv::Mat mat(size, CV_8UC3, bm.bmBits, bm.bmWidthBytes);
                 g_writer << mat;
             }
+
+            DeleteDC(hdcMem);
         }
         break;
     }
