@@ -110,6 +110,8 @@ void Settings::init()
     PathAppend(szPath, TEXT("movie-%3u.avi"));
     m_strMovieFileName = szPath;
 
+    m_strSoundFileName = TEXT("Sound.wav");
+
     m_strStatusText = TEXT("No image");
 }
 
@@ -182,6 +184,10 @@ bool Settings::load(HWND hwnd)
     {
         m_strMovieFileName = szText;
     }
+    if (ERROR_SUCCESS == app_key.QuerySz(L"SoundFileName", szText, ARRAYSIZE(szText)))
+    {
+        m_strSoundFileName = szText;
+    }
 
     SetPictureType(hwnd, type);
 
@@ -252,6 +258,7 @@ bool Settings::save(HWND hwnd) const
     app_key.SetSz(L"MovieDir", m_strMovieDir.c_str());
     app_key.SetSz(L"ImageFileName", m_strImageFileName.c_str());
     app_key.SetSz(L"MovieFileName", m_strMovieFileName.c_str());
+    app_key.SetSz(L"SoundFileName", m_strSoundFileName.c_str());
 
     return true;
 }
@@ -773,13 +780,14 @@ static void OnRec(HWND hwnd)
 {
     if (Button_GetCheck(GetDlgItem(hwnd, psh1)) & BST_CHECKED)
     {
+        // build image file path
         TCHAR szPath[MAX_PATH];
         StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                        g_settings.m_nMovieID);
         PathAppend(szPath, g_settings.m_strImageFileName.c_str());
-
         LPCSTR image_name = ansi_from_wide(szPath);
 
+        // open writer
         g_writer.open(image_name, 0, 0,
                       cv::Size(g_settings.m_nWidth, g_settings.m_nHeight));
         if (!g_writer.isOpened())
@@ -789,17 +797,27 @@ static void OnRec(HWND hwnd)
             return;
         }
 
+        // close config windows
         if (IsWindow(g_hwndSoundInput))
             PostMessage(g_hwndSoundInput, WM_CLOSE, 0, 0);
         if (IsWindow(g_hwndPictureInput))
             PostMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
 
+        // update UI
         EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
 
-        g_settings.create_dirs();
-        ++g_settings.m_nMovieID;
+        // set sound path
+        StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                       g_settings.m_nMovieID);
+        PathAppend(szPath, g_settings.m_strSoundFileName.c_str());
+        m_sound.SetSoundFile(szPath);
 
+        // create directories
+        g_settings.create_dirs();
+
+        // OK, start recording
+        ++g_settings.m_nMovieID;
         g_bWriting = TRUE;
         if (!g_settings.m_bNoSound)
         {

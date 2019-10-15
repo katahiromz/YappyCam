@@ -2,6 +2,7 @@
 #include "Sound.hpp"
 #include "resource.h"
 #include <cmath>
+#include <strsafe.h>
 
 static const WAVE_FORMAT_INFO s_wave_formats[] =
 {
@@ -85,6 +86,8 @@ Sound::Sound()
     m_wfx.wFormatTag = WAVE_FORMAT_PCM;
     m_wfx.cbSize = 0;
     SetInfo(1, 22050, 8);
+
+    m_szSoundFile[0] = 0;
 }
 
 void Sound::SetInfo(WORD nChannels, DWORD nSamplesPerSec, WORD wBitsPerSample)
@@ -347,7 +350,11 @@ DWORD Sound::ThreadProc()
 
 void Sound::SaveToFile()
 {
-    WCHAR szFileName[] = L"sound.wav";
-    save_pcm_wave_file(szFileName, &m_wfx,
+    save_pcm_wave_file(m_szSoundFile, &m_wfx,
                        m_wave_data.data(), m_wave_data.size());
+}
+
+void Sound::SetSoundFile(const TCHAR *filename)
+{
+    StringCbCopy(m_szSoundFile, sizeof(m_szSoundFile), filename);
 }

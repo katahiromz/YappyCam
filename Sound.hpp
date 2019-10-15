@@ -50,6 +50,8 @@ public:
 
     DWORD ThreadProc();
 
+    void SetSoundFile(const TCHAR *filename);
+
 protected:
     HANDLE m_hShutdownEvent;
     HANDLE m_hWakeUp;
@@ -61,6 +63,7 @@ protected:
     MMCKINFO m_ckData;
     CRITICAL_SECTION m_lock;
     UINT32 m_nFrames;
+    TCHAR m_szSoundFile[MAX_PATH];
     std::vector<BYTE> m_wave_data;
 
     static DWORD WINAPI ThreadFunction(LPVOID pContext);

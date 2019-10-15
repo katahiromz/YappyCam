@@ -70,6 +70,7 @@ struct Settings
     std::wstring m_strMovieDir;
     std::wstring m_strImageFileName;
     std::wstring m_strMovieFileName;
+    std::wstring m_strSoundFileName;
     std::wstring m_strStatusText;
 
     Settings()
