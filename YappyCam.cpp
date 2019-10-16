@@ -7,12 +7,13 @@
 #define CAP_TIMER_ID    888
 
 static cv::Mat s_frame;
-static INT s_button_width;
-static INT s_progress_width;
-static HBITMAP s_hbmRec;
-static HBITMAP s_hbmPause;
-static HBITMAP s_hbmStop;
-static HBITMAP s_hbmDots;
+static INT s_button_width = 0;
+static INT s_progress_width = 0;
+static HBITMAP s_hbmRec = NULL;
+static HBITMAP s_hbmPause = NULL;
+static HBITMAP s_hbmStop = NULL;
+static HBITMAP s_hbmDots = NULL;
+static INT s_nFrames = 0;
 
 typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
 
@@ -671,6 +672,8 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     HideButtonFocus(hwnd, GetDlgItem(hwnd, psh3));
     HideButtonFocus(hwnd, GetDlgItem(hwnd, psh4));
 
+    s_nFrames = 0;
+
     RECT rc;
     GetWindowRect(GetDlgItem(hwnd, psh1), &rc);
     s_button_width = rc.right - rc.left;
@@ -770,6 +773,7 @@ static void OnStop(HWND hwnd)
     m_sound.StopHearing();
     g_writer.release();
     g_bWriting = FALSE;
+    s_nFrames = 0;
 
     Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
@@ -830,6 +834,7 @@ static void OnRec(HWND hwnd)
         g_settings.create_dirs();
 
         // OK, start recording
+        s_nFrames = 0;
         ++g_settings.m_nMovieID;
         g_bWriting = TRUE;
         if (!g_settings.m_bNoSound)
@@ -960,6 +965,7 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
                 if (g_bWriting && g_writer.isOpened())
                 {
                     g_writer << image;
+                    ++s_nFrames;
                 }
             }
             else
@@ -970,6 +976,7 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
                 if (g_bWriting && g_writer.isOpened())
                 {
                     g_writer << s_frame;
+                    ++s_nFrames;
                 }
             }
         }
