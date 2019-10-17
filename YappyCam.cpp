@@ -97,6 +97,7 @@ void Settings::init()
     m_nCameraID = 0;
     m_nBrightness = 0;
     m_nContrast = 0;
+    m_dwFOURCC = 0x7634706d; // mp4v
 
     TCHAR szPath[MAX_PATH];
 
@@ -179,6 +180,7 @@ bool Settings::load(HWND hwnd)
 
     app_key.QueryDword(L"Brightness", (DWORD&)m_nBrightness);
     app_key.QueryDword(L"Contrast", (DWORD&)m_nContrast);
+    app_key.QueryDword(L"FOURCC", (DWORD&)m_dwFOURCC);
 
     WCHAR szText[MAX_PATH];
 
@@ -279,6 +281,7 @@ bool Settings::save(HWND hwnd) const
 
     app_key.SetDword(L"Brightness", m_nBrightness);
     app_key.SetDword(L"Contrast", m_nContrast);
+    app_key.SetDword(L"FOURCC", m_dwFOURCC);
 
     app_key.SetSz(L"Dir", m_strDir.c_str());
     app_key.SetSz(L"MovieDir", m_strMovieDir.c_str());
@@ -952,11 +955,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
     width = frame.cols;
     height = frame.rows;
     double fps = g_settings.m_nFPSx100 / 100.0;
-
-    int fourcc = 0x7634706d; // mp4v
-    //int fourcc = 0x3447504D; // MPEG-4
-    //int fourcc = 0x34363248; // H.264/MPEG-4 AVC
-    //int fourcc = 0x34363248; // H.264 H264
+    int fourcc = int(g_settings.m_dwFOURCC);
 
     cv::VideoWriter writer(output.c_str(), fourcc, fps, cv::Size(width, height));
     if (!writer.isOpened())

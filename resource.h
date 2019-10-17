@@ -40,6 +40,7 @@
 #define IDS_FINALIZEPERCENTS                116
 #define IDS_FINALIZEDONE                    117
 #define IDS_FINALIZECANCELLED               118
+#define IDS_SETLOCATION                     119
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101

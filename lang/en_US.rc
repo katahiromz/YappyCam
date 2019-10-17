@@ -15,7 +15,7 @@ IDR_MAINMENU MENU
         MENUITEM "&Picture Input", ID_PICTUREINPUT
         MENUITEM "&Sound Input", ID_SOUNDINPUT
         MENUITEM SEPARATOR
-        MENUITEM "Save &To...", ID_SAVETO
+        MENUITEM "Save &Options...", ID_SAVETO
         MENUITEM SEPARATOR
         MENUITEM "&About", ID_ABOUT
     }
@@ -112,8 +112,8 @@ FONT 9, "Tahoma"
 {
 }
 
-IDD_SAVETO DIALOG 0, 0, 250, 65
-CAPTION "Save To..."
+IDD_SAVETO DIALOG 0, 0, 250, 85
+CAPTION "Save Options"
 STYLE DS_CENTER | DS_MODALFRAME | WS_POPUPWINDOW | WS_CAPTION
 FONT 8, "Tahoma"
 {
@@ -123,6 +123,8 @@ FONT 8, "Tahoma"
     PUSHBUTTON "&Browse...", psh2, 185, 20, 60, 14
     LTEXT "&Image Filename:", IDC_STATIC, 5, 47, 70, 12
     COMBOBOX cmb2, 80, 45, 90, 300, CBS_HASSTRINGS | CBS_AUTOHSCROLL | CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    LTEXT "&FOURCC:", IDC_STATIC, 5, 67, 70, 12
+    COMBOBOX cmb3, 80, 65, 90, 300, CBS_HASSTRINGS | CBS_AUTOHSCROLL | CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -149,6 +151,7 @@ STRINGTABLE
     IDS_FINALIZEPERCENTS, "Finalizing... %u%%"
     IDS_FINALIZEDONE, "The movie is finalized at the following location:\n\n%s\n\nWanna browse?"
     IDS_FINALIZECANCELLED, "Finalizing is cancelled by user."
+    IDS_SETLOCATION, "Specify location"
 }
 
 //////////////////////////////////////////////////////////////////////////////

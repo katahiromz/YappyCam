@@ -72,6 +72,7 @@ struct Settings
     INT m_nCameraID;
     INT m_nBrightness;
     INT m_nContrast;
+    DWORD m_dwFOURCC;
     std::wstring m_strDir;
     std::wstring m_strMovieDir;
     std::wstring m_strImageFileName;

@@ -9,10 +9,19 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     HWND hCmb1 = GetDlgItem(hwnd, cmb1);
     HWND hCmb2 = GetDlgItem(hwnd, cmb2);
+    HWND hCmb3 = GetDlgItem(hwnd, cmb3);
 
     ComboBox_AddString(hCmb2, TEXT("img-%04u.png"));
     ComboBox_AddString(hCmb2, TEXT("img-%04u.jpg"));
     ComboBox_AddString(hCmb2, TEXT("img-%04u.bmp"));
+
+    ComboBox_AddString(hCmb3, TEXT("0x7634706d"));
+    ComboBox_AddString(hCmb3, TEXT("0x3447504d"));
+    ComboBox_AddString(hCmb3, TEXT("0x34363248"));
+
+    WCHAR szValue[64];
+    StringCbPrintf(szValue, sizeof(szValue), L"0x%08lX", g_settings.m_dwFOURCC);
+    ComboBox_SetText(hCmb3, szValue);
 
     SetDlgItemText(hwnd, cmb1, g_settings.m_strDir.c_str());
     SetDlgItemText(hwnd, cmb2, g_settings.m_strImageFileName.c_str());
@@ -71,7 +80,7 @@ static void OnPsh2(HWND hwnd)
     TCHAR szDisplayName[MAX_PATH] = { 0 };
     info.pidlRoot = NULL;
     info.pszDisplayName = szDisplayName;
-    info.lpszTitle = L"Specify location";
+    info.lpszTitle = LoadStringDx(IDS_SETLOCATION);
     info.ulFlags = BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
     info.lpfn = BrowseCallbackProc;
     info.lParam = (LPARAM)szPath;
@@ -113,6 +122,20 @@ static void OnCmb2(HWND hwnd)
     g_settings.m_strImageFileName = szFilename;
 }
 
+static void OnCmb3(HWND hwnd)
+{
+    if (!s_bInit)
+        return;
+
+    HWND hCmb3 = GetDlgItem(hwnd, cmb3);
+    TCHAR szValue[MAX_PATH];
+    ComboBox_GetText(hCmb3, szValue, ARRAYSIZE(szValue));
+    StrTrim(szValue, L" \t");
+
+    DWORD dwFOURCC = wcstoul(szValue, NULL, 0);
+    g_settings.m_dwFOURCC = dwFOURCC;
+}
+
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
@@ -143,6 +166,12 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         if (codeNotify == CBN_SELCHANGE || codeNotify == CBN_EDITCHANGE)
         {
             OnCmb2(hwnd);
+        }
+        break;
+    case cmb3:
+        if (codeNotify == CBN_SELCHANGE || codeNotify == CBN_EDITCHANGE)
+        {
+            OnCmb3(hwnd);
         }
         break;
     }
