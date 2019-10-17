@@ -3,31 +3,46 @@
 // License: MIT
 #include "YappyCam.hpp"
 
+// timer IDs
 #define SOUND_TIMER_ID  999
 #define CAP_TIMER_ID    888
 
-static cv::Mat s_frame;
+// for layout of the main window
 static INT s_button_width = 0;
 static INT s_progress_width = 0;
+
+// for button images
 static HBITMAP s_hbmRec = NULL;
 static HBITMAP s_hbmPause = NULL;
 static HBITMAP s_hbmStop = NULL;
 static HBITMAP s_hbmDots = NULL;
-static INT s_nFrames = 0;
 
-typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
-
+// the settings
 Settings g_settings;
 
+// the main window handle
 HWND g_hMainWnd = NULL;
-Sound m_sound;
+
+// for sound recording
+typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
 sound_devices_t m_sound_devices;
+Sound m_sound;
 std::vector<WAVE_FORMAT_INFO> m_wave_formats;
+
+// for camera capture
 cv::VideoCapture g_cap;
+
+// for video writing
 cv::VideoWriter g_writer;
 BOOL g_bWriting = FALSE;
-CRITICAL_SECTION g_lock;
-HDC g_hdcScreen = NULL;
+
+CRITICAL_SECTION g_lock;    // mutex
+
+HDC g_hdcScreen = NULL;     // screen DC
+
+// frame info
+static cv::Mat s_frame;
+static INT s_nFrames = 0;
 HBITMAP g_hbm = NULL;
 BITMAPINFO g_bi =
 {
