@@ -1969,6 +1969,7 @@ WinMain(HINSTANCE   hInstance,
     // don't start two applications at once
     if (HWND hwnd = FindWindow(L"#32770", LoadStringDx(IDS_APPTITLE)))
     {
+        ShowWindow(hwnd, SW_RESTORE);
         PostMessage(hwnd, DM_REPOSITION, 0, 0);
         SetForegroundWindow(hwnd);
         return EXIT_SUCCESS;
