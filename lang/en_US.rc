@@ -151,7 +151,7 @@ STRINGTABLE
     IDS_FINALIZEPERCENTS, "Finalizing... %u%%"
     IDS_FINALIZEDONE, "The movie is finalized at the following location:\n\n%s\n\nWanna browse?"
     IDS_FINALIZECANCELLED, "Finalizing is cancelled by user."
-    IDS_SETLOCATION, "Specify the location to save in:"
+    IDS_SETLOCATION, "Specify the folder location to save in:"
 }
 
 //////////////////////////////////////////////////////////////////////////////
