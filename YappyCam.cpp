@@ -901,32 +901,40 @@ BOOL DoUniteAviAndWav(HWND hwnd, const WCHAR *new_avi,
 
 void DoDeleteTempFiles(HWND hwnd)
 {
+    // delete the file of m_strMovieTempFileName
     TCHAR szPath[MAX_PATH];
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieTempFileName.c_str(),
                    s_nGotMovieID);
     DeleteFile(szPath);
 
+    // strMovieDir
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                    s_nGotMovieID);
     std::wstring strMovieDir = szPath;
 
+    // image_name
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                    s_nGotMovieID);
     PathAppend(szPath, g_settings.m_strImageFileName.c_str());
     std::wstring image_name = szPath;
 
+    // sound_name
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                    s_nGotMovieID);
     PathAppend(szPath, g_settings.m_strSoundFileName.c_str());
     std::wstring sound_name = szPath;
 
+    // delete frame files
     for (INT i = 0; i < s_nFramesToWrite; ++i)
     {
         StringCbPrintf(szPath, sizeof(szPath), image_name.c_str(), i);
         DeleteFile(szPath);
     }
 
+    // delete sound
     DeleteFile(sound_name.c_str());
+
+    // remove the movie directory
     RemoveDirectory(strMovieDir.c_str());
 }
 
@@ -934,21 +942,25 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
 {
     m_sound.StopHearing();
 
+    // init progress bar
     HWND hScr1 = GetDlgItem(g_hMainWnd, scr1);
     SendMessage(hScr1, PBM_SETRANGE, 0, MAKELPARAM(0, s_nFramesToWrite));
     SendMessage(hScr1, PBM_SETPOS, 0, 0);
 
+    // strOldMovieName and output_name
     TCHAR szPath[MAX_PATH];
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieTempFileName.c_str(),
                    s_nGotMovieID);
     std::wstring strOldMovieName = szPath;
-    std::string output = ansi_from_wide(szPath);
+    std::string output_name = ansi_from_wide(szPath);
 
+    // image_name
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                    s_nGotMovieID);
     PathAppend(szPath, g_settings.m_strImageFileName.c_str());
     std::string image_name = ansi_from_wide(szPath);
 
+    // get first frame
     TCHAR szText[MAX_PATH];
     CHAR szImageName[MAX_PATH];
     cv::Mat frame;
@@ -965,13 +977,16 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
         return FALSE;
     }
 
+    // get width and height
     int width, height;
     width = frame.cols;
     height = frame.rows;
+
     double fps = g_settings.m_nFPSx100 / 100.0;
     int fourcc = int(g_settings.m_dwFOURCC);
 
-    cv::VideoWriter writer(output.c_str(), fourcc, fps, cv::Size(width, height));
+    // video writer
+    cv::VideoWriter writer(output_name.c_str(), fourcc, fps, cv::Size(width, height));
     if (!writer.isOpened())
     {
         assert(0);
@@ -982,10 +997,12 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
         return FALSE;
     }
 
+    // for each frames...
     for (INT i = 0; i < s_nFramesToWrite; ++i)
     {
         if (s_bFinalizeCancelled)
         {
+            // cancelled
             assert(0);
             StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
             g_settings.m_strStatusText = szText;
@@ -994,6 +1011,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
             return FALSE;
         }
 
+        // load frame image
         StringCbPrintfA(szImageName, sizeof(szImageName),
                         image_name.c_str(), i);
         frame = cv::imread(szImageName);
@@ -1007,50 +1025,61 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
             return FALSE;
         }
 
+        // update status text
         StringCbPrintf(szText, sizeof(szText),
                        LoadStringDx(IDS_FINALIZEPERCENTS),
                        i * 100 / s_nFramesToWrite);
         g_settings.m_strStatusText = szText;
 
-        writer << frame;
-
+        // update progress
         PostMessage(hScr1, PBM_SETPOS, i, 0);
+
+        // write frame
+        writer << frame;
     }
     writer.release();
 
+    // set 99%
     StringCbPrintf(szText, sizeof(szText),
                    LoadStringDx(IDS_FINALIZEPERCENTS), 99);
     g_settings.m_strStatusText = szText;
+    SendMessage(hScr1, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+    SendMessage(hScr1, PBM_SETPOS, 99, 0);
 
+    // strNewMovieName
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieFileName.c_str(),
                    s_nGotMovieID);
     std::wstring strNewMovieName = szPath;
 
+    // strWavName
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                    s_nGotMovieID);
     PathAppend(szPath, g_settings.m_strSoundFileName.c_str());
     std::wstring strWavName = szPath;
 
+    // unite the movie and the sound
     BOOL ret = DoUniteAviAndWav(g_hMainWnd,
                                 strNewMovieName.c_str(),
                                 strOldMovieName.c_str(),
         (g_settings.m_bNoSound ? NULL : strWavName.c_str()));
     if (ret)
     {
+        // success
         StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZED));
         g_settings.m_strStatusText = szText;
         m_sound.StartHearing();
         PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZED, 0);
+        return TRUE;
     }
     else
     {
+        // failure
         StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
         g_settings.m_strStatusText = szText;
         m_sound.StartHearing();
         PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
+        return FALSE;
     }
-
-    return TRUE;
 }
 
 BOOL DoCreateFinalizingThread(HWND hwnd)
