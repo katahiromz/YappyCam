@@ -470,6 +470,8 @@ void Settings::fix_size(HWND hwnd)
     fix_size0(hwnd);
 }
 
+static BOOL s_bTimerON = FALSE;
+
 void DoStartStopTimers(HWND hwnd, BOOL bStart)
 {
     if (bStart)
@@ -478,9 +480,12 @@ void DoStartStopTimers(HWND hwnd, BOOL bStart)
 
         DWORD dwMSEC = DWORD(1000 * 100 / g_settings.m_nFPSx100);
         SetTimer(hwnd, CAP_TIMER_ID, dwMSEC, NULL);
+
+        s_bTimerON = TRUE;
     }
     else
     {
+        s_bTimerON = FALSE;
         KillTimer(hwnd, SOUND_TIMER_ID);
         KillTimer(hwnd, CAP_TIMER_ID);
     }
@@ -488,7 +493,10 @@ void DoStartStopTimers(HWND hwnd, BOOL bStart)
 
 BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
 {
+    BOOL bTimerON = s_bTimerON;
+
     DoStartStopTimers(hwnd, FALSE);
+
     g_cap.release();
     s_frame.release();
     if (g_hbm)
@@ -515,7 +523,7 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         g_cap.open(m_nCameraID);
         if (!g_cap.isOpened())
         {
-            DoStartStopTimers(hwnd, TRUE);
+            DoStartStopTimers(hwnd, bTimerON);
             return FALSE;
         }
         m_nWidth = (int)g_cap.get(cv::CAP_PROP_FRAME_WIDTH);
@@ -568,7 +576,7 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
 
     fix_size(hwnd);
 
-    DoStartStopTimers(hwnd, TRUE);
+    DoStartStopTimers(hwnd, bTimerON);
     return TRUE;
 }
 
@@ -781,7 +789,7 @@ static HANDLE s_hFinalizingThread = NULL;
 BOOL s_bFinalizeCancelled = FALSE;
 static PictureType s_nOldPictureType = PT_SCREENCAP;
 
-BOOL DoSaveAviFile(LPCTSTR lpszFileName, PAVISTREAM paviVideo,
+BOOL DoSaveAviFile(HWND hwnd, LPCTSTR lpszFileName, PAVISTREAM paviVideo,
                    PAVISTREAM paviAudio)
 {
     INT i;
@@ -807,7 +815,6 @@ BOOL DoSaveAviFile(LPCTSTR lpszFileName, PAVISTREAM paviVideo,
     }
 
     AVISaveOptionsFree(2, lpOptions);
-
     return TRUE;
 }
 
@@ -839,13 +846,44 @@ BOOL DoUniteAviAndWav(HWND hwnd, const WCHAR *new_avi,
         return FALSE;
     }
 
-    BOOL ret = DoSaveAviFile(new_avi, paviVideo, paviAudio);
+    BOOL ret = DoSaveAviFile(hwnd, new_avi, paviVideo, paviAudio);
 
     AVIStreamRelease(paviAudio);
     AVIStreamRelease(paviVideo);
     AVIFileExit();
 
     return ret;
+}
+
+void DoDeleteTempFiles(HWND hwnd)
+{
+    TCHAR szPath[MAX_PATH];
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieTempFileName.c_str(),
+                   s_nGotMovieID);
+    DeleteFile(szPath);
+
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                   s_nGotMovieID);
+    std::wstring strMovieDir = szPath;
+
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                   s_nGotMovieID);
+    PathAppend(szPath, g_settings.m_strImageFileName.c_str());
+    std::wstring image_name = szPath;
+
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                   s_nGotMovieID);
+    PathAppend(szPath, g_settings.m_strSoundFileName.c_str());
+    std::wstring sound_name = szPath;
+
+    for (INT i = 0; i < s_nFramesToWrite; ++i)
+    {
+        StringCbPrintf(szPath, sizeof(szPath), image_name.c_str(), i);
+        DeleteFile(szPath);
+    }
+
+    DeleteFile(sound_name.c_str());
+    RemoveDirectory(strMovieDir.c_str());
 }
 
 static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
@@ -878,6 +916,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
         assert(0);
         StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
         g_settings.m_strStatusText = szText;
+        m_sound.StartHearing();
         PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
         return FALSE;
     }
@@ -893,6 +932,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
         assert(0);
         StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
         g_settings.m_strStatusText = szText;
+        m_sound.StartHearing();
         PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
         return FALSE;
     }
@@ -904,6 +944,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
             assert(0);
             StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
             g_settings.m_strStatusText = szText;
+            m_sound.StartHearing();
             PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZECANCEL, 0);
             return FALSE;
         }
@@ -916,6 +957,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
             assert(0);
             StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
             g_settings.m_strStatusText = szText;
+            m_sound.StartHearing();
             PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
             return FALSE;
         }
@@ -948,12 +990,14 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
     {
         StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZED));
         g_settings.m_strStatusText = szText;
+        m_sound.StartHearing();
         PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZED, 0);
     }
     else
     {
         StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
         g_settings.m_strStatusText = szText;
+        m_sound.StartHearing();
         PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
     }
 
@@ -1038,15 +1082,12 @@ static void OnStop(HWND hwnd)
 
 static void OnFinalized(HWND hwnd)
 {
-    m_sound.StartHearing();
-    DoStartStopTimers(hwnd, TRUE);
-
     if (s_hFinalizingThread)
     {
         CloseHandle(s_hFinalizingThread);
         s_hFinalizingThread = NULL;
     }
-    
+
     Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
 
@@ -1078,6 +1119,8 @@ static void OnFinalized(HWND hwnd)
     StringCbPrintf(szText, sizeof(szText),
                    LoadStringDx(IDS_FINALIZEDONE), szPath);
 
+    DoDeleteTempFiles(hwnd);
+
     INT nID = MessageBox(hwnd, szText, LoadStringDx(IDS_APPTITLE),
                          MB_ICONINFORMATION | MB_YESNO);
     if (nID == IDYES)
@@ -1088,13 +1131,13 @@ static void OnFinalized(HWND hwnd)
     }
 
     g_settings.SetPictureType(hwnd, s_nOldPictureType);
+
+    m_sound.StartHearing();
+    DoStartStopTimers(hwnd, TRUE);
 }
 
 static void OnFinalizeFail(HWND hwnd)
 {
-    m_sound.StartHearing();
-    DoStartStopTimers(hwnd, TRUE);
-
     if (s_hFinalizingThread)
     {
         CloseHandle(s_hFinalizingThread);
@@ -1121,13 +1164,13 @@ static void OnFinalizeFail(HWND hwnd)
     g_settings.SetPictureType(hwnd, s_nOldPictureType);
 
     MessageBox(hwnd, LoadStringDx(IDS_FINALIZEFAIL), NULL, MB_ICONERROR);
+
+    m_sound.StartHearing();
+    DoStartStopTimers(hwnd, TRUE);
 }
 
 static void OnFinalizeCancel(HWND hwnd)
 {
-    m_sound.StartHearing();
-    DoStartStopTimers(hwnd, TRUE);
-
     if (s_hFinalizingThread)
     {
         CloseHandle(s_hFinalizingThread);
@@ -1154,6 +1197,9 @@ static void OnFinalizeCancel(HWND hwnd)
     g_settings.SetPictureType(hwnd, s_nOldPictureType);
 
     MessageBox(hwnd, LoadStringDx(IDS_FINALIZECANCELLED), NULL, MB_ICONERROR);
+
+    m_sound.StartHearing();
+    DoStartStopTimers(hwnd, TRUE);
 }
 
 static void OnRec(HWND hwnd)
