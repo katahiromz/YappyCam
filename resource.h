@@ -16,6 +16,7 @@
 #define IDD_WEBCAMERA                       103
 #define IDD_PICINPUT                        104
 #define IDD_SETBYDRAG                       105
+#define IDD_SAVETO                          106
 
 #define IDR_SILENT_WAV                      1
 #define IDR_MAINMENU                        1000
@@ -47,12 +48,13 @@
 #define ID_FINALIZED                        104
 #define ID_FINALIZEFAIL                     105
 #define ID_FINALIZECANCEL                   106
+#define ID_SAVETO                           107
 
 #ifdef APSTUDIO_INVOKED
     #ifndef APSTUDIO_READONLY_SYMBOLS
         #define _APS_NO_MFC                 1
         #define _APS_NEXT_RESOURCE_VALUE    1001
-        #define _APS_NEXT_COMMAND_VALUE     107
+        #define _APS_NEXT_COMMAND_VALUE     108
         #define _APS_NEXT_CONTROL_VALUE     1000
         #define _APS_NEXT_SYMED_VALUE       300
     #endif

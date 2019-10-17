@@ -88,6 +88,7 @@ void Settings::init()
 
     m_nSoundDlgX = m_nSoundDlgY = CW_USEDEFAULT;
     m_nPicDlgX = m_nPicDlgY = CW_USEDEFAULT;
+    m_nSaveToDlgX = m_nSaveToDlgY = CW_USEDEFAULT;
 
     m_nFPSx100 = UINT(DEFAULT_FPS * 100);
     m_bDrawCursor = TRUE;
@@ -167,6 +168,8 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"SoundDlgY", (DWORD&)m_nSoundDlgY);
     app_key.QueryDword(L"PicDlgX", (DWORD&)m_nPicDlgX);
     app_key.QueryDword(L"PicDlgY", (DWORD&)m_nPicDlgY);
+    app_key.QueryDword(L"SaveToDlgX", (DWORD&)m_nSaveToDlgX);
+    app_key.QueryDword(L"SaveToDlgY", (DWORD&)m_nSaveToDlgY);
 
     app_key.QueryDword(L"FPSx100", (DWORD&)m_nFPSx100);
     app_key.QueryDword(L"DrawCursor", (DWORD&)m_bDrawCursor);
@@ -265,6 +268,8 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"SoundDlgY", m_nSoundDlgY);
     app_key.SetDword(L"PicDlgX", m_nPicDlgX);
     app_key.SetDword(L"PicDlgY", m_nPicDlgY);
+    app_key.SetDword(L"SaveToDlgX", m_nSaveToDlgX);
+    app_key.SetDword(L"SaveToDlgY", m_nSaveToDlgY);
 
     app_key.SetDword(L"FPSx100", m_nFPSx100);
     app_key.SetDword(L"DrawCursor", m_bDrawCursor);
@@ -302,6 +307,26 @@ bool Settings::create_dirs() const
     CreateDirectory(szPath, NULL);
 
     return true;
+}
+
+void Settings::change_dirs(const WCHAR *dir)
+{
+    m_strDir = dir;
+
+    TCHAR szPath[MAX_PATH];
+    StringCbCopy(szPath, sizeof(szPath), dir);
+    PathAppend(szPath, TEXT("movie-%03u"));
+    m_strMovieDir = szPath;
+
+    m_strImageFileName = TEXT("img-%04u.png");
+
+    StringCbCopy(szPath, sizeof(szPath), dir);
+    PathAppend(szPath, TEXT("movie-%03u.avi"));
+    m_strMovieFileName = szPath;
+
+    StringCbCopy(szPath, sizeof(szPath), dir);
+    PathAppend(szPath, TEXT("movie-%03u-tmp.avi"));
+    m_strMovieTempFileName = szPath;
 }
 
 INT GetHeightFromWidth(INT cx)
@@ -1104,7 +1129,8 @@ static void OnFinalized(HWND hwnd)
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
 
     if (!IsWindow(g_hwndSoundInput) &&
-        !IsWindow(g_hwndPictureInput))
+        !IsWindow(g_hwndPictureInput) &&
+        !IsWindow(g_hwndSaveTo))
     {
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
@@ -1160,7 +1186,8 @@ static void OnFinalizeFail(HWND hwnd)
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
 
     if (!IsWindow(g_hwndSoundInput) &&
-        !IsWindow(g_hwndPictureInput))
+        !IsWindow(g_hwndPictureInput) &&
+        !IsWindow(g_hwndSaveTo))
     {
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
@@ -1193,7 +1220,8 @@ static void OnFinalizeCancel(HWND hwnd)
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
 
     if (!IsWindow(g_hwndSoundInput) &&
-        !IsWindow(g_hwndPictureInput))
+        !IsWindow(g_hwndPictureInput) &&
+        !IsWindow(g_hwndSaveTo))
     {
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
@@ -1241,6 +1269,8 @@ static void OnRec(HWND hwnd)
             PostMessage(g_hwndSoundInput, WM_CLOSE, 0, 0);
         if (IsWindow(g_hwndPictureInput))
             PostMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
+        if (IsWindow(g_hwndSaveTo))
+            PostMessage(g_hwndSaveTo, WM_CLOSE, 0, 0);
 
         // update UI
         EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
@@ -1355,7 +1385,8 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         if (0)
         {
             if (!IsWindow(g_hwndSoundInput) &&
-                !IsWindow(g_hwndPictureInput))
+                !IsWindow(g_hwndPictureInput) &&
+                !IsWindow(g_hwndSaveTo))
             {
                 SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
                 EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
@@ -1370,6 +1401,14 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         break;
     case ID_FINALIZECANCEL:
         OnFinalizeCancel(hwnd);
+        break;
+    case ID_SAVETO:
+        if (0)
+        {
+            SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+            EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
+        }
+        DoSaveToDialogBox(hwnd);
         break;
     }
 }

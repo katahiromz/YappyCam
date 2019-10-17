@@ -63,6 +63,8 @@ struct Settings
     INT m_nSoundDlgY;
     INT m_nPicDlgX;
     INT m_nPicDlgY;
+    INT m_nSaveToDlgX;
+    INT m_nSaveToDlgY;
     UINT m_nFPSx100;
     BOOL m_bDrawCursor;
     BOOL m_bNoSound;
@@ -87,6 +89,7 @@ struct Settings
     bool load(HWND hwnd);
     bool save(HWND hwnd) const;
     bool create_dirs() const;
+    void change_dirs(const WCHAR *dir);
     void update(HWND hwnd);
     void fix_size(HWND hwnd);
     void fix_size0(HWND hwnd);
@@ -113,6 +116,7 @@ extern Sound m_sound;
 extern HWND g_hMainWnd;
 extern HWND g_hwndSoundInput;
 extern HWND g_hwndPictureInput;
+extern HWND g_hwndSaveTo;
 extern cv::VideoCapture g_cap;
 extern CRITICAL_SECTION g_lock;
 
@@ -126,6 +130,8 @@ LPSTR ansi_from_wide(LPCWSTR pszWide);
 
 BOOL DoSoundInputDialogBox(HWND hwndParent);
 BOOL DoPictureInputDialogBox(HWND hwndParent);
+BOOL DoSaveToDialogBox(HWND hwndParent);
+
 void DoStartStopTimers(HWND hwnd, BOOL bStart);
 
 #endif  // ndef YAPPYCAM_HPP_

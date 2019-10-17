@@ -64,6 +64,7 @@ add_executable(YappyCam WIN32
     Sound.cpp
     SoundInputDlg.cpp
     PicInputDlg.cpp
+    SaveToDlg.cpp
     YappyCam_res.rc)
 target_link_libraries(YappyCam
     ${OpenCV_LIBS}
