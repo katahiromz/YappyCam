@@ -928,7 +928,12 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
     height = frame.rows;
     double fps = g_settings.m_nFPSx100 / 100.0;
 
-    cv::VideoWriter writer(output.c_str(), 0, fps, cv::Size(width, height));
+    int fourcc = 0x7634706d; // mp4v
+    //int fourcc = 0x3447504D; // MPEG-4
+    //int fourcc = 0x34363248; // H.264/MPEG-4 AVC
+    //int fourcc = 0x34363248; // H.264 H264
+
+    cv::VideoWriter writer(output.c_str(), fourcc, fps, cv::Size(width, height));
     if (!writer.isOpened())
     {
         assert(0);
@@ -974,6 +979,10 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
         PostMessage(hScr1, PBM_SETPOS, i, 0);
     }
     writer.release();
+
+    StringCbPrintf(szText, sizeof(szText),
+                   LoadStringDx(IDS_FINALIZEPERCENTS), 99);
+    g_settings.m_strStatusText = szText;
 
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieFileName.c_str(),
                    s_nGotMovieID);
@@ -1058,6 +1067,7 @@ static void OnStop(HWND hwnd)
     s_nOldPictureType = g_settings.GetPictureType();
     g_settings.SetPictureType(hwnd, PT_FINALIZING);
     g_settings.m_strStatusText = LoadStringDx(IDS_FINALIZING);
+    InvalidateRect(g_hMainWnd, NULL, TRUE);
 
     INT nID = MessageBox(hwnd, LoadStringDx(IDS_FINALIZEQUE),
                          LoadStringDx(IDS_WANNAFINALIZE),
