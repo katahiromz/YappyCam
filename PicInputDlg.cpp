@@ -757,7 +757,8 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
         ComboBox_SetCurSel(hCmb1, 3);
         break;
     default:
-        break;
+        EndDialog(hwnd, IDCLOSE);
+        return FALSE;
     }
 
     HWND hCmb2 = GetDlgItem(hwnd, cmb2);

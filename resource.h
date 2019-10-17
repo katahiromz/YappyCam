@@ -31,17 +31,28 @@
 #define IDS_VIRTUALSCREEN                   108
 #define IDS_APPTITLE                        109
 #define IDS_DRAGONME                        110
+#define IDS_FINALIZEFAIL                    111
+#define IDS_FINALIZED                       112
+#define IDS_FINALIZING                      113
+#define IDS_WANNAFINALIZE                   114
+#define IDS_FINALIZEQUE                     115
+#define IDS_FINALIZEPERCENTS                116
+#define IDS_FINALIZEDONE                    117
+#define IDS_FINALIZECANCELLED               118
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101
 #define ID_ABOUT                            102
 #define ID_CONFIGCLOSED                     103
+#define ID_FINALIZED                        104
+#define ID_FINALIZEFAIL                     105
+#define ID_FINALIZECANCEL                   106
 
 #ifdef APSTUDIO_INVOKED
     #ifndef APSTUDIO_READONLY_SYMBOLS
         #define _APS_NO_MFC                 1
         #define _APS_NEXT_RESOURCE_VALUE    1001
-        #define _APS_NEXT_COMMAND_VALUE     104
+        #define _APS_NEXT_COMMAND_VALUE     107
         #define _APS_NEXT_CONTROL_VALUE     1000
         #define _APS_NEXT_SYMED_VALUE       300
     #endif

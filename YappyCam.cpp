@@ -110,8 +110,13 @@ void Settings::init()
 
     SHGetSpecialFolderPath(NULL, szPath, CSIDL_MYVIDEO, FALSE);
     PathAppend(szPath, TEXT("YappyCam"));
-    PathAppend(szPath, TEXT("movie-%3u.avi"));
+    PathAppend(szPath, TEXT("movie-%03u.avi"));
     m_strMovieFileName = szPath;
+
+    SHGetSpecialFolderPath(NULL, szPath, CSIDL_MYVIDEO, FALSE);
+    PathAppend(szPath, TEXT("YappyCam"));
+    PathAppend(szPath, TEXT("movie-%03u-tmp.avi"));
+    m_strMovieTempFileName = szPath;
 
     m_strSoundFileName = TEXT("Sound.wav");
 
@@ -190,10 +195,17 @@ bool Settings::load(HWND hwnd)
     {
         m_strMovieFileName = szText;
     }
+    if (ERROR_SUCCESS == app_key.QuerySz(L"MovieTempFileName", szText, ARRAYSIZE(szText)))
+    {
+        m_strMovieTempFileName = szText;
+    }
     if (ERROR_SUCCESS == app_key.QuerySz(L"SoundFileName", szText, ARRAYSIZE(szText)))
     {
         m_strSoundFileName = szText;
     }
+
+    if (type == PT_FINALIZING)
+        type = PT_SCREENCAP;
 
     SetPictureType(hwnd, type);
 
@@ -267,6 +279,7 @@ bool Settings::save(HWND hwnd) const
     app_key.SetSz(L"MovieDir", m_strMovieDir.c_str());
     app_key.SetSz(L"ImageFileName", m_strImageFileName.c_str());
     app_key.SetSz(L"MovieFileName", m_strMovieFileName.c_str());
+    app_key.SetSz(L"MovieTempFileName", m_strMovieTempFileName.c_str());
     app_key.SetSz(L"SoundFileName", m_strSoundFileName.c_str());
 
     return true;
@@ -422,7 +435,6 @@ void Settings::fix_size(HWND hwnd)
     {
     case PT_BLACK:
     case PT_WHITE:
-    case PT_STATUSTEXT:
         x = m_nWindow1X;
         y = m_nWindow1Y;
         cx = m_nWindow1CX;
@@ -440,6 +452,8 @@ void Settings::fix_size(HWND hwnd)
         cx = m_nWindow3CX;
         cy = m_nWindow3CY;
         break;
+    case PT_FINALIZING:
+        return;
     }
 
     if (x != CW_USEDEFAULT && y != CW_USEDEFAULT)
@@ -507,10 +521,8 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         m_nWidth = (int)g_cap.get(cv::CAP_PROP_FRAME_WIDTH);
         m_nHeight = (int)g_cap.get(cv::CAP_PROP_FRAME_HEIGHT);
         break;
-    case PT_STATUSTEXT:
-        SetDisplayMode(DM_BITMAP);
-        m_nWidth = 320;
-        m_nHeight = 240;
+    case PT_FINALIZING:
+        SetDisplayMode(DM_TEXT);
         break;
     }
 
@@ -545,12 +557,9 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
             DeleteObject(g_hbm);
             g_hbm = NULL;
             break;
-        case PT_STATUSTEXT:
-            SetRect(&rc, 0, 0, m_nWidth, m_nHeight);
-            hbmOld = SelectObject(hdc, g_hbm);
-            DrawText(hdc, TEXT("No Image"), -1, &rc,
-                     DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_NOPREFIX);
-            SelectObject(hdc, hbmOld);
+        case PT_FINALIZING:
+            DeleteObject(g_hbm);
+            g_hbm = NULL;
             break;
         }
 
@@ -766,14 +775,321 @@ static void OnConfig(HWND hwnd)
         Button_SetCheck(hButton, BST_UNCHECKED);
     }
 }
+static INT s_nGotMovieID = 0;
+static INT s_nFramesToWrite = 0;
+static HANDLE s_hFinalizingThread = NULL;
+BOOL s_bFinalizeCancelled = FALSE;
+static PictureType s_nOldPictureType = PT_SCREENCAP;
+
+BOOL DoSaveAviFile(LPCTSTR lpszFileName, PAVISTREAM paviVideo,
+                   PAVISTREAM paviAudio)
+{
+    INT i;
+    PAVISTREAM pavis[2];
+    AVICOMPRESSOPTIONS options[2];
+    LPAVICOMPRESSOPTIONS lpOptions[2];
+
+    for (i = 0; i < 2; i++)
+    {
+        ZeroMemory(&options[i], sizeof(AVICOMPRESSOPTIONS));
+        lpOptions[i] = &options[i];
+    }
+
+    pavis[0] = paviVideo;
+    pavis[1] = paviAudio;
+    AVISaveOptions(NULL, 0, 2, pavis, lpOptions);
+
+    if (AVISaveV(lpszFileName, NULL, NULL, 2, pavis, lpOptions) != AVIERR_OK)
+    {
+        assert(0);
+        AVISaveOptionsFree(2, lpOptions);
+        return FALSE;
+    }
+
+    AVISaveOptionsFree(2, lpOptions);
+
+    return TRUE;
+}
+
+BOOL DoUniteAviAndWav(HWND hwnd, const WCHAR *new_avi,
+                      const WCHAR *old_avi, const WCHAR *wav_file)
+{
+    AVIFileInit();
+
+    INT nAVIERR;
+
+    PAVISTREAM paviVideo;
+    nAVIERR = AVIStreamOpenFromFile(&paviVideo, old_avi, streamtypeVIDEO, 0,
+                                    OF_READ | OF_SHARE_DENY_NONE, NULL);
+    if (nAVIERR)
+    {
+        assert(0);
+        AVIFileExit();
+        return FALSE;
+    }
+
+    PAVISTREAM paviAudio;
+    nAVIERR = AVIStreamOpenFromFile(&paviAudio, wav_file, streamtypeAUDIO, 0,
+                                    OF_READ | OF_SHARE_DENY_NONE, NULL);
+    if (nAVIERR)
+    {
+        assert(0);
+        AVIStreamRelease(paviVideo);
+        AVIFileExit();
+        return FALSE;
+    }
+
+    BOOL ret = DoSaveAviFile(new_avi, paviVideo, paviAudio);
+
+    AVIStreamRelease(paviAudio);
+    AVIStreamRelease(paviVideo);
+    AVIFileExit();
+
+    return ret;
+}
+
+static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
+{
+    HWND hScr1 = GetDlgItem(g_hMainWnd, scr1);
+    SendMessage(hScr1, PBM_SETRANGE, 0, MAKELPARAM(0, s_nFramesToWrite));
+    SendMessage(hScr1, PBM_SETPOS, 0, 0);
+
+    TCHAR szPath[MAX_PATH];
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieTempFileName.c_str(),
+                   s_nGotMovieID);
+    std::wstring strOldMovieName = szPath;
+    std::string output = ansi_from_wide(szPath);
+
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                   s_nGotMovieID);
+    PathAppend(szPath, g_settings.m_strImageFileName.c_str());
+    std::string image_name = ansi_from_wide(szPath);
+
+    TCHAR szText[MAX_PATH];
+    CHAR szImageName[MAX_PATH];
+    cv::Mat frame;
+    StringCbPrintfA(szImageName, sizeof(szImageName),
+                    image_name.c_str(), 0);
+    frame = cv::imread(szImageName);
+    if (!frame.data)
+    {
+        assert(0);
+        StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
+        g_settings.m_strStatusText = szText;
+        PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
+        return FALSE;
+    }
+
+    int width, height;
+    width = frame.cols;
+    height = frame.rows;
+    double fps = g_settings.m_nFPSx100 / 100.0;
+
+    cv::VideoWriter writer(output.c_str(), 0, fps, cv::Size(width, height));
+    if (!writer.isOpened())
+    {
+        assert(0);
+        StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
+        g_settings.m_strStatusText = szText;
+        PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
+        return FALSE;
+    }
+
+    for (INT i = 0; i < s_nFramesToWrite; ++i)
+    {
+        if (s_bFinalizeCancelled)
+        {
+            assert(0);
+            StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
+            g_settings.m_strStatusText = szText;
+            PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZECANCEL, 0);
+            return FALSE;
+        }
+
+        StringCbPrintfA(szImageName, sizeof(szImageName),
+                        image_name.c_str(), i);
+        frame = cv::imread(szImageName);
+        if (!frame.data)
+        {
+            assert(0);
+            StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
+            g_settings.m_strStatusText = szText;
+            PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
+            return FALSE;
+        }
+
+        StringCbPrintf(szText, sizeof(szText),
+                       LoadStringDx(IDS_FINALIZEPERCENTS),
+                       i * 100 / s_nFramesToWrite);
+        g_settings.m_strStatusText = szText;
+
+        writer << frame;
+
+        PostMessage(hScr1, PBM_SETPOS, i, 0);
+    }
+    writer.release();
+
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieFileName.c_str(),
+                   s_nGotMovieID);
+    std::wstring strNewMovieName = szPath;
+
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                   s_nGotMovieID);
+    PathAppend(szPath, g_settings.m_strSoundFileName.c_str());
+    std::wstring strWavName = szPath;
+
+    BOOL ret = DoUniteAviAndWav(g_hMainWnd,
+                                strNewMovieName.c_str(),
+                                strOldMovieName.c_str(),
+                                strWavName.c_str());
+    if (ret)
+    {
+        StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZED));
+        g_settings.m_strStatusText = szText;
+        PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZED, 0);
+    }
+    else
+    {
+        StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
+        g_settings.m_strStatusText = szText;
+        PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
+    }
+
+    return TRUE;
+}
+
+BOOL DoCreateFinalizingThread(HWND hwnd)
+{
+    if (s_hFinalizingThread)
+    {
+        CloseHandle(s_hFinalizingThread);
+        s_hFinalizingThread = NULL;
+    }
+
+    DWORD tid = 0;
+    s_bFinalizeCancelled = FALSE;
+    s_hFinalizingThread = ::CreateThread(NULL, 0, FinalizingThreadFunction, NULL, 0, &tid);
+    return s_hFinalizingThread != NULL;
+}
 
 static void OnStop(HWND hwnd)
 {
+    if (s_hFinalizingThread)
+    {
+        s_bFinalizeCancelled = TRUE;
+        WaitForSingleObject(s_hFinalizingThread, INFINITE);
+        CloseHandle(s_hFinalizingThread);
+        s_hFinalizingThread = NULL;
+        g_settings.SetPictureType(hwnd, s_nOldPictureType);
+    }
+
     DoStartStopTimers(hwnd, FALSE);
     m_sound.StopHearing();
     g_writer.release();
     g_bWriting = FALSE;
+    s_nFramesToWrite = s_nFrames;
     s_nFrames = 0;
+
+    SendDlgItemMessage(hwnd, scr1, PBM_SETPOS, 0, 0);
+
+    m_sound.StartHearing();
+    DoStartStopTimers(hwnd, TRUE);
+
+    s_nOldPictureType = g_settings.GetPictureType();
+    g_settings.SetPictureType(hwnd, PT_FINALIZING);
+    g_settings.m_strStatusText = LoadStringDx(IDS_FINALIZING);
+
+    INT nID = MessageBox(hwnd, LoadStringDx(IDS_FINALIZEQUE),
+                         LoadStringDx(IDS_WANNAFINALIZE),
+                         MB_ICONINFORMATION | MB_YESNOCANCEL);
+    switch (nID)
+    {
+    case IDYES:
+        SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+        SendDlgItemMessage(hwnd, psh2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+        SendDlgItemMessage(hwnd, psh3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+        SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+        EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
+        EnableWindow(GetDlgItem(hwnd, psh2), FALSE);
+        EnableWindow(GetDlgItem(hwnd, psh3), FALSE);
+        EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
+        DoCreateFinalizingThread(hwnd);
+        break;
+    case IDNO:
+    case IDCANCEL:
+        Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
+        Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
+
+        if (!IsWindow(g_hwndSoundInput) &&
+            !IsWindow(g_hwndPictureInput))
+        {
+            SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
+            SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
+            EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
+            EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
+        }
+        break;
+    }
+}
+
+static void OnFinalized(HWND hwnd)
+{
+    if (s_hFinalizingThread)
+    {
+        CloseHandle(s_hFinalizingThread);
+        s_hFinalizingThread = NULL;
+    }
+    
+    Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
+    Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
+
+    if (!IsWindow(g_hwndSoundInput) &&
+        !IsWindow(g_hwndPictureInput))
+    {
+        SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
+        SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
+        EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
+        EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
+    }
+
+    SendDlgItemMessage(hwnd, psh2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmPause);
+    SendDlgItemMessage(hwnd, psh3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmStop);
+    EnableWindow(GetDlgItem(hwnd, psh2), TRUE);
+    EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
+
+    TCHAR szPath[MAX_PATH];
+    StringCbPrintf(szPath, sizeof(szPath),
+                   g_settings.m_strMovieTempFileName.c_str(),
+                   s_nGotMovieID);
+    DeleteFile(szPath);
+
+    StringCbPrintf(szPath, sizeof(szPath),
+                   g_settings.m_strMovieFileName.c_str(),
+                   s_nGotMovieID);
+
+    TCHAR szText[256 + 128];
+    StringCbPrintf(szText, sizeof(szText),
+                   LoadStringDx(IDS_FINALIZEDONE), szPath);
+
+    INT nID = MessageBox(hwnd, szText, LoadStringDx(IDS_APPTITLE),
+                         MB_ICONINFORMATION | MB_YESNO);
+    if (nID == IDYES)
+    {
+        StringCbPrintf(szText, sizeof(szText),
+                       L"/e,/select,%s", szPath);
+        ShellExecute(hwnd, NULL, L"explorer", szText, NULL, SW_SHOWNORMAL);
+    }
+
+    g_settings.SetPictureType(hwnd, s_nOldPictureType);
+}
+
+static void OnFinalizeFail(HWND hwnd)
+{
+    if (s_hFinalizingThread)
+    {
+        CloseHandle(s_hFinalizingThread);
+        s_hFinalizingThread = NULL;
+    }
 
     Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
@@ -787,10 +1103,44 @@ static void OnStop(HWND hwnd)
         EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
     }
 
-    SendDlgItemMessage(hwnd, scr1, PBM_SETPOS, 0, 0);
+    SendDlgItemMessage(hwnd, psh2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmPause);
+    SendDlgItemMessage(hwnd, psh3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmStop);
+    EnableWindow(GetDlgItem(hwnd, psh2), TRUE);
+    EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
 
-    m_sound.StartHearing();
-    DoStartStopTimers(hwnd, TRUE);
+    g_settings.SetPictureType(hwnd, s_nOldPictureType);
+
+    MessageBox(hwnd, LoadStringDx(IDS_FINALIZEFAIL), NULL, MB_ICONERROR);
+}
+
+static void OnFinalizeCancel(HWND hwnd)
+{
+    if (s_hFinalizingThread)
+    {
+        CloseHandle(s_hFinalizingThread);
+        s_hFinalizingThread = NULL;
+    }
+
+    Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
+    Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
+
+    if (!IsWindow(g_hwndSoundInput) &&
+        !IsWindow(g_hwndPictureInput))
+    {
+        SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
+        SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
+        EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
+        EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
+    }
+
+    SendDlgItemMessage(hwnd, psh2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmPause);
+    SendDlgItemMessage(hwnd, psh3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmStop);
+    EnableWindow(GetDlgItem(hwnd, psh2), TRUE);
+    EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
+
+    g_settings.SetPictureType(hwnd, s_nOldPictureType);
+
+    MessageBox(hwnd, LoadStringDx(IDS_FINALIZECANCELLED), NULL, MB_ICONERROR);
 }
 
 static void OnRec(HWND hwnd)
@@ -805,6 +1155,7 @@ static void OnRec(HWND hwnd)
         LPCSTR image_name = ansi_from_wide(szPath);
 
         // open writer
+        g_writer.release();
         g_writer.open(image_name, 0, 0,
                       cv::Size(g_settings.m_nWidth, g_settings.m_nHeight));
         if (!g_writer.isOpened())
@@ -835,6 +1186,7 @@ static void OnRec(HWND hwnd)
 
         // OK, start recording
         s_nFrames = 0;
+        s_nGotMovieID = g_settings.m_nMovieID;
         ++g_settings.m_nMovieID;
         g_bWriting = TRUE;
         if (!g_settings.m_bNoSound)
@@ -938,6 +1290,15 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
             }
         }
         break;
+    case ID_FINALIZED:
+        OnFinalized(hwnd);
+        break;
+    case ID_FINALIZEFAIL:
+        OnFinalizeFail(hwnd);
+        break;
+    case ID_FINALIZECANCEL:
+        OnFinalizeCancel(hwnd);
+        break;
     }
 }
 
@@ -1005,11 +1366,12 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
                     PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
                 }
 
-                if (g_bWriting && g_writer.isOpened())
+                if (g_hbm && g_bWriting && g_writer.isOpened())
                 {
                     cv::Size size(bm.bmWidth, bm.bmHeight);
                     cv::Mat mat(size, CV_8UC3, bm.bmBits, bm.bmWidthBytes);
                     g_writer << mat;
+                    ++s_nFrames;
                 }
             }
             else
@@ -1018,6 +1380,19 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             }
 
             DeleteDC(hdcMem);
+        }
+        break;
+    case DM_TEXT:
+        {
+            RECT rc;
+            SetRect(&rc, 0, 0, cx, cy);
+            FillRect(hdc, &rc, GetStockBrush(WHITE_BRUSH));
+
+            UINT uFormat = DT_SINGLELINE | DT_CENTER | DT_VCENTER;
+            DrawText(hdc,
+                     g_settings.m_strStatusText.c_str(),
+                     INT(g_settings.m_strStatusText.size()),
+                     &rc, uFormat);
         }
         break;
     }
@@ -1077,7 +1452,7 @@ static void OnMove(HWND hwnd, int x, int y)
     {
     case PT_BLACK:
     case PT_WHITE:
-    case PT_STATUSTEXT:
+    case PT_FINALIZING:
         g_settings.m_nWindow1X = rc.left;
         g_settings.m_nWindow1Y = rc.top;
         break;
@@ -1147,7 +1522,7 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
         {
         case PT_BLACK:
         case PT_WHITE:
-        case PT_STATUSTEXT:
+        case PT_FINALIZING:
             g_settings.m_nWindow1CX = cxWnd;
             g_settings.m_nWindow1CY = cyWnd;
             break;
@@ -1240,7 +1615,7 @@ static void OnTimer(HWND hwnd, UINT id)
         {
         case PT_BLACK:
         case PT_WHITE:
-        case PT_STATUSTEXT:
+        case PT_FINALIZING:
             break;
         case PT_SCREENCAP:
             DoScreenCap(hwnd, g_settings.m_bDrawCursor);

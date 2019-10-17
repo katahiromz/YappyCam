@@ -6,6 +6,7 @@
 #include <commctrl.h>
 #include <shlobj.h>
 #include <shlwapi.h>
+#include <vfw.h>
 #include <strsafe.h>
 #include <string>
 #include <opencv2/opencv.hpp>
@@ -20,7 +21,8 @@
 enum DisplayMode
 {
     DM_CAPFRAME,
-    DM_BITMAP
+    DM_BITMAP,
+    DM_TEXT
 };
 
 enum PictureType
@@ -29,7 +31,7 @@ enum PictureType
     PT_WHITE,
     PT_SCREENCAP,
     PT_VIDEOCAP,
-    PT_STATUSTEXT
+    PT_FINALIZING
 };
 
 struct Settings
@@ -72,6 +74,7 @@ struct Settings
     std::wstring m_strMovieDir;
     std::wstring m_strImageFileName;
     std::wstring m_strMovieFileName;
+    std::wstring m_strMovieTempFileName;
     std::wstring m_strSoundFileName;
     std::wstring m_strStatusText;
 

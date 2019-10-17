@@ -126,6 +126,14 @@ STRINGTABLE
     IDS_VIRTUALSCREEN, "Virtual Screen"
     IDS_APPTITLE, "YappyCam"
     IDS_DRAGONME, "(Please drag area on the screen... Press Esc to quit)"
+    IDS_FINALIZEFAIL, "Faild to finalize."
+    IDS_FINALIZED, "Finalized."
+    IDS_FINALIZING, "Finalizing..."
+    IDS_WANNAFINALIZE, "Wanna finalize?"
+    IDS_FINALIZEQUE, "It's ready to create a movie file. Finalize the movie?"
+    IDS_FINALIZEPERCENTS, "Finalizing... %u%%"
+    IDS_FINALIZEDONE, "The movie is finalized at the following location:\n\n%s\n\nWanna browse?"
+    IDS_FINALIZECANCELLED, "Finalizing is cancelled by user."
 }
 
 //////////////////////////////////////////////////////////////////////////////

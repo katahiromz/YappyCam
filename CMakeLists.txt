@@ -65,6 +65,14 @@ add_executable(YappyCam WIN32
     SoundInputDlg.cpp
     PicInputDlg.cpp
     YappyCam_res.rc)
-target_link_libraries(YappyCam ${OpenCV_LIBS} comctl32 shlwapi winmm ole32 avrt ksuser)
+target_link_libraries(YappyCam
+    ${OpenCV_LIBS}
+    comctl32
+    shlwapi
+    winmm
+    vfw32
+    ole32
+    avrt
+    ksuser)
 
 ##############################################################################
