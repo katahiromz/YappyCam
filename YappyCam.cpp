@@ -850,6 +850,8 @@ BOOL DoUniteAviAndWav(HWND hwnd, const WCHAR *new_avi,
 
 static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
 {
+    m_sound.StopHearing();
+
     HWND hScr1 = GetDlgItem(g_hMainWnd, scr1);
     SendMessage(hScr1, PBM_SETRANGE, 0, MAKELPARAM(0, s_nFramesToWrite));
     SendMessage(hScr1, PBM_SETPOS, 0, 0);
@@ -974,6 +976,26 @@ BOOL DoCreateFinalizingThread(HWND hwnd)
 
 static void OnStop(HWND hwnd)
 {
+    DoStartStopTimers(hwnd, FALSE);
+    m_sound.StopHearing();
+    g_writer.release();
+    g_bWriting = FALSE;
+    m_sound.SetRecording(FALSE);
+
+    if (!s_nFrames)
+    {
+        Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
+        Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
+        SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
+        SendDlgItemMessage(hwnd, psh2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmPause);
+        SendDlgItemMessage(hwnd, psh3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmStop);
+        SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
+
+        m_sound.StartHearing();
+        DoStartStopTimers(hwnd, TRUE);
+        return;
+    }
+
     if (s_hFinalizingThread)
     {
         s_bFinalizeCancelled = TRUE;
@@ -983,17 +1005,9 @@ static void OnStop(HWND hwnd)
         g_settings.SetPictureType(hwnd, s_nOldPictureType);
     }
 
-    DoStartStopTimers(hwnd, FALSE);
-    m_sound.StopHearing();
-    g_writer.release();
-    g_bWriting = FALSE;
     s_nFramesToWrite = s_nFrames;
     s_nFrames = 0;
-
     SendDlgItemMessage(hwnd, scr1, PBM_SETPOS, 0, 0);
-
-    m_sound.StartHearing();
-    DoStartStopTimers(hwnd, TRUE);
 
     s_nOldPictureType = g_settings.GetPictureType();
     g_settings.SetPictureType(hwnd, PT_FINALIZING);
@@ -1017,23 +1031,16 @@ static void OnStop(HWND hwnd)
         break;
     case IDNO:
     case IDCANCEL:
-        Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
-        Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
-
-        if (!IsWindow(g_hwndSoundInput) &&
-            !IsWindow(g_hwndPictureInput))
-        {
-            SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
-            SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
-            EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
-            EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
-        }
+        PostMessage(hwnd, WM_COMMAND, ID_FINALIZECANCEL, 0);
         break;
     }
 }
 
 static void OnFinalized(HWND hwnd)
 {
+    m_sound.StartHearing();
+    DoStartStopTimers(hwnd, TRUE);
+
     if (s_hFinalizingThread)
     {
         CloseHandle(s_hFinalizingThread);
@@ -1085,6 +1092,9 @@ static void OnFinalized(HWND hwnd)
 
 static void OnFinalizeFail(HWND hwnd)
 {
+    m_sound.StartHearing();
+    DoStartStopTimers(hwnd, TRUE);
+
     if (s_hFinalizingThread)
     {
         CloseHandle(s_hFinalizingThread);
@@ -1115,6 +1125,9 @@ static void OnFinalizeFail(HWND hwnd)
 
 static void OnFinalizeCancel(HWND hwnd)
 {
+    m_sound.StartHearing();
+    DoStartStopTimers(hwnd, TRUE);
+
     if (s_hFinalizingThread)
     {
         CloseHandle(s_hFinalizingThread);
@@ -1187,6 +1200,7 @@ static void OnRec(HWND hwnd)
         // OK, start recording
         s_nFrames = 0;
         s_nGotMovieID = g_settings.m_nMovieID;
+        s_nFramesToWrite = 0;
         ++g_settings.m_nMovieID;
         g_bWriting = TRUE;
         if (!g_settings.m_bNoSound)
