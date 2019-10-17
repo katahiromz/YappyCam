@@ -125,7 +125,7 @@ STRINGTABLE
     IDS_PRIMARYMONITOR, "Primary Monitor"
     IDS_VIRTUALSCREEN, "Virtual Screen"
     IDS_APPTITLE, "YappyCam"
-    IDS_DRAGONME, "(Please drag area on the screen... Press Esc to quit)"
+    IDS_DRAGONME, "(Please drag an area on the screen... Press Esc to quit)"
     IDS_FINALIZEFAIL, "Faild to finalize."
     IDS_FINALIZED, "Finalized."
     IDS_FINALIZING, "Finalizing..."
