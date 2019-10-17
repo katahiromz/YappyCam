@@ -30,7 +30,7 @@ Sound m_sound;
 std::vector<WAVE_FORMAT_INFO> m_wave_formats;
 
 // for camera capture
-cv::VideoCapture g_cap;
+cv::VideoCapture g_camera;
 
 // for video writing
 cv::VideoWriter g_writer;
@@ -543,7 +543,7 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
 
     DoStartStopTimers(hwnd, FALSE);
 
-    g_cap.release();
+    g_camera.release();
     s_frame.release();
     if (g_hbm)
     {
@@ -566,14 +566,14 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         break;
     case PT_VIDEOCAP:
         SetDisplayMode(DM_CAPFRAME);
-        g_cap.open(m_nCameraID);
-        if (!g_cap.isOpened())
+        g_camera.open(m_nCameraID);
+        if (!g_camera.isOpened())
         {
             DoStartStopTimers(hwnd, bTimerON);
             return FALSE;
         }
-        m_nWidth = (int)g_cap.get(cv::CAP_PROP_FRAME_WIDTH);
-        m_nHeight = (int)g_cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+        m_nWidth = (int)g_camera.get(cv::CAP_PROP_FRAME_WIDTH);
+        m_nHeight = (int)g_camera.get(cv::CAP_PROP_FRAME_HEIGHT);
         break;
     case PT_FINALIZING:
         SetDisplayMode(DM_TEXT);
@@ -1902,7 +1902,7 @@ static void OnTimer(HWND hwnd, UINT id)
         case PT_VIDEOCAP:
             // take a camera capture
             EnterCriticalSection(&g_lock);
-            g_cap >> s_frame;
+            g_camera >> s_frame;
             LeaveCriticalSection(&g_lock);
             break;
         }
