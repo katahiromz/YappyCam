@@ -605,7 +605,18 @@ static void Page1_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         }
         break;
     case cmb1:
-        Page1_OnCmb1(hwnd);
+        switch (codeNotify)
+        {
+        case CBN_DROPDOWN:
+        case CBN_CLOSEUP:
+        case CBN_SETFOCUS:
+        case CBN_EDITUPDATE:
+        case CBN_SELENDCANCEL:
+            break;
+        default:
+            Page1_OnCmb1(hwnd);
+            break;
+        }
         break;
     case edt1:
         if (codeNotify == EN_CHANGE)
@@ -850,10 +861,32 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         DestroyWindow(hwnd);
         break;
     case cmb1:
-        OnCmb1(hwnd);
+        switch (codeNotify)
+        {
+        case CBN_DROPDOWN:
+        case CBN_CLOSEUP:
+        case CBN_SETFOCUS:
+        case CBN_EDITUPDATE:
+        case CBN_SELENDCANCEL:
+            break;
+        default:
+            OnCmb1(hwnd);
+            break;
+        }
         break;
     case cmb2:
-        OnCmb2(hwnd);
+        switch (codeNotify)
+        {
+        case CBN_DROPDOWN:
+        case CBN_CLOSEUP:
+        case CBN_SETFOCUS:
+        case CBN_EDITUPDATE:
+        case CBN_SELENDCANCEL:
+            break;
+        default:
+            OnCmb2(hwnd);
+            break;
+        }
         break;
     }
 }
