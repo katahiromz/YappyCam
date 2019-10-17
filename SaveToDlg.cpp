@@ -81,7 +81,7 @@ static void OnPsh2(HWND hwnd)
     info.pidlRoot = NULL;
     info.pszDisplayName = szDisplayName;
     info.lpszTitle = LoadStringDx(IDS_SETLOCATION);
-    info.ulFlags = BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
+    info.ulFlags = BIF_RETURNONLYFSDIRS | BIF_VALIDATE | BIF_NEWDIALOGSTYLE;
     info.lpfn = BrowseCallbackProc;
     info.lParam = (LPARAM)szPath;
     info.iImage = 0;

@@ -82,9 +82,12 @@ void Settings::init()
     m_nWindow2X = m_nWindow2Y = CW_USEDEFAULT;
     m_nWindow3X = m_nWindow3Y = CW_USEDEFAULT;
 
-    m_nWindow1CX = m_nWindow1CY = CW_USEDEFAULT;
-    m_nWindow2CX = m_nWindow2CY = CW_USEDEFAULT;
-    m_nWindow3CX = m_nWindow3CY = CW_USEDEFAULT;
+    m_nWindow1CX = 360;
+    m_nWindow1CY = 450;
+    m_nWindow2CX = 360;
+    m_nWindow2CY = 450;
+    m_nWindow3CX = 360;
+    m_nWindow3CY = 450;
 
     m_nSoundDlgX = m_nSoundDlgY = CW_USEDEFAULT;
     m_nPicDlgX = m_nPicDlgY = CW_USEDEFAULT;
@@ -1806,7 +1809,7 @@ WinMain(HINSTANCE   hInstance,
         return EXIT_SUCCESS;
     }
 
-    HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     if (FAILED(hr))
     {
         ErrorBoxDx(NULL, TEXT("CoInitializeEx"));
