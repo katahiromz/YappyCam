@@ -111,6 +111,11 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
         SendMessage(hwnd, DM_REPOSITION, 0, 0);
     }
 
+    if (g_settings.m_bNoSound)
+        CheckDlgButton(hwnd, chx1, BST_CHECKED);
+    else
+        CheckDlgButton(hwnd, chx1, BST_UNCHECKED);
+
     s_bInit = TRUE;
 
     return TRUE;

@@ -817,15 +817,16 @@ static HANDLE s_hFinalizingThread = NULL;
 BOOL s_bFinalizeCancelled = FALSE;
 static PictureType s_nOldPictureType = PT_SCREENCAP;
 
-BOOL DoSaveAviFile(HWND hwnd, LPCTSTR lpszFileName, PAVISTREAM paviVideo,
+BOOL DoSaveAviFile(HWND hwnd, LPCTSTR pszFileName, PAVISTREAM paviVideo,
                    PAVISTREAM paviAudio)
 {
     INT i;
     PAVISTREAM pavis[2];
     AVICOMPRESSOPTIONS options[2];
     LPAVICOMPRESSOPTIONS lpOptions[2];
+    INT nCount = 2;
 
-    for (i = 0; i < 2; i++)
+    for (i = 0; i < nCount; i++)
     {
         ZeroMemory(&options[i], sizeof(AVICOMPRESSOPTIONS));
         lpOptions[i] = &options[i];
@@ -833,18 +834,18 @@ BOOL DoSaveAviFile(HWND hwnd, LPCTSTR lpszFileName, PAVISTREAM paviVideo,
 
     pavis[0] = paviVideo;
     pavis[1] = paviAudio;
-    AVISaveOptions(NULL, ICMF_CHOOSE_PREVIEW, 2, pavis, lpOptions);
+    AVISaveOptions(NULL, 0, nCount, pavis, lpOptions);
 
     INT nAVIERR;
-    nAVIERR = AVISaveV(lpszFileName, NULL, NULL, 2, pavis, lpOptions);
+    nAVIERR = AVISaveV(pszFileName, NULL, NULL, nCount, pavis, lpOptions);
     if (nAVIERR != AVIERR_OK)
     {
         assert(0);
-        AVISaveOptionsFree(2, lpOptions);
+        AVISaveOptionsFree(nCount, lpOptions);
         return FALSE;
     }
 
-    AVISaveOptionsFree(2, lpOptions);
+    AVISaveOptionsFree(nCount, lpOptions);
     return TRUE;
 }
 
@@ -865,20 +866,30 @@ BOOL DoUniteAviAndWav(HWND hwnd, const WCHAR *new_avi,
         return FALSE;
     }
 
-    PAVISTREAM paviAudio;
-    nAVIERR = AVIStreamOpenFromFile(&paviAudio, wav_file, streamtypeAUDIO, 0,
-                                    OF_READ | OF_SHARE_DENY_NONE, NULL);
-    if (nAVIERR)
+    BOOL ret;
+    PAVISTREAM paviAudio = NULL;
+    if (wav_file)
     {
-        assert(0);
-        AVIStreamRelease(paviVideo);
-        AVIFileExit();
-        return FALSE;
+        nAVIERR = AVIStreamOpenFromFile(&paviAudio, wav_file, streamtypeAUDIO, 0,
+                                        OF_READ | OF_SHARE_DENY_NONE, NULL);
+        if (nAVIERR)
+        {
+            assert(0);
+            AVIStreamRelease(paviVideo);
+            AVIFileExit();
+            return FALSE;
+        }
+        ret = DoSaveAviFile(hwnd, new_avi, paviVideo, paviAudio);
+    }
+    else
+    {
+        ret = CopyFile(old_avi, new_avi, FALSE);
     }
 
-    BOOL ret = DoSaveAviFile(hwnd, new_avi, paviVideo, paviAudio);
-
-    AVIStreamRelease(paviAudio);
+    if (paviAudio)
+    {
+        AVIStreamRelease(paviAudio);
+    }
     AVIStreamRelease(paviVideo);
     AVIFileExit();
 
@@ -1020,7 +1031,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
     BOOL ret = DoUniteAviAndWav(g_hMainWnd,
                                 strNewMovieName.c_str(),
                                 strOldMovieName.c_str(),
-                                strWavName.c_str());
+        (g_settings.m_bNoSound ? NULL : strWavName.c_str()));
     if (ret)
     {
         StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZED));
