@@ -805,9 +805,11 @@ BOOL DoSaveAviFile(HWND hwnd, LPCTSTR lpszFileName, PAVISTREAM paviVideo,
 
     pavis[0] = paviVideo;
     pavis[1] = paviAudio;
-    AVISaveOptions(NULL, 0, 2, pavis, lpOptions);
+    AVISaveOptions(NULL, ICMF_CHOOSE_PREVIEW, 2, pavis, lpOptions);
 
-    if (AVISaveV(lpszFileName, NULL, NULL, 2, pavis, lpOptions) != AVIERR_OK)
+    INT nAVIERR;
+    nAVIERR = AVISaveV(lpszFileName, NULL, NULL, 2, pavis, lpOptions);
+    if (nAVIERR != AVIERR_OK)
     {
         assert(0);
         AVISaveOptionsFree(2, lpOptions);
@@ -1529,11 +1531,6 @@ static void OnMove(HWND hwnd, int x, int y)
 
 static void OnSize(HWND hwnd, UINT state, int cx, int cy)
 {
-    if (IsMaximized(hwnd))
-    {
-        InvalidateRect(hwnd, NULL, TRUE);
-        return;
-    }
     if (IsMinimized(hwnd))
         return;
 
@@ -1573,6 +1570,7 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
     y = 0;
     MoveWindow(GetDlgItem(hwnd, scr1), x, y, s_progress_width, cy, TRUE);
 
+    if (!IsMaximized(hwnd))
     {
         RECT rcWnd;
         GetWindowRect(hwnd, &rcWnd);
