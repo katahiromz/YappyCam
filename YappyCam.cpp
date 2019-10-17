@@ -659,6 +659,7 @@ BOOL get_sound_devices(sound_devices_t& devices)
     return TRUE;
 }
 
+// special procedure to hide the focus
 LRESULT CALLBACK
 AlwaysHideFocusRectangleSubclassProc(
     HWND hwnd,
@@ -842,6 +843,8 @@ static void OnConfig(HWND hwnd)
     }
 }
 
+////////////////////////////////////////////////////////////////////////////
+// finalizing
 
 static INT s_nGotMovieID = 0;
 static INT s_nFramesToWrite = 0;
@@ -1359,6 +1362,8 @@ static void OnFinalizeCancel(HWND hwnd)
     DoStartStopTimers(hwnd, TRUE);
 }
 
+////////////////////////////////////////////////////////////////////////////
+
 static void OnRec(HWND hwnd)
 {
     if (Button_GetCheck(GetDlgItem(hwnd, psh1)) & BST_CHECKED)
@@ -1421,8 +1426,10 @@ static void OnRec(HWND hwnd)
 
 static void OnPause(HWND hwnd)
 {
+    // is the "pause" button pressed?
     if (Button_GetCheck(GetDlgItem(hwnd, psh2)) & BST_CHECKED)
     {
+        // disable recording
         g_bWriting = FALSE;
         if (!g_settings.m_bNoSound)
         {
@@ -1431,6 +1438,7 @@ static void OnPause(HWND hwnd)
     }
     else
     {
+        // enable recording
         g_bWriting = TRUE;
         if (!g_settings.m_bNoSound)
         {
@@ -1532,13 +1540,15 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 
 static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
 {
+    // COLORONCOLOR is quick
     SetStretchBltMode(hdc, COLORONCOLOR);
+
     EnterCriticalSection(&g_lock);
 
     switch (g_settings.GetDisplayMode())
     {
     case DM_CAPFRAME:
-        if (s_frame.data)
+        if (s_frame.data)   // if frame data exists
         {
             if (g_settings.m_nBrightness != 0 ||
                 g_settings.m_nContrast != 100)
@@ -1575,13 +1585,13 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
         }
         else
         {
+            // black out if no image
             PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
         }
         break;
     case DM_BITMAP:
         if (HDC hdcMem = CreateCompatibleDC(NULL))
         {
-            SetStretchBltMode(hdcMem, COLORONCOLOR);
             BITMAP bm;
             if (GetObject(g_hbm, sizeof(bm), &bm))
             {
@@ -1595,6 +1605,7 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
                 }
                 else
                 {
+                    // black out if no image
                     PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
                 }
 
@@ -1609,6 +1620,7 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             }
             else
             {
+                // black out if no image
                 PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
             }
 
@@ -1617,10 +1629,12 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
         break;
     case DM_TEXT:
         {
+            // white background
             RECT rc;
             SetRect(&rc, 0, 0, cx, cy);
             FillRect(hdc, &rc, GetStockBrush(WHITE_BRUSH));
 
+            // show image
             UINT uFormat = DT_SINGLELINE | DT_CENTER | DT_VCENTER;
             DrawText(hdc,
                      g_settings.m_strStatusText.c_str(),
@@ -1664,11 +1678,11 @@ static void OnGetMinMaxInfo(HWND hwnd, LPMINMAXINFO lpMinMaxInfo)
     DWORD exstyle = GetWindowExStyle(hwnd);
     BOOL bMenu = FALSE;
 
+    // restrict the maximum size of the main window
     SetRectEmpty(&rc);
     rc.right = 192;
     rc.bottom = rc.right * g_settings.m_nHeight / g_settings.m_nWidth;
     AdjustWindowRectEx(&rc, style, bMenu, exstyle);
-
     lpMinMaxInfo->ptMinTrackSize.x = rc.right - rc.left;
     lpMinMaxInfo->ptMinTrackSize.y = rc.bottom - rc.top;
 }
