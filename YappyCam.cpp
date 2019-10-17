@@ -697,50 +697,66 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
     InitializeCriticalSection(&g_lock);
 
+    // main window handle
     g_hMainWnd = hwnd;
 
+    // device context of the display
     g_hdcScreen = CreateDC(TEXT("DISPLAY"), NULL, NULL, NULL);
 
+    // get sound devices and wave formats
     get_sound_devices(m_sound_devices);
     get_wave_formats(m_wave_formats);
 
+    // load bitmaps
     HINSTANCE hInst = GetModuleHandle(NULL);
     s_hbmRec = DoLoadBitmap(hInst, IDB_REC);
     s_hbmPause = DoLoadBitmap(hInst, IDB_PAUSE);
     s_hbmStop = DoLoadBitmap(hInst, IDB_STOP);
     s_hbmDots = DoLoadBitmap(hInst, IDB_DOTS);
 
+    // set the bitmap to each button
     SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
     SendDlgItemMessage(hwnd, psh2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmPause);
     SendDlgItemMessage(hwnd, psh3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmStop);
     SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
 
+    // hide button focus
     HideButtonFocus(hwnd, GetDlgItem(hwnd, psh1));
     HideButtonFocus(hwnd, GetDlgItem(hwnd, psh2));
     HideButtonFocus(hwnd, GetDlgItem(hwnd, psh3));
     HideButtonFocus(hwnd, GetDlgItem(hwnd, psh4));
 
+    // no frames
     s_nFrames = 0;
 
+    // s_button_width for layout purpose
     RECT rc;
     GetWindowRect(GetDlgItem(hwnd, psh1), &rc);
     s_button_width = rc.right - rc.left;
 
+    // s_progress_width for layout purpose
     GetWindowRect(GetDlgItem(hwnd, scr1), &rc);
     s_progress_width = rc.right - rc.left;
 
+    // load settings
     g_settings.load(hwnd);
 
+    // setup sound device
     auto& format = m_wave_formats[g_settings.m_iWaveFormat];
     m_sound.SetInfo(format.channels, format.samples, format.bits);
     m_sound.SetDevice(m_sound_devices[g_settings.m_iSoundDev]);
 
+    // uncheck some buttons
     Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
 
+    // fix window size
     g_settings.fix_size(hwnd);
+
+    // ?
     PostMessage(hwnd, WM_SIZE, 0, 0);
 
+    // restart hearing and watching
     m_sound.StartHearing();
     DoStartStopTimers(hwnd, TRUE);
 
@@ -751,6 +767,7 @@ static void OnConfig(HWND hwnd)
 {
     HWND hButton = GetDlgItem(hwnd, psh4);
 
+    // manage the pressed status of psh4
     if (GetAsyncKeyState(VK_MENU) < 0 &&
         GetAsyncKeyState(L'C') < 0)
     {
@@ -770,50 +787,62 @@ static void OnConfig(HWND hwnd)
         }
     }
 
+    // get the pos and size of the button, in screen coordinates
     RECT rc;
     GetWindowRect(hButton, &rc);
 
+    // get the cursor pos in screen coordinates
     POINT pt;
     GetCursorPos(&pt);
 
     if (!PtInRect(&rc, pt))
     {
+        // the center point
         pt.x = (rc.left + rc.right) / 2;
         pt.y = (rc.top + rc.bottom) / 2;
     }
 
+    // load the menu from resource
     HMENU hMenu = LoadMenu(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_MAINMENU));
     if (!hMenu)
     {
         Button_SetCheck(hButton, BST_UNCHECKED);
         return;
     }
-
     HMENU hSubMenu = GetSubMenu(hMenu, 0);
 
+    // setup the parameters to show a popup menu
     TPMPARAMS params;
     ZeroMemory(&params, sizeof(params));
     params.cbSize = sizeof(params);
     params.rcExclude = rc;
 
+    // track the popup menu
     SetForegroundWindow(hwnd);
     UINT uFlags = TPM_LEFTBUTTON | TPM_LEFTALIGN | TPM_VERTICAL | TPM_RETURNCMD;
     UINT nCmd = TrackPopupMenuEx(hSubMenu, uFlags, rc.left, pt.y, hwnd, &params);
+
+    // destroy the menu
     DestroyMenu(hMenu);
 
+    // fix messaging (workaround)
     PostMessage(hwnd, WM_NULL, 0, 0);
 
+    // invoke command
     if (nCmd != 0)
     {
         PostMessage(hwnd, WM_COMMAND, nCmd, 0);
     }
 
+    // unpressed if necessary
     GetCursorPos(&pt);
     if (!PtInRect(&rc, pt) || GetAsyncKeyState(VK_LBUTTON) >= 0)
     {
         Button_SetCheck(hButton, BST_UNCHECKED);
     }
 }
+
+
 static INT s_nGotMovieID = 0;
 static INT s_nFramesToWrite = 0;
 static HANDLE s_hFinalizingThread = NULL;
@@ -829,6 +858,7 @@ BOOL DoSaveAviFile(HWND hwnd, LPCTSTR pszFileName, PAVISTREAM paviVideo,
     LPAVICOMPRESSOPTIONS lpOptions[2];
     INT nCount = 2;
 
+    
     for (i = 0; i < nCount; i++)
     {
         ZeroMemory(&options[i], sizeof(AVICOMPRESSOPTIONS));
@@ -837,7 +867,7 @@ BOOL DoSaveAviFile(HWND hwnd, LPCTSTR pszFileName, PAVISTREAM paviVideo,
 
     pavis[0] = paviVideo;
     pavis[1] = paviAudio;
-    AVISaveOptions(NULL, 0, nCount, pavis, lpOptions);
+    //AVISaveOptions(NULL, 0, nCount, pavis, lpOptions);
 
     INT nAVIERR;
     nAVIERR = AVISaveV(pszFileName, NULL, NULL, nCount, pavis, lpOptions);
@@ -848,7 +878,7 @@ BOOL DoSaveAviFile(HWND hwnd, LPCTSTR pszFileName, PAVISTREAM paviVideo,
         return FALSE;
     }
 
-    AVISaveOptionsFree(nCount, lpOptions);
+    //AVISaveOptionsFree(nCount, lpOptions);
     return TRUE;
 }
 
@@ -873,6 +903,7 @@ BOOL DoUniteAviAndWav(HWND hwnd, const WCHAR *new_avi,
     PAVISTREAM paviAudio = NULL;
     if (wav_file)
     {
+        // there is sound data
         nAVIERR = AVIStreamOpenFromFile(&paviAudio, wav_file, streamtypeAUDIO, 0,
                                         OF_READ | OF_SHARE_DENY_NONE, NULL);
         if (nAVIERR)
@@ -886,6 +917,7 @@ BOOL DoUniteAviAndWav(HWND hwnd, const WCHAR *new_avi,
     }
     else
     {
+        // there is no sound data
         ret = CopyFile(old_avi, new_avi, FALSE);
     }
 
@@ -931,7 +963,7 @@ void DoDeleteTempFiles(HWND hwnd)
         DeleteFile(szPath);
     }
 
-    // delete sound
+    // delete sound file
     DeleteFile(sound_name.c_str());
 
     // remove the movie directory
@@ -1084,12 +1116,14 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
 
 BOOL DoCreateFinalizingThread(HWND hwnd)
 {
+    // close previous handle
     if (s_hFinalizingThread)
     {
         CloseHandle(s_hFinalizingThread);
         s_hFinalizingThread = NULL;
     }
 
+    // start up a new thread for finalizing
     DWORD tid = 0;
     s_bFinalizeCancelled = FALSE;
     s_hFinalizingThread = ::CreateThread(NULL, 0, FinalizingThreadFunction, NULL, 0, &tid);
@@ -1098,6 +1132,7 @@ BOOL DoCreateFinalizingThread(HWND hwnd)
 
 static void OnStop(HWND hwnd)
 {
+    // stop
     DoStartStopTimers(hwnd, FALSE);
     m_sound.StopHearing();
     g_writer.release();
@@ -1106,6 +1141,7 @@ static void OnStop(HWND hwnd)
 
     if (!s_nFrames)
     {
+        // not recorded yet
         Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
         Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
@@ -1113,11 +1149,15 @@ static void OnStop(HWND hwnd)
         SendDlgItemMessage(hwnd, psh3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmStop);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
 
+        // restart hearing and watching
         m_sound.StartHearing();
         DoStartStopTimers(hwnd, TRUE);
         return;
     }
 
+    // now, the movie has been recorded
+
+    // wait for the thread
     if (s_hFinalizingThread)
     {
         s_bFinalizeCancelled = TRUE;
@@ -1127,21 +1167,23 @@ static void OnStop(HWND hwnd)
         g_settings.SetPictureType(hwnd, s_nOldPictureType);
     }
 
+    // prepare for finalizing
     s_nFramesToWrite = s_nFrames;
     s_nFrames = 0;
     SendDlgItemMessage(hwnd, scr1, PBM_SETPOS, 0, 0);
-
     s_nOldPictureType = g_settings.GetPictureType();
     g_settings.SetPictureType(hwnd, PT_FINALIZING);
     g_settings.m_strStatusText = LoadStringDx(IDS_FINALIZING);
     InvalidateRect(g_hMainWnd, NULL, TRUE);
 
+    // ask for finalizing
     INT nID = MessageBox(hwnd, LoadStringDx(IDS_FINALIZEQUE),
                          LoadStringDx(IDS_WANNAFINALIZE),
                          MB_ICONINFORMATION | MB_YESNOCANCEL);
     switch (nID)
     {
     case IDYES:
+        // disable buttons
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
         SendDlgItemMessage(hwnd, psh2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
         SendDlgItemMessage(hwnd, psh3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
@@ -1150,10 +1192,17 @@ static void OnStop(HWND hwnd)
         EnableWindow(GetDlgItem(hwnd, psh2), FALSE);
         EnableWindow(GetDlgItem(hwnd, psh3), FALSE);
         EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
+
+        // create a thread
         DoCreateFinalizingThread(hwnd);
         break;
     case IDNO:
+        // cancel
+        DoDeleteTempFiles(hwnd);
+        PostMessage(hwnd, WM_COMMAND, ID_FINALIZECANCEL, 0);
+        break;
     case IDCANCEL:
+        // cancel
         PostMessage(hwnd, WM_COMMAND, ID_FINALIZECANCEL, 0);
         break;
     }
@@ -1161,72 +1210,87 @@ static void OnStop(HWND hwnd)
 
 static void OnFinalized(HWND hwnd)
 {
+    // close the thread handle
     if (s_hFinalizingThread)
     {
         CloseHandle(s_hFinalizingThread);
         s_hFinalizingThread = NULL;
     }
 
+    // uncheck buttons
     Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
 
+    // if any config window is shown, enable some buttons
     if (!IsWindow(g_hwndSoundInput) &&
         !IsWindow(g_hwndPictureInput) &&
         !IsWindow(g_hwndSaveTo))
     {
+        //
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
         EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
         EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
     }
 
+    // enable some buttons
     SendDlgItemMessage(hwnd, psh2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmPause);
     SendDlgItemMessage(hwnd, psh3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmStop);
     EnableWindow(GetDlgItem(hwnd, psh2), TRUE);
     EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
 
     TCHAR szPath[MAX_PATH];
+    TCHAR szText[256 + 128];
+
+    // delete temporary movie file
     StringCbPrintf(szPath, sizeof(szPath),
                    g_settings.m_strMovieTempFileName.c_str(),
                    s_nGotMovieID);
     DeleteFile(szPath);
 
+    // build movie file path
     StringCbPrintf(szPath, sizeof(szPath),
                    g_settings.m_strMovieFileName.c_str(),
                    s_nGotMovieID);
 
-    TCHAR szText[256 + 128];
+    // build the message text
     StringCbPrintf(szText, sizeof(szText),
                    LoadStringDx(IDS_FINALIZEDONE), szPath);
 
+    // delete the temporary files
     DoDeleteTempFiles(hwnd);
 
+    // query for browse
     INT nID = MessageBox(hwnd, szText, LoadStringDx(IDS_APPTITLE),
                          MB_ICONINFORMATION | MB_YESNO);
     if (nID == IDYES)
     {
+        // open explorer and select the file icon
         StringCbPrintf(szText, sizeof(szText),
                        L"/e,/select,%s", szPath);
         ShellExecute(hwnd, NULL, L"explorer", szText, NULL, SW_SHOWNORMAL);
     }
 
+    // restart hearing and watching
     g_settings.SetPictureType(hwnd, s_nOldPictureType);
-
     m_sound.StartHearing();
     DoStartStopTimers(hwnd, TRUE);
 }
 
 static void OnFinalizeFail(HWND hwnd)
 {
+    // close the thread handle
     if (s_hFinalizingThread)
     {
         CloseHandle(s_hFinalizingThread);
         s_hFinalizingThread = NULL;
     }
 
+    // uncheck some buttons
     Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
 
+    // enable some buttons
     if (!IsWindow(g_hwndSoundInput) &&
         !IsWindow(g_hwndPictureInput) &&
         !IsWindow(g_hwndSaveTo))
@@ -1237,30 +1301,37 @@ static void OnFinalizeFail(HWND hwnd)
         EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
     }
 
+    // enable some buttons
     SendDlgItemMessage(hwnd, psh2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmPause);
     SendDlgItemMessage(hwnd, psh3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmStop);
     EnableWindow(GetDlgItem(hwnd, psh2), TRUE);
     EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
 
+    // resume picture type
     g_settings.SetPictureType(hwnd, s_nOldPictureType);
 
+    // show a message of failure
     MessageBox(hwnd, LoadStringDx(IDS_FINALIZEFAIL), NULL, MB_ICONERROR);
 
+    // restart hearing and watching
     m_sound.StartHearing();
     DoStartStopTimers(hwnd, TRUE);
 }
 
 static void OnFinalizeCancel(HWND hwnd)
 {
+    // close the thread handle
     if (s_hFinalizingThread)
     {
         CloseHandle(s_hFinalizingThread);
         s_hFinalizingThread = NULL;
     }
 
+    // uncheck some buttons
     Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
     Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
 
+    // enable some buttons
     if (!IsWindow(g_hwndSoundInput) &&
         !IsWindow(g_hwndPictureInput) &&
         !IsWindow(g_hwndSaveTo))
@@ -1271,15 +1342,19 @@ static void OnFinalizeCancel(HWND hwnd)
         EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
     }
 
+    // enable some buttons
     SendDlgItemMessage(hwnd, psh2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmPause);
     SendDlgItemMessage(hwnd, psh3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmStop);
     EnableWindow(GetDlgItem(hwnd, psh2), TRUE);
     EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
 
+    // resume the picture type
     g_settings.SetPictureType(hwnd, s_nOldPictureType);
 
+    // show a message of cancellation
     MessageBox(hwnd, LoadStringDx(IDS_FINALIZECANCELLED), NULL, MB_ICONERROR);
 
+    // restart hearing and watching
     m_sound.StartHearing();
     DoStartStopTimers(hwnd, TRUE);
 }
@@ -1468,6 +1543,7 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             if (g_settings.m_nBrightness != 0 ||
                 g_settings.m_nContrast != 100)
             {
+                // modify the brightness and contrast values
                 double alpha = g_settings.m_nContrast / 100.0;
                 double beta = g_settings.m_nBrightness;
 
@@ -1478,17 +1554,20 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
                               image.data, &g_bi, DIB_RGB_COLORS, SRCCOPY);
                 if (g_bWriting && g_writer.isOpened())
                 {
+                    // write a frame
                     g_writer << image;
                     ++s_nFrames;
                 }
             }
             else
             {
+                // no modification
                 StretchDIBits(hdc, 0, 0, cx, cy,
                               0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
                               s_frame.data, &g_bi, DIB_RGB_COLORS, SRCCOPY);
                 if (g_bWriting && g_writer.isOpened())
                 {
+                    // write a frame
                     g_writer << s_frame;
                     ++s_nFrames;
                 }
@@ -1521,6 +1600,7 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
 
                 if (g_hbm && g_bWriting && g_writer.isOpened())
                 {
+                    // write a frame
                     cv::Size size(bm.bmWidth, bm.bmHeight);
                     cv::Mat mat(size, CV_8UC3, bm.bmBits, bm.bmWidthBytes);
                     g_writer << mat;
@@ -1601,6 +1681,7 @@ static void OnMove(HWND hwnd, int x, int y)
     RECT rc;
     GetWindowRect(hwnd, &rc);
 
+    // record the positions for usability
     switch (g_settings.GetPictureType())
     {
     case PT_BLACK:
@@ -1625,44 +1706,52 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
     if (IsMinimized(hwnd))
         return;
 
+    // get client area minus buttons and progress bar
     RECT rc;
     GetClientRect(hwnd, &rc);
     rc.right -= s_button_width + s_progress_width;
     cx = rc.right;
     cy = rc.bottom;
 
+    // move the STATIC control
     MoveWindow(GetDlgItem(hwnd, stc1), 0, 0, cx, cy, TRUE);
 
     INT x = cx;
     INT y = 0, cy2;
     INT i = 0;
 
+    // move psh1
     y = i * cy / 4;
     cy2 = (i + 1) * cy / 4 - y;
     MoveWindow(GetDlgItem(hwnd, psh1), x, y, s_button_width, cy2, TRUE);
     ++i;
 
+    // move psh2
     y = i * cy / 4;
     cy2 = (i + 1) * cy / 4 - y;
     MoveWindow(GetDlgItem(hwnd, psh2), x, y, s_button_width, cy2, TRUE);
     ++i;
 
+    // move psh3
     y = i * cy / 4;
     cy2 = (i + 1) * cy / 4 - y;
     MoveWindow(GetDlgItem(hwnd, psh3), x, y, s_button_width, cy2, TRUE);
     ++i;
 
+    // move psh4
     y = i * cy / 4;
     cy2 = (i + 1) * cy / 4 - y;
     MoveWindow(GetDlgItem(hwnd, psh4), x, y, s_button_width, cy2, TRUE);
     ++i;
 
+    // move the progress bar
     x = cx + s_button_width;
     y = 0;
     MoveWindow(GetDlgItem(hwnd, scr1), x, y, s_progress_width, cy, TRUE);
 
     if (!IsMaximized(hwnd))
     {
+        // record the sizes for usability
         RECT rcWnd;
         GetWindowRect(hwnd, &rcWnd);
         INT cxWnd = rcWnd.right - rcWnd.left;
@@ -1686,26 +1775,32 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
         }
     }
 
+    // trigger to redraw
     InvalidateRect(hwnd, &rc, TRUE);
 }
 
 static void OnDestroy(HWND hwnd)
 {
+    // stop watching and hearing
     DoStartStopTimers(hwnd, FALSE);
     m_sound.StopHearing();
 
+    // save application's settings
     g_settings.save(hwnd);
 
     DeleteCriticalSection(&g_lock);
 
+    // delete bitmaps
     DeleteObject(s_hbmRec);
     DeleteObject(s_hbmPause);
     DeleteObject(s_hbmStop);
     DeleteObject(s_hbmDots);
 
+    // delete screen DC
     DeleteDC(g_hdcScreen);
     g_hdcScreen = NULL;
 
+    // no use of the main window any more
     g_hMainWnd = NULL;
 }
 
@@ -1729,6 +1824,7 @@ void DoDrawCursor(HDC hDC, INT dx, INT dy)
 
 void DoScreenCap(HWND hwnd, BOOL bCursor)
 {
+    // sanity check
     if (g_settings.m_nWidth != g_settings.m_cxCap ||
         g_settings.m_nHeight != g_settings.m_cyCap)
     {
@@ -1738,6 +1834,8 @@ void DoScreenCap(HWND hwnd, BOOL bCursor)
     if (HDC hdcMem = CreateCompatibleDC(g_hdcScreen))
     {
         EnterCriticalSection(&g_lock);
+
+        // screen capture!
         HGDIOBJ hbmOld = SelectObject(hdcMem, g_hbm);
         BitBlt(hdcMem,
                0, 0,
@@ -1750,6 +1848,7 @@ void DoScreenCap(HWND hwnd, BOOL bCursor)
             DoDrawCursor(hdcMem, g_settings.m_xCap, g_settings.m_yCap);
         }
         SelectObject(hdcMem, hbmOld);
+
         LeaveCriticalSection(&g_lock);
         DeleteDC(hdcMem);
     }
@@ -1765,21 +1864,26 @@ static void OnTimer(HWND hwnd, UINT id)
         case PT_BLACK:
         case PT_WHITE:
         case PT_FINALIZING:
+            // no capture
             break;
         case PT_SCREENCAP:
+            // take a screen capture
             DoScreenCap(hwnd, g_settings.m_bDrawCursor);
             break;
         case PT_VIDEOCAP:
+            // take a camera capture
             EnterCriticalSection(&g_lock);
             g_cap >> s_frame;
             LeaveCriticalSection(&g_lock);
             break;
         }
+        // trigger to redraw
         InvalidateRect(hwnd, NULL, TRUE);
         break;
     case SOUND_TIMER_ID:
         if (!g_settings.m_bNoSound)
         {
+            // show sound loudness
             LONG nValue = m_sound.m_nValue;
             LONG nMax = m_sound.m_nMax;
             SendDlgItemMessage(hwnd, scr1, PBM_SETRANGE32, 0, nMax);
@@ -1787,6 +1891,7 @@ static void OnTimer(HWND hwnd, UINT id)
         }
         else
         {
+            // no sound
             SendDlgItemMessage(hwnd, scr1, PBM_SETRANGE32, 0, 0);
             SendDlgItemMessage(hwnd, scr1, PBM_SETPOS, 0, 0);
         }
@@ -1794,6 +1899,7 @@ static void OnTimer(HWND hwnd, UINT id)
     }
 }
 
+// the dialog procedure of the main window
 static INT_PTR CALLBACK
 DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -1831,6 +1937,7 @@ WinMain(HINSTANCE   hInstance,
         LPSTR       lpCmdLine,
         int         nCmdShow)
 {
+    // don't start two applications at once
     if (HWND hwnd = FindWindow(L"#32770", LoadStringDx(IDS_APPTITLE)))
     {
         PostMessage(hwnd, DM_REPOSITION, 0, 0);
@@ -1838,6 +1945,7 @@ WinMain(HINSTANCE   hInstance,
         return EXIT_SUCCESS;
     }
 
+    // initialize COM
     HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     if (FAILED(hr))
     {
@@ -1845,8 +1953,14 @@ WinMain(HINSTANCE   hInstance,
         return EXIT_FAILURE;
     }
 
+    // initialize comctl32
     InitCommonControls();
+
+    // show the main window
     DialogBox(hInstance, MAKEINTRESOURCE(IDD_MAIN), NULL, DialogProc);
+
+    // uninitialize COM
     CoUninitialize();
+
     return EXIT_SUCCESS;
 }
