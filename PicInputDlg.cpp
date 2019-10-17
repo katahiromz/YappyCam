@@ -449,10 +449,7 @@ static void Page0_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     switch (id)
     {
     case cmb1:
-        if (codeNotify == CBN_SELCHANGE)
-        {
-            Page0_OnCmb1(hwnd);
-        }
+        Page0_OnCmb1(hwnd);
         break;
     case edt1:
     case edt2:
@@ -608,10 +605,7 @@ static void Page1_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         }
         break;
     case cmb1:
-        if (codeNotify == CBN_SELCHANGE)
-        {
-            Page1_OnCmb1(hwnd);
-        }
+        Page1_OnCmb1(hwnd);
         break;
     case edt1:
         if (codeNotify == EN_CHANGE)
@@ -856,16 +850,10 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         DestroyWindow(hwnd);
         break;
     case cmb1:
-        if (codeNotify == CBN_SELCHANGE)
-        {
-            OnCmb1(hwnd);
-        }
+        OnCmb1(hwnd);
         break;
     case cmb2:
-        if (codeNotify == CBN_SELCHANGE || codeNotify == CBN_EDITCHANGE)
-        {
-            OnCmb2(hwnd);
-        }
+        OnCmb2(hwnd);
         break;
     }
 }

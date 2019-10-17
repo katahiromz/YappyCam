@@ -102,7 +102,7 @@ static void OnCmb1(HWND hwnd)
 
     HWND hCmb1 = GetDlgItem(hwnd, cmb1);
     TCHAR szPath[MAX_PATH];
-    ComboBox_GetText(hCmb1, szPath, ARRAYSIZE(szPath));
+    GetDlgItemText(hwnd, cmb1, szPath, ARRAYSIZE(szPath));
     StrTrim(szPath, L" \t");
 
     g_settings.m_strDir = szPath;
@@ -116,7 +116,7 @@ static void OnCmb2(HWND hwnd)
 
     HWND hCmb2 = GetDlgItem(hwnd, cmb2);
     TCHAR szFilename[MAX_PATH];
-    ComboBox_GetText(hCmb2, szFilename, ARRAYSIZE(szFilename));
+    GetDlgItemText(hwnd, cmb2, szFilename, ARRAYSIZE(szFilename));
     StrTrim(szFilename, L" \t");
 
     g_settings.m_strImageFileName = szFilename;
@@ -129,7 +129,7 @@ static void OnCmb3(HWND hwnd)
 
     HWND hCmb3 = GetDlgItem(hwnd, cmb3);
     TCHAR szValue[MAX_PATH];
-    ComboBox_GetText(hCmb3, szValue, ARRAYSIZE(szValue));
+    GetDlgItemText(hwnd, cmb3, szValue, ARRAYSIZE(szValue));
     StrTrim(szValue, L" \t");
 
     DWORD dwFOURCC = wcstoul(szValue, NULL, 0);
@@ -157,22 +157,13 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         }
         break;
     case cmb1:
-        if (codeNotify == CBN_SELCHANGE || codeNotify == CBN_EDITCHANGE)
-        {
-            OnCmb1(hwnd);
-        }
+        OnCmb1(hwnd);
         break;
     case cmb2:
-        if (codeNotify == CBN_SELCHANGE || codeNotify == CBN_EDITCHANGE)
-        {
-            OnCmb2(hwnd);
-        }
+        OnCmb2(hwnd);
         break;
     case cmb3:
-        if (codeNotify == CBN_SELCHANGE || codeNotify == CBN_EDITCHANGE)
-        {
-            OnCmb3(hwnd);
-        }
+        OnCmb3(hwnd);
         break;
     }
 }
