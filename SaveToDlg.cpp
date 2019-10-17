@@ -20,7 +20,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     ComboBox_AddString(hCmb3, TEXT("0x34363248"));
 
     WCHAR szValue[64];
-    StringCbPrintf(szValue, sizeof(szValue), L"0x%08lX", g_settings.m_dwFOURCC);
+    StringCbPrintf(szValue, sizeof(szValue), L"0x%08lx", g_settings.m_dwFOURCC);
     ComboBox_SetText(hCmb3, szValue);
 
     SetDlgItemText(hwnd, cmb1, g_settings.m_strDir.c_str());
