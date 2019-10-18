@@ -154,7 +154,7 @@ STRINGTABLE
     IDS_FINALIZEDONE, "The movie file is completed at the following location:\n\n%s\n\nWanna browse?"
     IDS_FINALIZECANCELLED, "Finalizing is cancelled."
     IDS_SETLOCATION, "Specify the folder location to save in:"
-    IDS_VERSIONTEXT, "YappyCam Version 0.0\nKatayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>"
+    IDS_VERSIONTEXT, "YappyCam Version 0.5\nKatayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>"
     IDS_VERSIONCAPTION, "About YappyCam"
 }
 
