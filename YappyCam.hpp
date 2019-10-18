@@ -75,7 +75,7 @@ struct Settings
     INT m_nBrightness;
     INT m_nContrast;
     DWORD m_dwFOURCC;
-    UINT m_nHotKey[5];
+    UINT m_nHotKey[6];
     std::wstring m_strDir;
     std::wstring m_strMovieDir;
     std::wstring m_strImageFileName;
@@ -146,6 +146,7 @@ void DoStartStopTimers(HWND hwnd, BOOL bStart);
 #define HOTKEY_2_ID  0x1002
 #define HOTKEY_3_ID  0x1003
 #define HOTKEY_4_ID  0x1004
+#define HOTKEY_5_ID  0x1005
 BOOL DoSetupHotkeys(HWND hwnd, BOOL bSetup);
 
 #endif  // ndef YAPPYCAM_HPP_
