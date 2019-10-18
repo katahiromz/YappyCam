@@ -16,6 +16,7 @@ IDR_MAINMENU MENU
         MENUITEM "&Sound Input...", ID_SOUNDINPUT
         MENUITEM SEPARATOR
         MENUITEM "Save &Options...", ID_SAVETO
+        MENUITEM "&Hotkeys...", ID_HOTKEYS
         MENUITEM SEPARATOR
         MENUITEM "&About", ID_ABOUT
         MENUITEM SEPARATOR
@@ -127,6 +128,23 @@ FONT 8, "Tahoma"
     COMBOBOX cmb2, 80, 45, 90, 300, CBS_HASSTRINGS | CBS_AUTOHSCROLL | CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     LTEXT "&FOURCC:", IDC_STATIC, 5, 67, 70, 12
     COMBOBOX cmb3, 80, 65, 90, 300, CBS_HASSTRINGS | CBS_AUTOHSCROLL | CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+}
+
+IDD_HOTKEYS DIALOG 0, 0, 165, 105
+CAPTION "Hotkeys"
+STYLE DS_MODALFRAME | WS_POPUPWINDOW | WS_CAPTION
+FONT 8, "Tahoma"
+{
+    LTEXT "Start &Recording:", IDC_STATIC, 5, 7, 70, 12
+    CONTROL "", edt1, "msctls_hotkey32", 0, 80, 5, 80, 14
+    LTEXT "&Pause", IDC_STATIC, 5, 27, 70, 12
+    CONTROL "", edt2, "msctls_hotkey32", 0, 80, 25, 80, 14
+    LTEXT "&Stop", IDC_STATIC, 5, 47, 70, 12
+    CONTROL "", edt3, "msctls_hotkey32", 0, 80, 45, 80, 14
+    LTEXT "&Config", IDC_STATIC, 5, 67, 70, 12
+    CONTROL "", edt4, "msctls_hotkey32", 0, 80, 65, 80, 14
+    LTEXT "&Minimize", IDC_STATIC, 5, 87, 70, 12
+    CONTROL "", edt5, "msctls_hotkey32", 0, 80, 85, 80, 14
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -61,6 +61,7 @@ add_definitions(-DUNICODE -D_UNICODE)
 # YappyCam.exe
 add_executable(YappyCam WIN32
     YappyCam.cpp
+    hotkeys_dlg.cpp
     misc.cpp
     sound.cpp
     sound_dlg.cpp

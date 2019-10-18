@@ -90,6 +90,7 @@ void Settings::init()
     m_nSoundDlgX = m_nSoundDlgY = CW_USEDEFAULT;
     m_nPicDlgX = m_nPicDlgY = CW_USEDEFAULT;
     m_nSaveToDlgX = m_nSaveToDlgY = CW_USEDEFAULT;
+    m_nHotKeysDlgX = m_nHotKeysDlgY = CW_USEDEFAULT;
 
     m_nFPSx100 = UINT(DEFAULT_FPS * 100);
     m_bDrawCursor = TRUE;
@@ -99,6 +100,12 @@ void Settings::init()
     m_nBrightness = 0;
     m_nContrast = 100;
     m_dwFOURCC = 0x7634706d; // mp4v
+
+    m_nHotKey[0] = MAKEWORD('R', HOTKEYF_ALT);
+    m_nHotKey[1] = MAKEWORD('P', HOTKEYF_ALT);
+    m_nHotKey[2] = MAKEWORD('S', HOTKEYF_ALT);
+    m_nHotKey[3] = MAKEWORD('C', HOTKEYF_ALT);
+    m_nHotKey[4] = MAKEWORD('M', HOTKEYF_ALT);
 
     TCHAR szPath[MAX_PATH];
 
@@ -173,6 +180,8 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"PicDlgY", (DWORD&)m_nPicDlgY);
     app_key.QueryDword(L"SaveToDlgX", (DWORD&)m_nSaveToDlgX);
     app_key.QueryDword(L"SaveToDlgY", (DWORD&)m_nSaveToDlgY);
+    app_key.QueryDword(L"HotKeysDlgX", (DWORD&)m_nHotKeysDlgX);
+    app_key.QueryDword(L"HotKeysDlgX", (DWORD&)m_nHotKeysDlgY);
 
     app_key.QueryDword(L"FPSx100", (DWORD&)m_nFPSx100);
     app_key.QueryDword(L"DrawCursor", (DWORD&)m_bDrawCursor);
@@ -183,6 +192,12 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"Brightness", (DWORD&)m_nBrightness);
     app_key.QueryDword(L"Contrast", (DWORD&)m_nContrast);
     app_key.QueryDword(L"FOURCC", (DWORD&)m_dwFOURCC);
+
+    app_key.QueryDword(L"HotKey0", (DWORD&)m_nHotKey[0]);
+    app_key.QueryDword(L"HotKey1", (DWORD&)m_nHotKey[1]);
+    app_key.QueryDword(L"HotKey2", (DWORD&)m_nHotKey[2]);
+    app_key.QueryDword(L"HotKey3", (DWORD&)m_nHotKey[3]);
+    app_key.QueryDword(L"HotKey4", (DWORD&)m_nHotKey[4]);
 
     WCHAR szText[MAX_PATH];
 
@@ -278,6 +293,8 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"PicDlgY", m_nPicDlgY);
     app_key.SetDword(L"SaveToDlgX", m_nSaveToDlgX);
     app_key.SetDword(L"SaveToDlgY", m_nSaveToDlgY);
+    app_key.SetDword(L"HotKeysDlgX", m_nHotKeysDlgX);
+    app_key.SetDword(L"HotKeysDlgX", m_nHotKeysDlgY);
 
     app_key.SetDword(L"FPSx100", m_nFPSx100);
     app_key.SetDword(L"DrawCursor", m_bDrawCursor);
@@ -288,6 +305,12 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"Brightness", m_nBrightness);
     app_key.SetDword(L"Contrast", m_nContrast);
     app_key.SetDword(L"FOURCC", m_dwFOURCC);
+
+    app_key.SetDword(L"HotKey0", m_nHotKey[0]);
+    app_key.SetDword(L"HotKey1", m_nHotKey[1]);
+    app_key.SetDword(L"HotKey2", m_nHotKey[2]);
+    app_key.SetDword(L"HotKey3", m_nHotKey[3]);
+    app_key.SetDword(L"HotKey4", m_nHotKey[4]);
 
     app_key.SetSz(L"Dir", m_strDir.c_str());
     app_key.SetSz(L"MovieDir", m_strMovieDir.c_str());
@@ -777,6 +800,9 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     // ?
     PostMessage(hwnd, WM_SIZE, 0, 0);
 
+    // setup hotkeys
+    DoSetupHotkeys(hwnd, TRUE);
+
     // restart hearing and watching
     g_settings.update(hwnd);
     m_sound.StartHearing();
@@ -785,29 +811,14 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     return TRUE;
 }
 
-static void OnConfig(HWND hwnd)
+void DoConfig(HWND hwnd)
 {
-    HWND hButton = GetDlgItem(hwnd, psh4);
+    if (!IsWindowEnabled(GetDlgItem(hwnd, psh4)))
+    {
+        return;
+    }
 
-    // manage the pressed status of psh4
-    if (GetAsyncKeyState(VK_MENU) < 0 &&
-        GetAsyncKeyState(L'C') < 0)
-    {
-        // Alt+C
-        Button_SetCheck(hButton, BST_CHECKED);
-    }
-    else
-    {
-        if (Button_GetCheck(hButton) & BST_CHECKED)
-        {
-            Button_SetCheck(hButton, BST_CHECKED);
-        }
-        else
-        {
-            Button_SetCheck(hButton, BST_UNCHECKED);
-            return;
-        }
-    }
+    HWND hButton = GetDlgItem(hwnd, psh4);
 
     // get the pos and size of the button, in screen coordinates
     RECT rc;
@@ -855,9 +866,41 @@ static void OnConfig(HWND hwnd)
     {
         PostMessage(hwnd, WM_COMMAND, nCmd, 0);
     }
+}
+
+static void OnConfig(HWND hwnd)
+{
+    HWND hButton = GetDlgItem(hwnd, psh4);
+
+    // manage the pressed status of psh4
+    if (GetAsyncKeyState(VK_MENU) < 0 &&
+        GetAsyncKeyState(L'C') < 0)
+    {
+        // Alt+C
+        Button_SetCheck(hButton, BST_CHECKED);
+    }
+    else
+    {
+        if (IsDlgButtonChecked(hwnd, psh4) == BST_CHECKED)
+        {
+            Button_SetCheck(hButton, BST_CHECKED);
+        }
+        else
+        {
+            Button_SetCheck(hButton, BST_UNCHECKED);
+            return;
+        }
+    }
+
+    DoConfig(hwnd);
+
+    POINT pt;
+    GetCursorPos(&pt);
+
+    RECT rc;
+    GetWindowRect(hwnd, &rc);
 
     // unpressed if necessary
-    GetCursorPos(&pt);
     if (!PtInRect(&rc, pt) || GetAsyncKeyState(VK_LBUTTON) >= 0)
     {
         Button_SetCheck(hButton, BST_UNCHECKED);
@@ -1179,8 +1222,11 @@ BOOL DoCreateFinalizingThread(HWND hwnd)
     return s_hFinalizingThread != NULL;
 }
 
-static void OnStop(HWND hwnd)
+void DoStop(HWND hwnd)
 {
+    if (!IsWindowEnabled(GetDlgItem(hwnd, psh3)))
+        return;
+
     // stop
     DoStartStopTimers(hwnd, FALSE);
     m_sound.StopHearing();
@@ -1188,11 +1234,12 @@ static void OnStop(HWND hwnd)
     s_bWriting = FALSE;
     m_sound.SetRecording(FALSE);
 
+    CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
+    CheckDlgButton(hwnd, psh2, BST_UNCHECKED);
+
     if (!s_nFrames)
     {
         // not recorded yet
-        Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
-        Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
         SendDlgItemMessage(hwnd, psh2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmPause);
         SendDlgItemMessage(hwnd, psh3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmStop);
@@ -1303,9 +1350,9 @@ static void OnFinalized(HWND hwnd)
     // if any config window is shown, enable some buttons
     if (!IsWindow(g_hwndSoundInput) &&
         !IsWindow(g_hwndPictureInput) &&
-        !IsWindow(g_hwndSaveTo))
+        !IsWindow(g_hwndSaveTo) &&
+        !IsWindow(g_hwndHotKeys))
     {
-        //
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
         EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
@@ -1372,7 +1419,8 @@ static void OnFinalizeFail(HWND hwnd)
     // enable some buttons
     if (!IsWindow(g_hwndSoundInput) &&
         !IsWindow(g_hwndPictureInput) &&
-        !IsWindow(g_hwndSaveTo))
+        !IsWindow(g_hwndSaveTo) &&
+        !IsWindow(g_hwndHotKeys))
     {
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
@@ -1413,7 +1461,8 @@ static void OnFinalizeCancel(HWND hwnd)
     // enable some buttons
     if (!IsWindow(g_hwndSoundInput) &&
         !IsWindow(g_hwndPictureInput) &&
-        !IsWindow(g_hwndSaveTo))
+        !IsWindow(g_hwndSaveTo) &&
+        !IsWindow(g_hwndHotKeys))
     {
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
@@ -1440,85 +1489,118 @@ static void OnFinalizeCancel(HWND hwnd)
 
 ////////////////////////////////////////////////////////////////////////////
 
-static void OnRec(HWND hwnd)
+void DoRec(HWND hwnd, BOOL bFromButton)
 {
-    if (Button_GetCheck(GetDlgItem(hwnd, psh1)) & BST_CHECKED)
+    if (!IsWindowEnabled(GetDlgItem(hwnd, psh1)))
     {
-        // build image file path
-        TCHAR szPath[MAX_PATH];
-        StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
-                       g_settings.m_nMovieID);
-        PathAppend(szPath, g_settings.m_strImageFileName.c_str());
-        LPCSTR image_name = ansi_from_wide(szPath);
+        return;
+    }
 
-        // open writer
-        g_writer.release();
-        g_writer.open(image_name, 0, 0,
-                      cv::Size(g_settings.m_nWidth, g_settings.m_nHeight));
-        if (!g_writer.isOpened())
+    if (!bFromButton)
+    {
+        if (IsDlgButtonChecked(hwnd, psh1) == BST_CHECKED)
         {
-            ErrorBoxDx(hwnd, TEXT("Unable to open image writer"));
-            Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
+            DoStop(hwnd);
             return;
         }
-
-        // close config windows
-        if (IsWindow(g_hwndSoundInput))
-            PostMessage(g_hwndSoundInput, WM_CLOSE, 0, 0);
-        if (IsWindow(g_hwndPictureInput))
-            PostMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
-        if (IsWindow(g_hwndSaveTo))
-            PostMessage(g_hwndSaveTo, WM_CLOSE, 0, 0);
-
-        // update UI
-        EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
-        SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
-
-        // set sound path
-        StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
-                       g_settings.m_nMovieID);
-        PathAppend(szPath, g_settings.m_strSoundTempFileName.c_str());
-        m_sound.SetSoundFile(szPath);
-
-        // create directories
-        g_settings.create_dirs();
-
-        // OK, start recording
-        s_nFrames = 0;
-        s_nGotMovieID = g_settings.m_nMovieID;
-        s_nFramesToWrite = 0;
-        ++g_settings.m_nMovieID;
-        s_bWriting = TRUE;
-        if (!g_settings.m_bNoSound)
-        {
-            m_sound.SetRecording(TRUE);
-        }
+        CheckDlgButton(hwnd, psh1, BST_CHECKED);
     }
-    else
+
+    // build image file path
+    TCHAR szPath[MAX_PATH];
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                   g_settings.m_nMovieID);
+    PathAppend(szPath, g_settings.m_strImageFileName.c_str());
+    LPCSTR image_name = ansi_from_wide(szPath);
+
+    // open writer
+    g_writer.release();
+    g_writer.open(image_name, 0, 0,
+                  cv::Size(g_settings.m_nWidth, g_settings.m_nHeight));
+    if (!g_writer.isOpened())
     {
-        OnStop(hwnd);
+        ErrorBoxDx(hwnd, TEXT("Unable to open image writer"));
+        CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
+        return;
+    }
+
+    // close config windows
+    if (IsWindow(g_hwndSoundInput))
+        PostMessage(g_hwndSoundInput, WM_CLOSE, 0, 0);
+    if (IsWindow(g_hwndPictureInput))
+        PostMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
+    if (IsWindow(g_hwndSaveTo))
+        PostMessage(g_hwndSaveTo, WM_CLOSE, 0, 0);
+    if (IsWindow(g_hwndHotKeys))
+        PostMessage(g_hwndHotKeys, WM_CLOSE, 0, 0);
+
+    // update UI
+    EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
+    SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+
+    // set sound path
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                   g_settings.m_nMovieID);
+    PathAppend(szPath, g_settings.m_strSoundTempFileName.c_str());
+    m_sound.SetSoundFile(szPath);
+
+    // create directories
+    g_settings.create_dirs();
+
+    // OK, start recording
+    s_nFrames = 0;
+    s_nGotMovieID = g_settings.m_nMovieID;
+    s_nFramesToWrite = 0;
+    ++g_settings.m_nMovieID;
+    s_bWriting = TRUE;
+    if (!g_settings.m_bNoSound)
+    {
+        m_sound.SetRecording(TRUE);
     }
 }
 
-static void OnPause(HWND hwnd)
+void DoResume(HWND hwnd)
 {
-    // is the "pause" button pressed?
-    if (Button_GetCheck(GetDlgItem(hwnd, psh2)) & BST_CHECKED)
+    if (!IsWindowEnabled(GetDlgItem(hwnd, psh2)))
+        return;
+
+    s_bWriting = TRUE;
+    if (!g_settings.m_bNoSound)
     {
-        // disable recording
-        s_bWriting = FALSE;
-        if (!g_settings.m_bNoSound)
-        {
-            m_sound.SetRecording(FALSE);
-        }
+        m_sound.SetRecording(TRUE);
+    }
+}
+
+void DoPause(HWND hwnd)
+{
+    // disable recording
+    s_bWriting = FALSE;
+    if (!g_settings.m_bNoSound)
+    {
+        m_sound.SetRecording(FALSE);
+    }
+}
+
+void DoPauseResume(HWND hwnd, BOOL bFromButton)
+{
+    if (bFromButton)
+    {
+        if (IsDlgButtonChecked(hwnd, psh2) == BST_CHECKED)
+            DoPause(hwnd);
+        else
+            DoResume(hwnd);
     }
     else
     {
-        // enable recording
-        s_bWriting = TRUE;
-        if (!g_settings.m_bNoSound)
+        if (IsDlgButtonChecked(hwnd, psh2) != BST_CHECKED)
         {
-            m_sound.SetRecording(TRUE);
+            DoPause(hwnd);
+            CheckDlgButton(hwnd, psh2, BST_CHECKED);
+        }
+        else
+        {
+            DoResume(hwnd);
+            CheckDlgButton(hwnd, psh2, BST_UNCHECKED);
         }
     }
 }
@@ -1551,19 +1633,19 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     case psh1:
         if (codeNotify == BN_CLICKED)
         {
-            OnRec(hwnd);
+            DoRec(hwnd, TRUE);
         }
         break;
     case psh2:
         if (codeNotify == BN_CLICKED)
         {
-            OnPause(hwnd);
+            DoPauseResume(hwnd, TRUE);
         }
         break;
     case psh3:
         if (codeNotify == BN_CLICKED)
         {
-            OnStop(hwnd);
+            DoStop(hwnd);
         }
         break;
     case psh4:
@@ -1596,7 +1678,8 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         {
             if (!IsWindow(g_hwndSoundInput) &&
                 !IsWindow(g_hwndPictureInput) &&
-                !IsWindow(g_hwndSaveTo))
+                !IsWindow(g_hwndSaveTo) &&
+                !IsWindow(g_hwndHotKeys))
             {
                 SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
                 EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
@@ -1622,6 +1705,14 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         break;
     case ID_EXIT:
         OnExit(hwnd);
+        break;
+    case ID_HOTKEYS:
+        if (0)
+        {
+            SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+            EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
+        }
+        DoHotKeysDialogBox(hwnd);
         break;
     }
 }
@@ -1892,6 +1983,9 @@ static void OnDestroy(HWND hwnd)
     DoStartStopTimers(hwnd, FALSE);
     m_sound.StopHearing();
 
+    // destroy hotkeys
+    DoSetupHotkeys(hwnd, FALSE);
+
     // destroy icon
     DestroyIcon(g_hMainIcon);
     g_hMainIcon = NULL;
@@ -2012,6 +2106,74 @@ static void OnTimer(HWND hwnd, UINT id)
     }
 }
 
+static void DoMinimizeRestore(HWND hwnd)
+{
+    if (IsMinimized(hwnd))
+        ShowWindow(hwnd, SW_RESTORE);
+    else
+        ShowWindow(hwnd, SW_MINIMIZE);
+}
+
+BOOL DoRegisterHotKey(HWND hwnd, WORD wHotKey, INT id, BOOL bRegister)
+{
+    UINT vk = LOBYTE(wHotKey);
+    UINT flags = HIBYTE(wHotKey);
+
+    UINT nMod = 0;
+    if (flags & HOTKEYF_ALT)
+        nMod |= MOD_ALT;
+    if (flags & HOTKEYF_CONTROL)
+        nMod |= MOD_CONTROL;
+    if (flags & HOTKEYF_SHIFT)
+        nMod |= MOD_SHIFT;
+
+    UnregisterHotKey(hwnd, id);
+    if (bRegister && !RegisterHotKey(hwnd, id, nMod, vk))
+    {
+        assert(0);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+BOOL DoSetupHotkeys(HWND hwnd, BOOL bSetup)
+{
+    BOOL b;
+    b = DoRegisterHotKey(hwnd, g_settings.m_nHotKey[0], HOTKEY_0_ID, bSetup);
+    assert(b);
+    b = DoRegisterHotKey(hwnd, g_settings.m_nHotKey[1], HOTKEY_1_ID, bSetup);
+    assert(b);
+    b = DoRegisterHotKey(hwnd, g_settings.m_nHotKey[2], HOTKEY_2_ID, bSetup);
+    assert(b);
+    b = DoRegisterHotKey(hwnd, g_settings.m_nHotKey[3], HOTKEY_3_ID, bSetup);
+    assert(b);
+    b = DoRegisterHotKey(hwnd, g_settings.m_nHotKey[4], HOTKEY_4_ID, bSetup);
+    assert(b);
+    return TRUE;
+}
+
+static void OnHotKey(HWND hwnd, int idHotKey, UINT fuModifiers, UINT vk)
+{
+    switch (idHotKey)
+    {
+    case HOTKEY_0_ID:
+        DoRec(hwnd, FALSE);
+        break;
+    case HOTKEY_1_ID:
+        DoPauseResume(hwnd, FALSE);
+        break;
+    case HOTKEY_2_ID:
+        DoStop(hwnd);
+        break;
+    case HOTKEY_3_ID:
+        DoConfig(hwnd);
+        break;
+    case HOTKEY_4_ID:
+        DoMinimizeRestore(hwnd);
+        break;
+    }
+}
+
 // the dialog procedure of the main window
 static INT_PTR CALLBACK
 DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -2027,6 +2189,7 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HANDLE_MSG(hwnd, WM_MOVE, OnMove);
         HANDLE_MSG(hwnd, WM_SIZE, OnSize);
         HANDLE_MSG(hwnd, WM_TIMER, OnTimer);
+        HANDLE_MSG(hwnd, WM_HOTKEY, OnHotKey);
         case WM_SIZING:
         {
             if (OnSizing(hwnd, (DWORD)wParam, (LPRECT)lParam))

@@ -65,6 +65,8 @@ struct Settings
     INT m_nPicDlgY;
     INT m_nSaveToDlgX;
     INT m_nSaveToDlgY;
+    INT m_nHotKeysDlgX;
+    INT m_nHotKeysDlgY;
     UINT m_nFPSx100;
     BOOL m_bDrawCursor;
     BOOL m_bNoSound;
@@ -73,6 +75,7 @@ struct Settings
     INT m_nBrightness;
     INT m_nContrast;
     DWORD m_dwFOURCC;
+    UINT m_nHotKey[5];
     std::wstring m_strDir;
     std::wstring m_strMovieDir;
     std::wstring m_strImageFileName;
@@ -116,10 +119,13 @@ protected:
 extern Settings g_settings;
 
 extern Sound m_sound;
+
 extern HWND g_hMainWnd;
 extern HWND g_hwndSoundInput;
 extern HWND g_hwndPictureInput;
 extern HWND g_hwndSaveTo;
+extern HWND g_hwndHotKeys;
+
 extern cv::VideoCapture g_camera;
 extern CRITICAL_SECTION g_lockPicture;
 
@@ -127,10 +133,19 @@ typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
 extern sound_devices_t m_sound_devices;
 extern std::vector<WAVE_FORMAT_INFO> m_wave_formats;
 
+// dialogs
 BOOL DoSoundInputDialogBox(HWND hwndParent);
 BOOL DoPictureInputDialogBox(HWND hwndParent);
 BOOL DoSaveToDialogBox(HWND hwndParent);
+BOOL DoHotKeysDialogBox(HWND hwndParent);
 
 void DoStartStopTimers(HWND hwnd, BOOL bStart);
+
+#define HOTKEY_0_ID  0x1000
+#define HOTKEY_1_ID  0x1001
+#define HOTKEY_2_ID  0x1002
+#define HOTKEY_3_ID  0x1003
+#define HOTKEY_4_ID  0x1004
+BOOL DoSetupHotkeys(HWND hwnd, BOOL bSetup);
 
 #endif  // ndef YAPPYCAM_HPP_
