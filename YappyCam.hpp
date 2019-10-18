@@ -13,6 +13,7 @@
 #include "Sound.hpp"
 #include "resource.h"
 #include "MRegKey.hpp"
+#include "Misc.hpp"
 
 #define MIN_FPS 0.1
 #define MAX_FPS 7.0
@@ -79,6 +80,7 @@ struct Settings
     std::wstring m_strMovieFileName;
     std::wstring m_strMovieTempFileName;
     std::wstring m_strSoundFileName;
+    std::wstring m_strSoundTempFileName;
     std::wstring m_strStatusText;
 
     Settings()
@@ -125,10 +127,6 @@ extern CRITICAL_SECTION g_lockPicture;
 typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
 extern sound_devices_t m_sound_devices;
 extern std::vector<WAVE_FORMAT_INFO> m_wave_formats;
-
-void ErrorBoxDx(HWND hwnd, LPCTSTR pszText);
-LPTSTR LoadStringDx(INT nID);
-LPSTR ansi_from_wide(LPCWSTR pszWide);
 
 BOOL DoSoundInputDialogBox(HWND hwndParent);
 BOOL DoPictureInputDialogBox(HWND hwndParent);

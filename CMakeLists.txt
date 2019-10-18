@@ -61,6 +61,7 @@ add_definitions(-DUNICODE -D_UNICODE)
 # YappyCam.exe
 add_executable(YappyCam WIN32
     YappyCam.cpp
+    Misc.cpp
     Sound.cpp
     SoundInputDlg.cpp
     PicInputDlg.cpp
@@ -75,5 +76,9 @@ target_link_libraries(YappyCam
     ole32
     avrt
     ksuser)
+
+# sound2wav.exe
+add_executable(sound2wav sound2wav.cpp Misc.cpp)
+target_link_libraries(sound2wav winmm)
 
 ##############################################################################

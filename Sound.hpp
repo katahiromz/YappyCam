@@ -24,9 +24,6 @@ struct WAVE_FORMAT_INFO
 
 bool get_wave_formats(std::vector<WAVE_FORMAT_INFO>& formats);
 
-bool save_pcm_wave_file(LPTSTR lpszFileName, LPWAVEFORMATEX lpwf,
-                        LPCVOID lpWaveData, DWORD dwDataSize);
-
 class Sound
 {
 public:
@@ -35,6 +32,7 @@ public:
     LONG m_nMax;
     BOOL m_bRecording;
     CRITICAL_SECTION m_lock;
+    std::vector<BYTE> m_wave_data;
     void SetInfo(WORD nChannels, DWORD nSamplesPerSec, WORD wBitsPerSample);
 
     Sound();
@@ -47,7 +45,7 @@ public:
 
     BOOL SetRecording(BOOL bRecording);
 
-    void SaveToFile();
+    void FlushData();
 
     DWORD ThreadProc();
 
@@ -64,7 +62,6 @@ protected:
     MMCKINFO m_ckData;
     UINT32 m_nFrames;
     TCHAR m_szSoundFile[MAX_PATH];
-    std::vector<BYTE> m_wave_data;
 
     static DWORD WINAPI ThreadFunction(LPVOID pContext);
     void ScanBuffer(const BYTE *pb, DWORD cb, DWORD dwFlags);

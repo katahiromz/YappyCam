@@ -59,32 +59,6 @@ BITMAPINFO g_bi =
     }
 };
 
-void ErrorBoxDx(HWND hwnd, LPCTSTR pszText)
-{
-    MessageBox(hwnd, pszText, NULL, MB_ICONERROR);
-}
-
-LPTSTR LoadStringDx(INT nID)
-{
-    static UINT s_index = 0;
-    const UINT cchBuffMax = 1024;
-    static TCHAR s_sz[2][cchBuffMax];
-
-    TCHAR *pszBuff = s_sz[s_index];
-    s_index = (s_index + 1) % ARRAYSIZE(s_sz);
-    pszBuff[0] = 0;
-    if (!::LoadString(NULL, nID, pszBuff, cchBuffMax))
-        assert(0);
-    return pszBuff;
-}
-
-LPSTR ansi_from_wide(LPCWSTR pszWide)
-{
-    static char s_buf[256];
-    WideCharToMultiByte(CP_ACP, 0, pszWide, -1, s_buf, ARRAYSIZE(s_buf), NULL, NULL);
-    return s_buf;
-}
-
 void Settings::init()
 {
     m_nDisplayMode = DM_BITMAP;
@@ -147,6 +121,7 @@ void Settings::init()
     m_strMovieTempFileName = szPath;
 
     m_strSoundFileName = TEXT("Sound.wav");
+    m_strSoundTempFileName = TEXT("Sound.sound");
 
     m_strStatusText = TEXT("No image");
 }
@@ -234,6 +209,10 @@ bool Settings::load(HWND hwnd)
     {
         m_strSoundFileName = szText;
     }
+    if (ERROR_SUCCESS == app_key.QuerySz(L"SoundFileTempName", szText, ARRAYSIZE(szText)))
+    {
+        m_strSoundTempFileName = szText;
+    }
 
     if (type == PT_FINALIZING)
         type = PT_SCREENCAP;
@@ -315,6 +294,7 @@ bool Settings::save(HWND hwnd) const
     app_key.SetSz(L"MovieFileName", m_strMovieFileName.c_str());
     app_key.SetSz(L"MovieTempFileName", m_strMovieTempFileName.c_str());
     app_key.SetSz(L"SoundFileName", m_strSoundFileName.c_str());
+    app_key.SetSz(L"SoundTempFileName", m_strSoundTempFileName.c_str());
 
     return true;
 }
@@ -1000,6 +980,12 @@ void DoDeleteTempFiles(HWND hwnd)
     PathAppend(szPath, g_settings.m_strSoundFileName.c_str());
     std::wstring sound_name = szPath;
 
+    // sound_temp_name
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                   s_nGotMovieID);
+    PathAppend(szPath, g_settings.m_strSoundTempFileName.c_str());
+    std::wstring sound_temp_name = szPath;
+
     // delete frame files
     for (INT i = 0; i < s_nFramesToWrite; ++i)
     {
@@ -1009,6 +995,7 @@ void DoDeleteTempFiles(HWND hwnd)
 
     // delete sound file
     DeleteFile(sound_name.c_str());
+    DeleteFile(sound_temp_name.c_str());
 
     // remove the movie directory
     RemoveDirectory(strMovieDir.c_str());
@@ -1133,11 +1120,20 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
                    s_nGotMovieID);
     std::wstring strNewMovieName = szPath;
 
+    // strSoundTempName
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                   s_nGotMovieID);
+    PathAppend(szPath, g_settings.m_strSoundTempFileName.c_str());
+    std::wstring strSoundTempName = szPath;
+
     // strWavName
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                    s_nGotMovieID);
     PathAppend(szPath, g_settings.m_strSoundFileName.c_str());
     std::wstring strWavName = szPath;
+
+    // convert sound to wav
+    DoConvertSoundToWav(g_hMainWnd, strSoundTempName.c_str(), strWavName.c_str());
 
     // unite the movie and the sound
     BOOL ret = DoUniteAviAndWav(g_hMainWnd,
@@ -1448,7 +1444,7 @@ static void OnRec(HWND hwnd)
         // set sound path
         StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                        g_settings.m_nMovieID);
-        PathAppend(szPath, g_settings.m_strSoundFileName.c_str());
+        PathAppend(szPath, g_settings.m_strSoundTempFileName.c_str());
         m_sound.SetSoundFile(szPath);
 
         // create directories

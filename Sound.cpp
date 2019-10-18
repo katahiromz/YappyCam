@@ -38,37 +38,6 @@ bool get_wave_formats(std::vector<WAVE_FORMAT_INFO>& formats)
     return true;
 }
 
-bool save_pcm_wave_file(LPTSTR lpszFileName, LPWAVEFORMATEX lpwf,
-                        LPCVOID lpWaveData, DWORD dwDataSize)
-{
-    HMMIO    hmmio;
-    MMCKINFO mmckRiff;
-    MMCKINFO mmckFmt;
-    MMCKINFO mmckData;
-    
-    hmmio = mmioOpen(lpszFileName, NULL, MMIO_CREATE | MMIO_WRITE);
-    if (hmmio == NULL)
-        return false;
-
-    mmckRiff.fccType = mmioStringToFOURCC(TEXT("WAVE"), 0);
-    mmioCreateChunk(hmmio, &mmckRiff, MMIO_CREATERIFF);
-
-    mmckFmt.ckid = mmioStringToFOURCC(TEXT("fmt "), 0);
-    mmioCreateChunk(hmmio, &mmckFmt, 0);
-    mmioWrite(hmmio, (const char *)lpwf, sizeof(PCMWAVEFORMAT));
-    mmioAscend(hmmio, &mmckFmt, 0);
-
-    mmckData.ckid = mmioStringToFOURCC(TEXT("data"), 0);
-    mmioCreateChunk(hmmio, &mmckData, 0);
-    mmioWrite(hmmio, (const char *)lpWaveData, dwDataSize);
-    mmioAscend(hmmio, &mmckData, 0);
-
-    mmioAscend(hmmio, &mmckRiff, 0);
-    mmioClose(hmmio, 0);
-
-    return true;
-}
-
 Sound::Sound()
     : m_nValue(0)
     , m_nMax(0)
@@ -313,7 +282,14 @@ DWORD Sound::ThreadProc()
             {
                 bRecorded = TRUE;
                 ::EnterCriticalSection(&m_lock);
-                m_wave_data.insert(m_wave_data.end(), pbData, pbData + cbToWrite);
+                if (m_wave_data.size() >= 3 * 1024 * 1024)
+                {
+                    FlushData();
+                }
+                else
+                {
+                    m_wave_data.insert(m_wave_data.end(), pbData, pbData + cbToWrite);
+                }
                 ::LeaveCriticalSection(&m_lock);
             }
 
@@ -342,16 +318,31 @@ DWORD Sound::ThreadProc()
 
     if (bRecorded)
     {
-        SaveToFile();
+        FlushData();
     }
 
     return 0;
 }
 
-void Sound::SaveToFile()
+void Sound::FlushData()
 {
-    save_pcm_wave_file(m_szSoundFile, &m_wfx,
-                       m_wave_data.data(), m_wave_data.size());
+    EnterCriticalSection(&m_lock);
+    if (FILE *fp = _wfopen(m_szSoundFile, L"ab"))
+    {
+        bool ok = true;
+        if (ftell(fp) == 0)
+        {
+            ok = !!fwrite(&m_wfx, sizeof(m_wfx), 1, fp);
+        }
+        if (ok)
+            ok = !!fwrite(&m_wave_data[0], m_wave_data.size(), 1, fp);
+        fclose(fp);
+        if (ok)
+        {
+            m_wave_data.clear();
+        }
+    }
+    LeaveCriticalSection(&m_lock);
 }
 
 void Sound::SetSoundFile(const TCHAR *filename)
