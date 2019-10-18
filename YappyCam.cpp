@@ -43,7 +43,7 @@ cv::VideoWriter g_writer;
 static BOOL s_bWriting = FALSE;
 static BOOL s_bWatching = FALSE;
 
-CRITICAL_SECTION g_lock;    // mutex
+CRITICAL_SECTION g_lockPicture;    // mutex
 
 HDC g_hdcScreen = NULL;     // screen DC
 
@@ -727,7 +727,7 @@ HBITMAP DoLoadBitmap(HINSTANCE hInst, INT id)
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
-    InitializeCriticalSection(&g_lock);
+    InitializeCriticalSection(&g_lockPicture);
 
     // main window handle
     g_hMainWnd = hwnd;
@@ -1601,7 +1601,7 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
     // COLORONCOLOR is quick
     SetStretchBltMode(hdc, COLORONCOLOR);
 
-    EnterCriticalSection(&g_lock);
+    EnterCriticalSection(&g_lockPicture);
 
     switch (g_settings.GetDisplayMode())
     {
@@ -1707,7 +1707,7 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
         break;
     }
 
-    LeaveCriticalSection(&g_lock);
+    LeaveCriticalSection(&g_lockPicture);
 }
 
 static void OnPaint(HWND hwnd)
@@ -1871,7 +1871,7 @@ static void OnDestroy(HWND hwnd)
     // save application's settings
     g_settings.save(hwnd);
 
-    DeleteCriticalSection(&g_lock);
+    DeleteCriticalSection(&g_lockPicture);
 
     // delete bitmaps
     DeleteObject(s_hbmRec);
@@ -1916,7 +1916,7 @@ void DoScreenCap(HWND hwnd, BOOL bCursor)
 
     if (HDC hdcMem = CreateCompatibleDC(g_hdcScreen))
     {
-        EnterCriticalSection(&g_lock);
+        EnterCriticalSection(&g_lockPicture);
 
         // screen capture!
         HGDIOBJ hbmOld = SelectObject(hdcMem, g_hbm);
@@ -1932,7 +1932,7 @@ void DoScreenCap(HWND hwnd, BOOL bCursor)
         }
         SelectObject(hdcMem, hbmOld);
 
-        LeaveCriticalSection(&g_lock);
+        LeaveCriticalSection(&g_lockPicture);
         DeleteDC(hdcMem);
     }
 }
@@ -1955,28 +1955,28 @@ static void OnTimer(HWND hwnd, UINT id)
             break;
         case PT_VIDEOCAP:
             // take a camera capture
-            EnterCriticalSection(&g_lock);
+            EnterCriticalSection(&g_lockPicture);
             g_camera >> s_frame;
-            LeaveCriticalSection(&g_lock);
+            LeaveCriticalSection(&g_lockPicture);
             break;
         }
         // trigger to redraw
         InvalidateRect(hwnd, NULL, TRUE);
         break;
     case SOUND_TIMER_ID:
-        if (!g_settings.m_bNoSound)
+        if (g_settings.m_bNoSound)
+        {
+            // no sound
+            SendDlgItemMessage(hwnd, scr1, PBM_SETRANGE32, 0, 0);
+            SendDlgItemMessage(hwnd, scr1, PBM_SETPOS, 0, 0);
+        }
+        else
         {
             // show sound loudness
             LONG nValue = m_sound.m_nValue;
             LONG nMax = m_sound.m_nMax;
             SendDlgItemMessage(hwnd, scr1, PBM_SETRANGE32, 0, nMax);
             SendDlgItemMessage(hwnd, scr1, PBM_SETPOS, nValue, 0);
-        }
-        else
-        {
-            // no sound
-            SendDlgItemMessage(hwnd, scr1, PBM_SETRANGE32, 0, 0);
-            SendDlgItemMessage(hwnd, scr1, PBM_SETPOS, 0, 0);
         }
         break;
     }

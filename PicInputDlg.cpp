@@ -558,9 +558,9 @@ static void Page1_OnEdt1(HWND hwnd)
 
     if (bTranslated)
     {
-        EnterCriticalSection(&g_lock);
+        EnterCriticalSection(&g_lockPicture);
         g_settings.m_nBrightness = nValue;
-        LeaveCriticalSection(&g_lock);
+        LeaveCriticalSection(&g_lockPicture);
     }
 }
 
@@ -574,9 +574,9 @@ static void Page1_OnEdt2(HWND hwnd)
 
     if (bTranslated)
     {
-        EnterCriticalSection(&g_lock);
+        EnterCriticalSection(&g_lockPicture);
         g_settings.m_nContrast = nValue;
-        LeaveCriticalSection(&g_lock);
+        LeaveCriticalSection(&g_lockPicture);
     }
 }
 

@@ -120,7 +120,7 @@ extern HWND g_hwndSoundInput;
 extern HWND g_hwndPictureInput;
 extern HWND g_hwndSaveTo;
 extern cv::VideoCapture g_camera;
-extern CRITICAL_SECTION g_lock;
+extern CRITICAL_SECTION g_lockPicture;
 
 typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
 extern sound_devices_t m_sound_devices;
