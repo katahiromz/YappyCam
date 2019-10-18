@@ -41,6 +41,8 @@
 #define IDS_FINALIZEDONE                    117
 #define IDS_FINALIZECANCELLED               118
 #define IDS_SETLOCATION                     119
+#define IDS_VERSIONTEXT                     120
+#define IDS_VERSIONCAPTION                  121
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101

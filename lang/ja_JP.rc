@@ -152,6 +152,8 @@ STRINGTABLE
     IDS_FINALIZEDONE, "動画ファイルが次の場所に完成しました：\n\n%s\n\n見ますか?"
     IDS_FINALIZECANCELLED, "最終処理はキャンセルされました。"
     IDS_SETLOCATION, "保存先のフォルダの場所を指定して下さい:"
+    IDS_VERSIONTEXT, "YappyCam バージョン 0.0\n片山博文MZ <katayama.hirofumi.mz@gmail.com>"
+    IDS_VERSIONCAPTION, "YappyCam のバージョン情報"
 }
 
 //////////////////////////////////////////////////////////////////////////////

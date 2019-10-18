@@ -20,8 +20,14 @@ static HBITMAP s_hbmDots = NULL;
 // the settings
 Settings g_settings;
 
+HINSTANCE g_hInst = NULL;
+
 // the main window handle
 HWND g_hMainWnd = NULL;
+
+// the icon
+HICON g_hMainIcon = NULL;
+HICON g_hMainIconSmall = NULL;
 
 // for sound recording
 typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
@@ -715,6 +721,14 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     // main window handle
     g_hMainWnd = hwnd;
+
+    // set icon
+    g_hMainIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(100));
+    g_hMainIconSmall = (HICON)LoadImage(g_hInst, MAKEINTRESOURCE(100),
+        IMAGE_ICON,
+        GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0);
+    SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)g_hMainIcon);
+    SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)g_hMainIconSmall);
 
     // device context of the display
     g_hdcScreen = CreateDC(TEXT("DISPLAY"), NULL, NULL, NULL);
@@ -1464,10 +1478,14 @@ static void OnPause(HWND hwnd)
 
 static void OnAbout(HWND hwnd)
 {
-    MessageBox(hwnd,
-               TEXT("YappyCam 0.0 by katahiromz"),
-               TEXT("About YappyCam"),
-               MB_ICONINFORMATION);
+    MSGBOXPARAMS params = { sizeof(params) };
+    params.hwndOwner = hwnd;
+    params.hInstance = g_hInst;
+    params.lpszText = MAKEINTRESOURCE(IDS_VERSIONTEXT);
+    params.lpszCaption = MAKEINTRESOURCE(IDS_VERSIONCAPTION);
+    params.dwStyle = MB_USERICON;
+    params.lpszIcon = MAKEINTRESOURCE(100);
+    MessageBoxIndirect(&params);
 }
 
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
@@ -1819,6 +1837,12 @@ static void OnDestroy(HWND hwnd)
     DoStartStopTimers(hwnd, FALSE);
     m_sound.StopHearing();
 
+    // destroy icon
+    DestroyIcon(g_hMainIcon);
+    g_hMainIcon = NULL;
+    DestroyIcon(g_hMainIconSmall);
+    g_hMainIconSmall = NULL;
+
     // save application's settings
     g_settings.save(hwnd);
 
@@ -1971,6 +1995,8 @@ WinMain(HINSTANCE   hInstance,
         LPSTR       lpCmdLine,
         int         nCmdShow)
 {
+    g_hInst = hInstance;
+
     // don't start two applications at once
     if (HWND hwnd = FindWindow(L"#32770", LoadStringDx(IDS_APPTITLE)))
     {
