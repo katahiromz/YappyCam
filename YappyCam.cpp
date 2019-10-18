@@ -103,12 +103,12 @@ void Settings::init()
     m_nWindow2X = m_nWindow2Y = CW_USEDEFAULT;
     m_nWindow3X = m_nWindow3Y = CW_USEDEFAULT;
 
-    m_nWindow1CX = 360;
-    m_nWindow1CY = 450;
-    m_nWindow2CX = 360;
-    m_nWindow2CY = 450;
-    m_nWindow3CX = 360;
-    m_nWindow3CY = 450;
+    m_nWindow1CX = 250;
+    m_nWindow1CY = 160;
+    m_nWindow2CX = 250;
+    m_nWindow2CY = 160;
+    m_nWindow3CX = 250;
+    m_nWindow3CY = 160;
 
     m_nSoundDlgX = m_nSoundDlgY = CW_USEDEFAULT;
     m_nPicDlgX = m_nPicDlgY = CW_USEDEFAULT;
@@ -545,8 +545,6 @@ void DoStartStopTimers(HWND hwnd, BOOL bStart)
 
 BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
 {
-    BOOL bTimerON = s_bTimerON;
-
     DoStartStopTimers(hwnd, FALSE);
 
     g_camera.release();
@@ -575,7 +573,7 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         g_camera.open(m_nCameraID);
         if (!g_camera.isOpened())
         {
-            DoStartStopTimers(hwnd, bTimerON);
+            DoStartStopTimers(hwnd, TRUE);
             return FALSE;
         }
         m_nWidth = (int)g_camera.get(cv::CAP_PROP_FRAME_WIDTH);
@@ -628,7 +626,7 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
 
     fix_size(hwnd);
 
-    DoStartStopTimers(hwnd, bTimerON);
+    DoStartStopTimers(hwnd, TRUE);
     return TRUE;
 }
 
@@ -789,6 +787,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     // restart hearing and watching
     m_sound.StartHearing();
     DoStartStopTimers(hwnd, TRUE);
+    g_settings.update(hwnd);
 
     return TRUE;
 }
