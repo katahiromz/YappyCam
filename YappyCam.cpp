@@ -1111,6 +1111,9 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
 
         // write frame
         writer << frame;
+
+        // redraw window
+        InvalidateRect(g_hMainWnd, NULL, TRUE);
     }
     writer.release();
 
@@ -1120,6 +1123,9 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
     g_settings.m_strStatusText = szText;
     SendMessage(hScr1, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
     SendMessage(hScr1, PBM_SETPOS, 99, 0);
+
+    // redraw window
+    InvalidateRect(g_hMainWnd, NULL, TRUE);
 
     // strNewMovieName
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieFileName.c_str(),
