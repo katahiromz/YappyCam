@@ -18,6 +18,8 @@ IDR_MAINMENU MENU
         MENUITEM "保存オプション(&O)...", ID_SAVETO
         MENUITEM "ホットキー(&H)...", ID_HOTKEYS
         MENUITEM SEPARATOR
+        MENUITEM "設定の初期化(&I)", ID_INITSETTINGS
+        MENUITEM SEPARATOR
         MENUITEM "バージョン情報(&A)", ID_ABOUT
         MENUITEM SEPARATOR
         MENUITEM "終了(&X)", ID_EXIT
@@ -176,6 +178,7 @@ STRINGTABLE
     IDS_SETLOCATION, "保存先のフォルダの場所を指定して下さい:"
     IDS_VERSIONTEXT, "YappyCam バージョン 0.6\n片山博文MZ <katayama.hirofumi.mz@gmail.com>"
     IDS_VERSIONCAPTION, "YappyCam のバージョン情報"
+    IDS_QUERYINIT, "設定を初期化しますか?"
 }
 
 //////////////////////////////////////////////////////////////////////////////

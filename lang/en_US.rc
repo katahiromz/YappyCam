@@ -18,8 +18,9 @@ IDR_MAINMENU MENU
         MENUITEM "Save &Options...", ID_SAVETO
         MENUITEM "&Hotkeys...", ID_HOTKEYS
         MENUITEM SEPARATOR
-        MENUITEM "&About", ID_ABOUT
+        MENUITEM "&Initialize settings", ID_INITSETTINGS
         MENUITEM SEPARATOR
+        MENUITEM "&About", ID_ABOUT
         MENUITEM "E&xit", ID_EXIT
     }
 }
@@ -176,6 +177,7 @@ STRINGTABLE
     IDS_SETLOCATION, "Specify the folder location to save in:"
     IDS_VERSIONTEXT, "YappyCam Version 0.6\nKatayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>"
     IDS_VERSIONCAPTION, "About YappyCam"
+    IDS_QUERYINIT, "Do you want to initialize this application settings?"
 }
 
 //////////////////////////////////////////////////////////////////////////////

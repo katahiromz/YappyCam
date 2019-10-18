@@ -1494,6 +1494,18 @@ static void OnFinalizeCancel(HWND hwnd)
 
 ////////////////////////////////////////////////////////////////////////////
 
+void DoClosePopups(HWND hwnd)
+{
+    if (IsWindow(g_hwndSoundInput))
+        PostMessage(g_hwndSoundInput, WM_CLOSE, 0, 0);
+    if (IsWindow(g_hwndPictureInput))
+        PostMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
+    if (IsWindow(g_hwndSaveTo))
+        PostMessage(g_hwndSaveTo, WM_CLOSE, 0, 0);
+    if (IsWindow(g_hwndHotKeys))
+        PostMessage(g_hwndHotKeys, WM_CLOSE, 0, 0);
+}
+
 void DoRec(HWND hwnd, BOOL bFromButton)
 {
     if (!IsWindowEnabled(GetDlgItem(hwnd, psh1)))
@@ -1530,14 +1542,7 @@ void DoRec(HWND hwnd, BOOL bFromButton)
     }
 
     // close config windows
-    if (IsWindow(g_hwndSoundInput))
-        PostMessage(g_hwndSoundInput, WM_CLOSE, 0, 0);
-    if (IsWindow(g_hwndPictureInput))
-        PostMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
-    if (IsWindow(g_hwndSaveTo))
-        PostMessage(g_hwndSaveTo, WM_CLOSE, 0, 0);
-    if (IsWindow(g_hwndHotKeys))
-        PostMessage(g_hwndHotKeys, WM_CLOSE, 0, 0);
+    DoClosePopups(hwnd);
 
     // update UI
     EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
@@ -1625,6 +1630,23 @@ static void OnAbout(HWND hwnd)
 static void OnExit(HWND hwnd)
 {
     EndDialog(hwnd, IDCANCEL);
+}
+
+static void OnInitSettings(HWND hwnd)
+{
+    INT nID = MessageBox(hwnd,
+        LoadStringDx(IDS_QUERYINIT),
+        LoadStringDx(IDS_APPTITLE),
+        MB_ICONINFORMATION | MB_YESNOCANCEL);
+
+    if (nID == IDYES)
+    {
+        DoClosePopups(hwnd);
+        g_settings.init();
+        g_settings.save(hwnd);
+        g_settings.update(hwnd);
+        DoSetupHotkeys(hwnd, TRUE);
+    }
 }
 
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
@@ -1718,6 +1740,9 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
             EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
         }
         DoHotKeysDialogBox(hwnd);
+        break;
+    case ID_INITSETTINGS:
+        OnInitSettings(hwnd);
         break;
     }
 }

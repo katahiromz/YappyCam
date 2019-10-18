@@ -46,6 +46,7 @@
 #define IDS_SETLOCATION                     119
 #define IDS_VERSIONTEXT                     120
 #define IDS_VERSIONCAPTION                  121
+#define IDS_QUERYINIT                       122
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101
@@ -57,6 +58,7 @@
 #define ID_SAVETO                           107
 #define ID_EXIT                             108
 #define ID_HOTKEYS                          109
+#define ID_INITSETTINGS                     110
 
 #ifdef APSTUDIO_INVOKED
     #ifndef APSTUDIO_READONLY_SYMBOLS
