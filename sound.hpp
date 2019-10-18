@@ -10,7 +10,7 @@
 #include <audioclient.h>
 #include <avrt.h>
 #include <functiondiscoverykeys_devpkey.h>
-#include "CComPtr.hpp"
+#include "ccomptr.hpp"
 #include <vector>
 #include <cstdio>
 #include <strsafe.h>

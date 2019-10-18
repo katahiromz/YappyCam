@@ -12,7 +12,7 @@
 #include <opencv2/opencv.hpp>
 #include "sound.hpp"
 #include "resource.h"
-#include "MRegKey.hpp"
+#include "mregkey.hpp"
 #include "Misc.hpp"
 
 #define MIN_FPS 0.1
