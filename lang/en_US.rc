@@ -18,6 +18,8 @@ IDR_MAINMENU MENU
         MENUITEM "Save &Options...", ID_SAVETO
         MENUITEM SEPARATOR
         MENUITEM "&About", ID_ABOUT
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit", ID_EXIT
     }
 }
 

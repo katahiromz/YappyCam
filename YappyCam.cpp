@@ -1499,6 +1499,11 @@ static void OnAbout(HWND hwnd)
     MessageBoxIndirect(&params);
 }
 
+static void OnExit(HWND hwnd)
+{
+    EndDialog(hwnd, IDCANCEL);
+}
+
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
@@ -1578,6 +1583,9 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
             EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
         }
         DoSaveToDialogBox(hwnd);
+        break;
+    case ID_EXIT:
+        OnExit(hwnd);
         break;
     }
 }

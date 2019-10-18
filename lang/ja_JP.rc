@@ -18,6 +18,8 @@ IDR_MAINMENU MENU
         MENUITEM "保存オプション(&O)...", ID_SAVETO
         MENUITEM SEPARATOR
         MENUITEM "バージョン情報(&A)", ID_ABOUT
+        MENUITEM SEPARATOR
+        MENUITEM "終了(&X)", ID_EXIT
     }
 }
 
