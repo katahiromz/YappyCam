@@ -1,8 +1,10 @@
-# ![](YappyCam.png "") YappyCam by katahiromz
+# ![](images/YappyCam.png "") YappyCam by katahiromz
 
 ## What's this?
 
 YappyCam is a Windows software to create movie files from screen capture or Web camera.
+
+![Screenshot](images/screenshot.png "Screenshot")
 
 ## Platforms
 
