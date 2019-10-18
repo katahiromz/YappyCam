@@ -584,14 +584,12 @@ static void Page1_OnPsh1(HWND hwnd)
 {
     SetDlgItemInt(hwnd, edt1, 0, TRUE);
     Page1_OnEdt1(hwnd);
-    g_settings.update(g_hMainWnd);
 }
 
 static void Page1_OnPsh2(HWND hwnd)
 {
     SetDlgItemInt(hwnd, edt2, 100, TRUE);
     Page1_OnEdt2(hwnd);
-    g_settings.update(g_hMainWnd);
 }
 
 static void Page1_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
