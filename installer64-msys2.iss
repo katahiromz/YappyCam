@@ -26,26 +26,27 @@ OutputBaseFilename=YappyCam64-0.5-setup
 Compression=lzma
 SolidCompression=yes
 OutputDir=.
+ArchitecturesInstallIn64BitMode=x64
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checked
 
 [Files]
 Source: "YappyCam.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "READMEJP.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x64\libgcc_s_seh-1.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x64\libgfortran-5.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libHalf-2_3.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libIex-2_3.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libIlmImf-2_3.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libIlmThread-2_3.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libImath-2_3.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\msys2\x64\libgcc_s_dw2-1.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\msys2\x64\libgfortran-5.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libjasper-4.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libjpeg-8.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\liblzma-5.dll"; DestDir: "{app}"; Flags: ignoreversion
@@ -61,7 +62,7 @@ Source: "..\msys2\x64\libtiff-5.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libwebp-7.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libwinpthread-1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libzstd.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\msys2\x64\opencv_videoio_ffmpeg411.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x64\opencv_videoio_ffmpeg411_64.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\tbb.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\zlib1.dll"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
