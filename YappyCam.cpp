@@ -86,7 +86,7 @@ LPSTR ansi_from_wide(LPCWSTR pszWide)
 void Settings::init()
 {
     m_nDisplayMode = DM_BITMAP;
-    m_nPictureType = PT_VIDEOCAP;
+    m_nPictureType = PT_SCREENCAP;
     m_nWidth = 640;
     m_nHeight = 480;
     m_nMovieID = 0;
