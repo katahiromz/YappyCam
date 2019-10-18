@@ -120,7 +120,7 @@ void Settings::init()
     m_nMonitorID = 0;
     m_nCameraID = 0;
     m_nBrightness = 0;
-    m_nContrast = 0;
+    m_nContrast = 100;
     m_dwFOURCC = 0x7634706d; // mp4v
 
     TCHAR szPath[MAX_PATH];
