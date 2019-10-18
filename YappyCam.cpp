@@ -43,7 +43,8 @@ cv::VideoWriter g_writer;
 static BOOL s_bWriting = FALSE;
 static BOOL s_bWatching = FALSE;
 
-CRITICAL_SECTION g_lockPicture;    // mutex
+// mutex
+CRITICAL_SECTION g_lockPicture;
 
 HDC g_hdcScreen = NULL;     // screen DC
 

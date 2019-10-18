@@ -34,6 +34,7 @@ public:
     LONG m_nValue;
     LONG m_nMax;
     BOOL m_bRecording;
+    CRITICAL_SECTION m_lock;
     void SetInfo(WORD nChannels, DWORD nSamplesPerSec, WORD wBitsPerSample);
 
     Sound();
@@ -61,7 +62,6 @@ protected:
     CComPtr<IAudioCaptureClient> m_pCaptureClient;
     MMCKINFO m_ckRIFF;
     MMCKINFO m_ckData;
-    CRITICAL_SECTION m_lock;
     UINT32 m_nFrames;
     TCHAR m_szSoundFile[MAX_PATH];
     std::vector<BYTE> m_wave_data;
