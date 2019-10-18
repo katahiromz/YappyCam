@@ -1306,8 +1306,10 @@ void DoStop(HWND hwnd)
     WritePrivateProfileString(NULL, NULL, NULL, strMovieInfoFile.c_str());
 
     // ask for finalizing
-    INT nID = MessageBox(hwnd, LoadStringDx(IDS_FINALIZEQUE),
-                         LoadStringDx(IDS_WANNAFINALIZE),
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                   s_nGotMovieID);
+    StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEQUE), szPath);
+    INT nID = MessageBox(hwnd, szText, LoadStringDx(IDS_WANNAFINALIZE),
                          MB_ICONINFORMATION | MB_YESNOCANCEL);
     switch (nID)
     {

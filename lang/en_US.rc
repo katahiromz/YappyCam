@@ -169,12 +169,12 @@ STRINGTABLE
     IDS_FINALIZED, "Finalized."
     IDS_FINALIZING, "Finalizing..."
     IDS_WANNAFINALIZE, "Wanna finalize?"
-    IDS_FINALIZEQUE, "It's ready to create a movie file. Finalize the movie?"
+    IDS_FINALIZEQUE, "It's ready to create a movie file at the following location:\n\n%s\n\nFinalize the movie?"
     IDS_FINALIZEPERCENTS, "Finalizing... %u%%"
     IDS_FINALIZEDONE, "The movie file is completed at the following location:\n\n%s\n\nWanna browse?"
     IDS_FINALIZECANCELLED, "Finalizing is cancelled."
     IDS_SETLOCATION, "Specify the folder location to save in:"
-    IDS_VERSIONTEXT, "YappyCam Version 0.5\nKatayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>"
+    IDS_VERSIONTEXT, "YappyCam Version 0.6\nKatayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>"
     IDS_VERSIONCAPTION, "About YappyCam"
 }
 
