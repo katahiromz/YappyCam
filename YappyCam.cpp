@@ -1650,11 +1650,16 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             FillRect(hdc, &rc, GetStockBrush(WHITE_BRUSH));
 
             // show image
-            UINT uFormat = DT_SINGLELINE | DT_CENTER | DT_VCENTER;
-            DrawText(hdc,
-                     g_settings.m_strStatusText.c_str(),
-                     INT(g_settings.m_strStatusText.size()),
-                     &rc, uFormat);
+            if (HFONT hFont = GetWindowFont(hwnd))
+            {
+                HGDIOBJ hFontOld = SelectObject(hdc, hFont);
+                UINT uFormat = DT_SINGLELINE | DT_CENTER | DT_VCENTER;
+                DrawText(hdc,
+                         g_settings.m_strStatusText.c_str(),
+                         INT(g_settings.m_strStatusText.size()),
+                         &rc, uFormat);
+                SelectObject(hdc, hFontOld);
+            }
         }
         break;
     }
