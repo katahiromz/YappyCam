@@ -84,7 +84,6 @@ BOOL Finalize(const char *dir, const char *avi_file)
     std::wstring strWavName = szPath;
 
     // get first frame
-    TCHAR szText[MAX_PATH];
     CHAR szImageName[MAX_PATH];
     cv::Mat frame;
     StringCbPrintfA(szImageName, sizeof(szImageName), image_name.c_str(), nStartIndex);

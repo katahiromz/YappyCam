@@ -1,6 +1,7 @@
 // KeepAspect.cpp
 // Copyright (C) 2019 Katayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>
 // License: MIT
+#define _CRT_SECURE_NO_WARNINGS
 #include "YappyCam.hpp"
 
 // timer IDs
@@ -582,7 +583,6 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
     {
         LPVOID pvBits;
         HGDIOBJ hbmOld;
-        RECT rc;
 
         g_bi.bmiHeader.biWidth = m_nWidth;
         g_bi.bmiHeader.biHeight = -m_nHeight;

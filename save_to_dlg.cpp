@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "YappyCam.hpp"
 
 HWND g_hwndSaveTo = NULL;

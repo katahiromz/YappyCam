@@ -1,4 +1,5 @@
 #define DEFINE_GUIDS
+#define _CRT_SECURE_NO_WARNINGS
 #include "sound.hpp"
 #include "resource.h"
 #include <cmath>

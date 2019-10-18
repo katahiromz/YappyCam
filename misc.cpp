@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "misc.hpp"
 #include <vector>
 #include <cassert>

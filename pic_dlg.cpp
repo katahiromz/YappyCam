@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "YappyCam.hpp"
 #include "SetDlgItemDouble/SetDlgItemDouble.h"
 
@@ -405,9 +406,9 @@ static void Page0_OnPsh1(HWND hwnd)
 
 static void Page0_OnPsh2(HWND hwnd)
 {
-    INT nID = DialogBox(GetModuleHandle(NULL),
-                        MAKEINTRESOURCE(IDD_SETBYDRAG),
-                        NULL, SetByDragDlgProc);
+    INT_PTR nID = DialogBox(GetModuleHandle(NULL),
+                            MAKEINTRESOURCE(IDD_SETBYDRAG),
+                            NULL, SetByDragDlgProc);
     if (nID == IDOK)
     {
         INT x = std::min(s_SBD_pt[0].x, s_SBD_pt[1].x);
