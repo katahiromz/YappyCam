@@ -10,7 +10,7 @@
 #include <strsafe.h>
 #include <string>
 #include <opencv2/opencv.hpp>
-#include "Sound.hpp"
+#include "sound.hpp"
 #include "resource.h"
 #include "MRegKey.hpp"
 #include "Misc.hpp"

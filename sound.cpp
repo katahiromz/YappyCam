@@ -1,5 +1,5 @@
 #define DEFINE_GUIDS
-#include "Sound.hpp"
+#include "sound.hpp"
 #include "resource.h"
 #include <cmath>
 #include <strsafe.h>

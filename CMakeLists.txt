@@ -61,11 +61,11 @@ add_definitions(-DUNICODE -D_UNICODE)
 # YappyCam.exe
 add_executable(YappyCam WIN32
     YappyCam.cpp
-    Misc.cpp
-    Sound.cpp
-    SoundInputDlg.cpp
-    PicInputDlg.cpp
-    SaveToDlg.cpp
+    misc.cpp
+    sound.cpp
+    sound_dlg.cpp
+    pic_dlg.cpp
+    save_to_dlg.cpp
     YappyCam_res.rc)
 target_link_libraries(YappyCam
     ${OpenCV_LIBS}
@@ -78,7 +78,7 @@ target_link_libraries(YappyCam
     ksuser)
 
 # sound2wav.exe
-add_executable(sound2wav sound2wav.cpp Misc.cpp)
+add_executable(sound2wav sound2wav.cpp misc.cpp)
 target_link_libraries(sound2wav winmm)
 
 ##############################################################################

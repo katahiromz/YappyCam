@@ -1132,14 +1132,23 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
     PathAppend(szPath, g_settings.m_strSoundFileName.c_str());
     std::wstring strWavName = szPath;
 
-    // convert sound to wav
-    DoConvertSoundToWav(g_hMainWnd, strSoundTempName.c_str(), strWavName.c_str());
+    BOOL ret;
+    if (g_settings.m_bNoSound)
+    {
+        ret = CopyFile(strOldMovieName.c_str(), strNewMovieName.c_str(), FALSE);
+    }
+    else
+    {
+        // convert sound to wav
+        DoConvertSoundToWav(g_hMainWnd, strSoundTempName.c_str(), strWavName.c_str());
 
-    // unite the movie and the sound
-    BOOL ret = DoUniteAviAndWav(g_hMainWnd,
-                                strNewMovieName.c_str(),
-                                strOldMovieName.c_str(),
-        (g_settings.m_bNoSound ? NULL : strWavName.c_str()));
+        // unite the movie and the sound
+        ret = DoUniteAviAndWav(g_hMainWnd,
+                               strNewMovieName.c_str(),
+                               strOldMovieName.c_str(),
+                               strWavName.c_str());
+    }
+
     if (ret)
     {
         // success
