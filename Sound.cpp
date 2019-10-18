@@ -241,7 +241,7 @@ DWORD Sound::ThreadProc()
             {
                 bRecorded = TRUE;
                 ::EnterCriticalSection(&m_lock);
-                const size_t max_size = 10 * 1024 * 1024; // 10 MB
+                const size_t max_size = 1 * 1024 * 1024; // 1 MB
                 if (m_wave_data.size() >= max_size)
                 {
                     FlushData(FALSE);
