@@ -79,6 +79,10 @@ target_link_libraries(YappyCam
 
 # sound2wav.exe
 add_executable(sound2wav sound2wav.cpp misc.cpp)
-target_link_libraries(sound2wav winmm)
+target_link_libraries(sound2wav winmm vfw32)
+
+# finalize.exe
+add_executable(finalize finalize.cpp misc.cpp)
+target_link_libraries(finalize ${OpenCV_LIBS} winmm vfw32 shlwapi)
 
 ##############################################################################

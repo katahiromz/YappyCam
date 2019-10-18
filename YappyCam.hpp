@@ -6,14 +6,13 @@
 #include <commctrl.h>
 #include <shlobj.h>
 #include <shlwapi.h>
-#include <vfw.h>
 #include <strsafe.h>
 #include <string>
 #include <opencv2/opencv.hpp>
 #include "sound.hpp"
 #include "resource.h"
 #include "mregkey.hpp"
-#include "Misc.hpp"
+#include "misc.hpp"
 
 #define MIN_FPS 0.1
 #define MAX_FPS 7.0

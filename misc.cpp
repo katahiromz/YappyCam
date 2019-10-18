@@ -104,3 +104,85 @@ BOOL DoConvertSoundToWav(HWND hwnd, const TCHAR *temp_file, const TCHAR *wav_fil
     CloseHandle(hTempFile);
     return bOK;
 }
+
+BOOL DoSaveAviFile(HWND hwnd, LPCTSTR pszFileName, PAVISTREAM paviVideo,
+                   PAVISTREAM paviAudio)
+{
+    INT i;
+    PAVISTREAM pavis[2];
+    AVICOMPRESSOPTIONS options[2];
+    LPAVICOMPRESSOPTIONS lpOptions[2];
+    INT nCount = 2;
+
+    
+    for (i = 0; i < nCount; i++)
+    {
+        ZeroMemory(&options[i], sizeof(AVICOMPRESSOPTIONS));
+        lpOptions[i] = &options[i];
+    }
+
+    pavis[0] = paviVideo;
+    pavis[1] = paviAudio;
+    //AVISaveOptions(NULL, 0, nCount, pavis, lpOptions);
+
+    INT nAVIERR;
+    nAVIERR = AVISaveV(pszFileName, NULL, NULL, nCount, pavis, lpOptions);
+    if (nAVIERR != AVIERR_OK)
+    {
+        assert(0);
+        AVISaveOptionsFree(nCount, lpOptions);
+        return FALSE;
+    }
+
+    //AVISaveOptionsFree(nCount, lpOptions);
+    return TRUE;
+}
+
+BOOL DoUniteAviAndWav(HWND hwnd, const WCHAR *new_avi,
+                      const WCHAR *old_avi, const WCHAR *wav_file)
+{
+    AVIFileInit();
+
+    INT nAVIERR;
+
+    PAVISTREAM paviVideo;
+    nAVIERR = AVIStreamOpenFromFile(&paviVideo, old_avi, streamtypeVIDEO, 0,
+                                    OF_READ | OF_SHARE_DENY_NONE, NULL);
+    if (nAVIERR)
+    {
+        assert(0);
+        AVIFileExit();
+        return FALSE;
+    }
+
+    BOOL ret;
+    PAVISTREAM paviAudio = NULL;
+    if (wav_file)
+    {
+        // there is sound data
+        nAVIERR = AVIStreamOpenFromFile(&paviAudio, wav_file, streamtypeAUDIO, 0,
+                                        OF_READ | OF_SHARE_DENY_NONE, NULL);
+        if (nAVIERR)
+        {
+            assert(0);
+            AVIStreamRelease(paviVideo);
+            AVIFileExit();
+            return FALSE;
+        }
+        ret = DoSaveAviFile(hwnd, new_avi, paviVideo, paviAudio);
+    }
+    else
+    {
+        // there is no sound data
+        ret = CopyFile(old_avi, new_avi, FALSE);
+    }
+
+    if (paviAudio)
+    {
+        AVIStreamRelease(paviAudio);
+    }
+    AVIStreamRelease(paviVideo);
+    AVIFileExit();
+
+    return ret;
+}

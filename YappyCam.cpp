@@ -873,88 +873,6 @@ static HANDLE s_hFinalizingThread = NULL;
 BOOL s_bFinalizeCancelled = FALSE;
 static PictureType s_nOldPictureType = PT_SCREENCAP;
 
-BOOL DoSaveAviFile(HWND hwnd, LPCTSTR pszFileName, PAVISTREAM paviVideo,
-                   PAVISTREAM paviAudio)
-{
-    INT i;
-    PAVISTREAM pavis[2];
-    AVICOMPRESSOPTIONS options[2];
-    LPAVICOMPRESSOPTIONS lpOptions[2];
-    INT nCount = 2;
-
-    
-    for (i = 0; i < nCount; i++)
-    {
-        ZeroMemory(&options[i], sizeof(AVICOMPRESSOPTIONS));
-        lpOptions[i] = &options[i];
-    }
-
-    pavis[0] = paviVideo;
-    pavis[1] = paviAudio;
-    //AVISaveOptions(NULL, 0, nCount, pavis, lpOptions);
-
-    INT nAVIERR;
-    nAVIERR = AVISaveV(pszFileName, NULL, NULL, nCount, pavis, lpOptions);
-    if (nAVIERR != AVIERR_OK)
-    {
-        assert(0);
-        AVISaveOptionsFree(nCount, lpOptions);
-        return FALSE;
-    }
-
-    //AVISaveOptionsFree(nCount, lpOptions);
-    return TRUE;
-}
-
-BOOL DoUniteAviAndWav(HWND hwnd, const WCHAR *new_avi,
-                      const WCHAR *old_avi, const WCHAR *wav_file)
-{
-    AVIFileInit();
-
-    INT nAVIERR;
-
-    PAVISTREAM paviVideo;
-    nAVIERR = AVIStreamOpenFromFile(&paviVideo, old_avi, streamtypeVIDEO, 0,
-                                    OF_READ | OF_SHARE_DENY_NONE, NULL);
-    if (nAVIERR)
-    {
-        assert(0);
-        AVIFileExit();
-        return FALSE;
-    }
-
-    BOOL ret;
-    PAVISTREAM paviAudio = NULL;
-    if (wav_file)
-    {
-        // there is sound data
-        nAVIERR = AVIStreamOpenFromFile(&paviAudio, wav_file, streamtypeAUDIO, 0,
-                                        OF_READ | OF_SHARE_DENY_NONE, NULL);
-        if (nAVIERR)
-        {
-            assert(0);
-            AVIStreamRelease(paviVideo);
-            AVIFileExit();
-            return FALSE;
-        }
-        ret = DoSaveAviFile(hwnd, new_avi, paviVideo, paviAudio);
-    }
-    else
-    {
-        // there is no sound data
-        ret = CopyFile(old_avi, new_avi, FALSE);
-    }
-
-    if (paviAudio)
-    {
-        AVIStreamRelease(paviAudio);
-    }
-    AVIStreamRelease(paviVideo);
-    AVIFileExit();
-
-    return ret;
-}
-
 void DoDeleteTempFiles(HWND hwnd)
 {
     // delete the file of m_strMovieTempFileName
@@ -986,6 +904,18 @@ void DoDeleteTempFiles(HWND hwnd)
     PathAppend(szPath, g_settings.m_strSoundTempFileName.c_str());
     std::wstring sound_temp_name = szPath;
 
+    // movie info
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                   s_nGotMovieID);
+    PathAppend(szPath, L"movie_info.ini");
+    std::wstring strMovieInfoFile = szPath;
+
+    // desktop.ini
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                   s_nGotMovieID);
+    PathAppend(szPath, L"desktop.ini");
+    std::wstring strDesktopIni = szPath;
+
     // delete frame files
     for (INT i = 0; i < s_nFramesToWrite; ++i)
     {
@@ -996,6 +926,10 @@ void DoDeleteTempFiles(HWND hwnd)
     // delete sound file
     DeleteFile(sound_name.c_str());
     DeleteFile(sound_temp_name.c_str());
+
+    // delete info file
+    DeleteFile(strMovieInfoFile.c_str());
+    DeleteFile(strDesktopIni.c_str());
 
     // remove the movie directory
     RemoveDirectory(strMovieDir.c_str());
@@ -1017,18 +951,82 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
     std::wstring strOldMovieName = szPath;
     std::string output_name = ansi_from_wide(szPath);
 
-    // image_name
+    // strMovieInfoFile
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                    s_nGotMovieID);
-    PathAppend(szPath, g_settings.m_strImageFileName.c_str());
-    std::string image_name = ansi_from_wide(szPath);
+    PathAppend(szPath, L"movie_info.ini");
+    std::wstring strMovieInfoFile = szPath;
+
+    INT nStartIndex = 0;
+    INT nEndIndex = s_nFramesToWrite - 1;
+    INT nFPSx100 = DWORD(g_settings.m_nFPSx100);
+    BOOL bNoSound = g_settings.m_bNoSound;
+    if (PathFileExists(strMovieInfoFile.c_str()))
+    {
+        nStartIndex = GetPrivateProfileInt(L"Info", L"StartIndex", nStartIndex, strMovieInfoFile.c_str());
+        nEndIndex = GetPrivateProfileInt(L"Info", L"EndIndex", nEndIndex, strMovieInfoFile.c_str());
+        nFPSx100 = GetPrivateProfileInt(L"Info", L"FPSx100", nFPSx100, strMovieInfoFile.c_str());
+        bNoSound = !!GetPrivateProfileInt(L"Info", L"NoSound", bNoSound, strMovieInfoFile.c_str());
+    }
+
+    // image_name
+    std::string image_name;
+    if (PathFileExists(strMovieInfoFile.c_str()))
+    {
+        TCHAR szText[128];
+        GetPrivateProfileString(L"Info", L"ImageFile", L"", szText, ARRAYSIZE(szText), strMovieInfoFile.c_str());
+        if (szText[0])
+        {
+            StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                           s_nGotMovieID);
+            PathAppend(szPath, szText);
+            image_name = ansi_from_wide(szPath);
+        }
+    }
+    if (image_name.empty())
+    {
+        StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                       s_nGotMovieID);
+        PathAppend(szPath, g_settings.m_strImageFileName.c_str());
+        image_name = ansi_from_wide(szPath);
+    }
+
+    // strSoundTempFile
+    std::wstring strSoundTempFile;
+    if (!bNoSound && PathFileExists(strMovieInfoFile.c_str()))
+    {
+        TCHAR szText[128];
+        GetPrivateProfileString(L"Info", L"SoundTempFile", L"", szText, ARRAYSIZE(szText), strMovieInfoFile.c_str());
+        if (szText[0])
+        {
+            StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                           s_nGotMovieID);
+            PathAppend(szPath, szText);
+            if (PathFileExists(szPath))
+            {
+                strSoundTempFile = szPath;
+            }
+        }
+    }
+    if (!bNoSound && strSoundTempFile.empty())
+    {
+        StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                       s_nGotMovieID);
+        PathAppend(szPath, g_settings.m_strSoundTempFileName.c_str());
+        strSoundTempFile = szPath;
+    }
+
+    // strWavName
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                   s_nGotMovieID);
+    PathAppend(szPath, g_settings.m_strSoundFileName.c_str());
+    std::wstring strWavName = szPath;
 
     // get first frame
     TCHAR szText[MAX_PATH];
     CHAR szImageName[MAX_PATH];
     cv::Mat frame;
-    StringCbPrintfA(szImageName, sizeof(szImageName),
-                    image_name.c_str(), 0);
+    StringCbPrintfA(szImageName, sizeof(szImageName), image_name.c_str(), nStartIndex);
     frame = cv::imread(szImageName);
     if (!frame.data)
     {
@@ -1045,7 +1043,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
     width = frame.cols;
     height = frame.rows;
 
-    double fps = g_settings.m_nFPSx100 / 100.0;
+    double fps = nFPSx100 / 100.0;
     int fourcc = int(g_settings.m_dwFOURCC);
 
     // video writer
@@ -1061,7 +1059,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
     }
 
     // for each frames...
-    for (INT i = 0; i < s_nFramesToWrite; ++i)
+    for (INT i = nStartIndex; i <= nEndIndex; ++i)
     {
         if (s_bFinalizeCancelled)
         {
@@ -1075,8 +1073,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
         }
 
         // load frame image
-        StringCbPrintfA(szImageName, sizeof(szImageName),
-                        image_name.c_str(), i);
+        StringCbPrintfA(szImageName, sizeof(szImageName), image_name.c_str(), i);
         frame = cv::imread(szImageName);
         if (!frame.data)
         {
@@ -1120,27 +1117,24 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
                    s_nGotMovieID);
     std::wstring strNewMovieName = szPath;
 
-    // strSoundTempName
-    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
-                   s_nGotMovieID);
-    PathAppend(szPath, g_settings.m_strSoundTempFileName.c_str());
-    std::wstring strSoundTempName = szPath;
-
-    // strWavName
-    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
-                   s_nGotMovieID);
-    PathAppend(szPath, g_settings.m_strSoundFileName.c_str());
-    std::wstring strWavName = szPath;
-
+    // sound
     BOOL ret;
-    if (g_settings.m_bNoSound)
+    if (bNoSound)
     {
         ret = CopyFile(strOldMovieName.c_str(), strNewMovieName.c_str(), FALSE);
     }
     else
     {
         // convert sound to wav
-        DoConvertSoundToWav(g_hMainWnd, strSoundTempName.c_str(), strWavName.c_str());
+        std::wstring strDotExt = PathFindExtension(strSoundTempFile.c_str());
+        if (lstrcmpi(strDotExt.c_str(), L".wav") == 0)
+        {
+            CopyFile(strSoundTempFile.c_str(), strWavName.c_str(), FALSE);
+        }
+        else
+        {
+            DoConvertSoundToWav(g_hMainWnd, strSoundTempFile.c_str(), strWavName.c_str());
+        }
 
         // unite the movie and the sound
         ret = DoUniteAviAndWav(g_hMainWnd,
@@ -1219,7 +1213,6 @@ static void OnStop(HWND hwnd)
         WaitForSingleObject(s_hFinalizingThread, INFINITE);
         CloseHandle(s_hFinalizingThread);
         s_hFinalizingThread = NULL;
-        g_settings.SetPictureType(hwnd, s_nOldPictureType);
     }
 
     // prepare for finalizing
@@ -1230,6 +1223,37 @@ static void OnStop(HWND hwnd)
     g_settings.SetPictureType(hwnd, PT_FINALIZING);
     g_settings.m_strStatusText = LoadStringDx(IDS_FINALIZING);
     InvalidateRect(g_hMainWnd, NULL, TRUE);
+
+    TCHAR szPath[MAX_PATH];
+    TCHAR szText[MAX_PATH + 64];
+
+    // strMovieInfoFile
+    StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
+                   s_nGotMovieID);
+    PathAppend(szPath, L"movie_info.ini");
+    std::wstring strMovieInfoFile = szPath;
+
+    // ImageFileName
+    std::wstring strImageFile = g_settings.m_strImageFileName;
+    WritePrivateProfileString(L"Info", L"ImageFile", strImageFile.c_str(), strMovieInfoFile.c_str());
+    // SoundTempFile
+    std::wstring strSoundTempFile = g_settings.m_strSoundTempFileName;
+    WritePrivateProfileString(L"Info", L"SoundTempFile", strSoundTempFile.c_str(), strMovieInfoFile.c_str());
+    // StartIndex
+    StringCbPrintf(szText, sizeof(szText), L"%u", 0);
+    WritePrivateProfileString(L"Info", L"StartIndex", szText, strMovieInfoFile.c_str());
+    // EndIndex
+    StringCbPrintf(szText, sizeof(szText), L"%u", s_nFramesToWrite - 1);
+    WritePrivateProfileString(L"Info", L"EndIndex", szText, strMovieInfoFile.c_str());
+    // FPSx100
+    StringCbPrintf(szText, sizeof(szText), L"%u", DWORD(g_settings.m_nFPSx100));
+    WritePrivateProfileString(L"Info", L"FPSx100", szText, strMovieInfoFile.c_str());
+    // NoSound
+    StringCbPrintf(szText, sizeof(szText), L"%u", DWORD(g_settings.m_bNoSound));
+    WritePrivateProfileString(L"Info", L"NoSound", szText, strMovieInfoFile.c_str());
+
+    // Flush!
+    WritePrivateProfileString(NULL, NULL, NULL, strMovieInfoFile.c_str());
 
     // ask for finalizing
     INT nID = MessageBox(hwnd, LoadStringDx(IDS_FINALIZEQUE),
