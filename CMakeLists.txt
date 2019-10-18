@@ -18,8 +18,8 @@ enable_language(RC)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # using Clang
-    set(CMAKE_C_FLAGS "-static -s")
-    set(CMAKE_CXX_FLAGS "-static -s")
+    set(CMAKE_C_FLAGS "-static")
+    set(CMAKE_CXX_FLAGS "-static")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # using GCC
     set(CMAKE_C_FLAGS "-static -static-libgcc -static-libstdc++ -s")
