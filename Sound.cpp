@@ -89,47 +89,6 @@ Sound::~Sound()
     ::DeleteCriticalSection(&m_lock);
 }
 
-void Sound::SetDevice(CComPtr<IMMDevice> pDevice)
-{
-    m_pDevice = pDevice;
-}
-
-BOOL Sound::StartHearing()
-{
-    DWORD tid = 0;
-    m_hThread = ::CreateThread(NULL, 0, Sound::ThreadFunction, this, 0, &tid);
-    return m_hThread != NULL;
-}
-
-BOOL Sound::StopHearing()
-{
-    m_bRecording = FALSE;
-
-    SetEvent(m_hShutdownEvent);
-
-    if (m_pAudioClient)
-    {
-        m_pAudioClient->Stop();
-    }
-
-    if (m_hThread)
-    {
-        WaitForSingleObject(m_hThread, INFINITE);
-        CloseHandle(m_hThread);
-        m_hThread = NULL;
-    }
-
-    ::PlaySound(NULL, NULL, 0);
-
-    return TRUE;
-}
-
-BOOL Sound::SetRecording(BOOL bRecording)
-{
-    m_bRecording = bRecording;
-    return TRUE;
-}
-
 DWORD WINAPI Sound::ThreadFunction(LPVOID pContext)
 {
     HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -282,9 +241,10 @@ DWORD Sound::ThreadProc()
             {
                 bRecorded = TRUE;
                 ::EnterCriticalSection(&m_lock);
-                if (m_wave_data.size() >= 3 * 1024 * 1024)
+                const size_t max_size = 10 * 1024 * 1024; // 10 MB
+                if (m_wave_data.size() >= max_size)
                 {
-                    FlushData();
+                    FlushData(FALSE);
                 }
                 else
                 {
@@ -318,34 +278,8 @@ DWORD Sound::ThreadProc()
 
     if (bRecorded)
     {
-        FlushData();
+        FlushData(TRUE);
     }
 
     return 0;
-}
-
-void Sound::FlushData()
-{
-    EnterCriticalSection(&m_lock);
-    if (FILE *fp = _wfopen(m_szSoundFile, L"ab"))
-    {
-        bool ok = true;
-        if (ftell(fp) == 0)
-        {
-            ok = !!fwrite(&m_wfx, sizeof(m_wfx), 1, fp);
-        }
-        if (ok)
-            ok = !!fwrite(&m_wave_data[0], m_wave_data.size(), 1, fp);
-        fclose(fp);
-        if (ok)
-        {
-            m_wave_data.clear();
-        }
-    }
-    LeaveCriticalSection(&m_lock);
-}
-
-void Sound::SetSoundFile(const TCHAR *filename)
-{
-    StringCbCopy(m_szSoundFile, sizeof(m_szSoundFile), filename);
 }

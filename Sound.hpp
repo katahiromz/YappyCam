@@ -13,6 +13,9 @@
 #include "CComPtr.hpp"
 #include <vector>
 #include <cstdio>
+#include <strsafe.h>
+
+/////////////////////////////////////////////////////////////////////////////
 
 struct WAVE_FORMAT_INFO
 {
@@ -23,6 +26,9 @@ struct WAVE_FORMAT_INFO
 };
 
 bool get_wave_formats(std::vector<WAVE_FORMAT_INFO>& formats);
+
+/////////////////////////////////////////////////////////////////////////////
+// Sound class
 
 class Sound
 {
@@ -45,7 +51,7 @@ public:
 
     BOOL SetRecording(BOOL bRecording);
 
-    void FlushData();
+    void FlushData(BOOL bLock);
 
     DWORD ThreadProc();
 
@@ -66,5 +72,83 @@ protected:
     static DWORD WINAPI ThreadFunction(LPVOID pContext);
     void ScanBuffer(const BYTE *pb, DWORD cb, DWORD dwFlags);
 };
+
+/////////////////////////////////////////////////////////////////////////////
+// inlining
+
+inline BOOL Sound::SetRecording(BOOL bRecording)
+{
+    m_bRecording = bRecording;
+    return TRUE;
+}
+
+inline void Sound::SetDevice(CComPtr<IMMDevice> pDevice)
+{
+    m_pDevice = pDevice;
+}
+
+inline void Sound::SetSoundFile(const TCHAR *filename)
+{
+    StringCbCopy(m_szSoundFile, sizeof(m_szSoundFile), filename);
+}
+
+inline BOOL Sound::StartHearing()
+{
+    DWORD tid = 0;
+    m_hThread = ::CreateThread(NULL, 0, Sound::ThreadFunction, this, 0, &tid);
+    return m_hThread != NULL;
+}
+
+inline BOOL Sound::StopHearing()
+{
+    m_bRecording = FALSE;
+
+    SetEvent(m_hShutdownEvent);
+
+    if (m_pAudioClient)
+    {
+        m_pAudioClient->Stop();
+    }
+
+    if (m_hThread)
+    {
+        WaitForSingleObject(m_hThread, INFINITE);
+        CloseHandle(m_hThread);
+        m_hThread = NULL;
+    }
+
+    ::PlaySound(NULL, NULL, 0);
+
+    return TRUE;
+}
+
+inline void Sound::FlushData(BOOL bLock)
+{
+    if (bLock)
+    {
+        EnterCriticalSection(&m_lock);
+    }
+    if (FILE *fp = _wfopen(m_szSoundFile, L"ab"))
+    {
+        bool ok = true;
+        if (ftell(fp) == 0)
+        {
+            ok = !!fwrite(&m_wfx, sizeof(m_wfx), 1, fp);
+        }
+        if (ok)
+            ok = !!fwrite(&m_wave_data[0], m_wave_data.size(), 1, fp);
+        fclose(fp);
+        if (ok)
+        {
+            m_wave_data.clear();
+        }
+    }
+    if (bLock)
+    {
+        LeaveCriticalSection(&m_lock);
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////
 
 #endif  // ndef SOUND_HPP_
