@@ -208,6 +208,11 @@ static void SBD_OnDestroy(HWND hwnd)
     s_SBD_hbm = NULL;
 }
 
+static void SBD_OnRButtonUp(HWND hwnd, int x, int y, UINT flags)
+{
+    EndDialog(hwnd, IDCANCEL);
+}
+
 static INT_PTR CALLBACK
 SetByDragDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -220,6 +225,7 @@ SetByDragDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HANDLE_MSG(hwnd, WM_LBUTTONDOWN, SBD_OnLButtonDown);
         HANDLE_MSG(hwnd, WM_MOUSEMOVE, SBD_OnMouseMove);
         HANDLE_MSG(hwnd, WM_LBUTTONUP, SBD_OnLButtonUp);
+        HANDLE_MSG(hwnd, WM_RBUTTONUP, SBD_OnRButtonUp);
         case WM_CAPTURECHANGED:
         case WM_CANCELMODE:
             EndDialog(hwnd, IDCANCEL);
