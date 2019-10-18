@@ -28,6 +28,13 @@ LPSTR ansi_from_wide(LPCWSTR pszWide)
     return s_buf;
 }
 
+LPWSTR wide_from_ansi(LPCSTR pszAnsi)
+{
+    static WCHAR s_buf[256];
+    MultiByteToWideChar(CP_ACP, 0, pszAnsi, -1, s_buf, ARRAYSIZE(s_buf));
+    return s_buf;
+}
+
 bool save_pcm_wave_file(LPCTSTR lpszFileName, LPWAVEFORMATEX lpwf,
                         LPCVOID lpWaveData, DWORD dwDataSize)
 {

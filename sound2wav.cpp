@@ -1,5 +1,6 @@
 #include "Misc.hpp"
 #include <cstdio>
+#include <string>
 
 int main(int argc, char **argv)
 {
@@ -14,12 +15,10 @@ int main(int argc, char **argv)
         return EXIT_SUCCESS;
     }
 
-    WCHAR szInput[MAX_PATH];
-    WCHAR szOutput[MAX_PATH];
-    MultiByteToWideChar(CP_ACP, 0, argv[1], -1, szInput, ARRAYSIZE(szInput));
-    MultiByteToWideChar(CP_ACP, 0, argv[2], -1, szOutput, ARRAYSIZE(szOutput));
+    std::wstring strInput = wide_from_ansi(argv[1]);
+    std::wstring strOutput = wide_from_ansi(argv[2]);
 
-    if (DoConvertSoundToWav(NULL, szInput, szOutput))
+    if (DoConvertSoundToWav(NULL, strInput.c_str(), strOutput.c_str()))
     {
         puts("Converted.");
         return EXIT_SUCCESS;

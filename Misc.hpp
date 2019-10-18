@@ -9,6 +9,7 @@
 void ErrorBoxDx(HWND hwnd, LPCTSTR pszText);
 LPTSTR LoadStringDx(INT nID);
 LPSTR ansi_from_wide(LPCWSTR pszWide);
+LPWSTR wide_from_ansi(LPCSTR pszAnsi);
 BOOL DoConvertSoundToWav(HWND hwnd, const TCHAR *temp_file, const TCHAR *wav_file);
 bool save_pcm_wave_file(LPCTSTR lpszFileName, LPWAVEFORMATEX lpwf,
                         LPCVOID lpWaveData, DWORD dwDataSize);
