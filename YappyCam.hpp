@@ -92,6 +92,7 @@ struct Settings
     bool create_dirs() const;
     void change_dirs(const WCHAR *dir);
     void update(HWND hwnd);
+    void update(HWND hwnd, PictureType type);
     void fix_size(HWND hwnd);
     void fix_size0(HWND hwnd);
 

@@ -40,7 +40,8 @@ cv::VideoCapture g_camera;
 
 // for video writing
 cv::VideoWriter g_writer;
-BOOL g_bWriting = FALSE;
+static BOOL s_bWriting = FALSE;
+static BOOL s_bWatching = FALSE;
 
 CRITICAL_SECTION g_lock;    // mutex
 
@@ -317,12 +318,43 @@ bool Settings::save(HWND hwnd) const
     return true;
 }
 
+void DoStartStopTimers(HWND hwnd, BOOL bStart)
+{
+    if (bStart)
+    {
+        SetTimer(hwnd, SOUND_TIMER_ID, 300, NULL);
+
+        DWORD dwMSEC = DWORD(1000 * 100 / g_settings.m_nFPSx100);
+        SetTimer(hwnd, CAP_TIMER_ID, dwMSEC, NULL);
+
+        s_bWatching = TRUE;
+    }
+    else
+    {
+        s_bWatching = FALSE;
+        KillTimer(hwnd, SOUND_TIMER_ID);
+        KillTimer(hwnd, CAP_TIMER_ID);
+    }
+}
+
 void Settings::update(HWND hwnd)
 {
-    PictureType type = GetPictureType();
+    update(hwnd, GetPictureType());
+}
+
+void Settings::update(HWND hwnd, PictureType type)
+{
+    BOOL bWatching = s_bWatching;
+
+    if (bWatching)
+        DoStartStopTimers(hwnd, FALSE);
+
     SetPictureType(hwnd, type);
 
     fix_size(hwnd);
+
+    if (bWatching)
+        DoStartStopTimers(hwnd, TRUE);
 }
 
 bool Settings::create_dirs() const
@@ -522,30 +554,9 @@ void Settings::fix_size(HWND hwnd)
     fix_size0(hwnd);
 }
 
-static BOOL s_bTimerON = FALSE;
-
-void DoStartStopTimers(HWND hwnd, BOOL bStart)
-{
-    if (bStart)
-    {
-        SetTimer(hwnd, SOUND_TIMER_ID, 300, NULL);
-
-        DWORD dwMSEC = DWORD(1000 * 100 / g_settings.m_nFPSx100);
-        SetTimer(hwnd, CAP_TIMER_ID, dwMSEC, NULL);
-
-        s_bTimerON = TRUE;
-    }
-    else
-    {
-        s_bTimerON = FALSE;
-        KillTimer(hwnd, SOUND_TIMER_ID);
-        KillTimer(hwnd, CAP_TIMER_ID);
-    }
-}
-
 BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
 {
-    DoStartStopTimers(hwnd, FALSE);
+    assert(!s_bWatching);
 
     g_camera.release();
     s_frame.release();
@@ -626,7 +637,8 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
 
     fix_size(hwnd);
 
-    DoStartStopTimers(hwnd, TRUE);
+    assert(!s_bWatching);
+
     return TRUE;
 }
 
@@ -785,9 +797,9 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     PostMessage(hwnd, WM_SIZE, 0, 0);
 
     // restart hearing and watching
+    g_settings.update(hwnd);
     m_sound.StartHearing();
     DoStartStopTimers(hwnd, TRUE);
-    g_settings.update(hwnd);
 
     return TRUE;
 }
@@ -1167,7 +1179,7 @@ static void OnStop(HWND hwnd)
     DoStartStopTimers(hwnd, FALSE);
     m_sound.StopHearing();
     g_writer.release();
-    g_bWriting = FALSE;
+    s_bWriting = FALSE;
     m_sound.SetRecording(FALSE);
 
     if (!s_nFrames)
@@ -1440,7 +1452,7 @@ static void OnRec(HWND hwnd)
         s_nGotMovieID = g_settings.m_nMovieID;
         s_nFramesToWrite = 0;
         ++g_settings.m_nMovieID;
-        g_bWriting = TRUE;
+        s_bWriting = TRUE;
         if (!g_settings.m_bNoSound)
         {
             m_sound.SetRecording(TRUE);
@@ -1458,7 +1470,7 @@ static void OnPause(HWND hwnd)
     if (Button_GetCheck(GetDlgItem(hwnd, psh2)) & BST_CHECKED)
     {
         // disable recording
-        g_bWriting = FALSE;
+        s_bWriting = FALSE;
         if (!g_settings.m_bNoSound)
         {
             m_sound.SetRecording(FALSE);
@@ -1467,7 +1479,7 @@ static void OnPause(HWND hwnd)
     else
     {
         // enable recording
-        g_bWriting = TRUE;
+        s_bWriting = TRUE;
         if (!g_settings.m_bNoSound)
         {
             m_sound.SetRecording(TRUE);
@@ -1594,7 +1606,7 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
                 StretchDIBits(hdc, 0, 0, cx, cy,
                               0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
                               image.data, &g_bi, DIB_RGB_COLORS, SRCCOPY);
-                if (g_bWriting && g_writer.isOpened())
+                if (s_bWriting && g_writer.isOpened())
                 {
                     // write a frame
                     g_writer << image;
@@ -1607,7 +1619,7 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
                 StretchDIBits(hdc, 0, 0, cx, cy,
                               0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
                               s_frame.data, &g_bi, DIB_RGB_COLORS, SRCCOPY);
-                if (g_bWriting && g_writer.isOpened())
+                if (s_bWriting && g_writer.isOpened())
                 {
                     // write a frame
                     g_writer << s_frame;
@@ -1641,7 +1653,7 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
                     PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
                 }
 
-                if (g_hbm && g_bWriting && g_writer.isOpened())
+                if (g_hbm && s_bWriting && g_writer.isOpened())
                 {
                     // write a frame
                     cv::Size size(bm.bmWidth, bm.bmHeight);

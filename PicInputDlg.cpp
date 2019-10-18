@@ -740,7 +740,7 @@ static void OnCmb1(HWND hwnd)
     Page0_SetData(s_hPages[0]);
     s_bInit = TRUE;
 
-    g_settings.SetPictureType(g_hMainWnd, type);
+    g_settings.update(g_hMainWnd, type);
 }
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
