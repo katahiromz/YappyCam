@@ -11,6 +11,19 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     HWND hCmb2 = GetDlgItem(hwnd, cmb2);
     HWND hCmb3 = GetDlgItem(hwnd, cmb3);
 
+    {
+        TCHAR szPath[MAX_PATH];
+
+        SHGetSpecialFolderPath(NULL, szPath, CSIDL_MYVIDEO, TRUE);
+        PathAppend(szPath, TEXT("YappyCam"));
+        ComboBox_AddString(hCmb1, szPath);
+
+        if (g_settings.m_strDir != szPath)
+        {
+            ComboBox_AddString(hCmb1, g_settings.m_strDir.c_str());
+        }
+    }
+
     ComboBox_AddString(hCmb2, TEXT("img-%04u.png"));
     ComboBox_AddString(hCmb2, TEXT("img-%04u.jpg"));
     ComboBox_AddString(hCmb2, TEXT("img-%04u.bmp"));
@@ -90,6 +103,7 @@ static void OnPsh2(HWND hwnd)
     {
         SHGetPathFromIDList(pidl, szPath);
         ComboBox_SetText(hCmb1, szPath);
+        g_settings.change_dirs(szPath);
 
         CoTaskMemFree(pidl);
     }
