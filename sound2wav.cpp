@@ -9,14 +9,24 @@ int main(int argc, char **argv)
         puts("sound2wav version 0.5 by katahiromz");
         return EXIT_SUCCESS;
     }
-    if (argc <= 2)
+    if (argc <= 1)
     {
-        puts("Usage: sound2wav input.sound output.wav");
+        puts("Usage: sound2wav input.sound [output.wav]");
         return EXIT_SUCCESS;
     }
 
     std::wstring strInput = wide_from_ansi(argv[1]);
-    std::wstring strOutput = wide_from_ansi(argv[2]);
+
+    std::wstring strOutput;
+    if (argc >= 3)
+    {
+        strOutput = wide_from_ansi(argv[2]);
+    }
+    else
+    {
+        strOutput = strInput;
+        strOutput += L".wav";
+    }
 
     if (DoConvertSoundToWav(NULL, strInput.c_str(), strOutput.c_str()))
     {
