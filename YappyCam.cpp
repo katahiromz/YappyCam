@@ -209,7 +209,7 @@ bool Settings::load(HWND hwnd)
     {
         m_strSoundFileName = szText;
     }
-    if (ERROR_SUCCESS == app_key.QuerySz(L"SoundFileTempName", szText, ARRAYSIZE(szText)))
+    if (ERROR_SUCCESS == app_key.QuerySz(L"SoundTempFileName", szText, ARRAYSIZE(szText)))
     {
         m_strSoundTempFileName = szText;
     }
