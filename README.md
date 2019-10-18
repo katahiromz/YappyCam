@@ -1,4 +1,4 @@
-# ![](https://github.com/katahiromz/YappyCam/YappyCam.png "") YappyCam by katahiromz
+# ![](YappyCam.png "") YappyCam by katahiromz
 
 ## What's this?
 
