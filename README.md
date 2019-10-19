@@ -6,6 +6,8 @@ YappyCam is a Windows software to create movie files from screen capture or Web 
 
 ![Screenshot](images/screenshot.png "Screenshot")
 
+It can also record sound from speaker.
+
 Download: https://katahiromz.web.fc2.com/yappycam/en
 
 ## Platforms
