@@ -9,15 +9,18 @@ BOOL Finalize(const char *dir, const char *avi_file)
 {
     WCHAR szPath[MAX_PATH];
 
+    // strDir
+    std::wstring strDir = wide_from_ansi(dir);
+
     // output_name
-    std::string output_name = dir;
+    std::string output_name = ansi_from_wide(strDir.c_str());
     output_name += "-tmp.avi";
 
     // strMovieDir
-    std::wstring strMovieDir = wide_from_ansi(dir);
+    std::wstring strMovieDir = strDir;
 
     // strOldMovieName
-    std::wstring strOldMovieName = wide_from_ansi(dir);
+    std::wstring strOldMovieName = strDir;
     strOldMovieName += L"-tmp.avi";
 
     // strMovieInfoFile
@@ -172,6 +175,14 @@ int main(int argc, char **argv)
         return EXIT_SUCCESS;
     }
 
+    std::string strInput = argv[1];
+    if (strInput.size())
+    {
+        char ch = strInput[strInput.size() - 1];
+        if (ch == '/' || ch == '\\')
+            strInput.resize(strInput.size() - 1);
+    }
+
     std::string strOutput;
     if (argc >= 3)
     {
@@ -179,11 +190,11 @@ int main(int argc, char **argv)
     }
     else
     {
-        strOutput = argv[1];
+        strOutput = strInput;
         strOutput += ".avi";
     }
 
-    if (Finalize(argv[1], strOutput.c_str()))
+    if (Finalize(strInput.c_str(), strOutput.c_str()))
     {
         puts("Finalized.");
         return EXIT_SUCCESS;
