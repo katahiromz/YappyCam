@@ -1113,6 +1113,10 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
             assert(0);
             StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
             g_settings.m_strStatusText = szText;
+            SendMessage(hScr1, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+            SendMessage(hScr1, PBM_SETPOS, 0, 0);
+            InvalidateRect(g_hMainWnd, NULL, TRUE);
+
             m_sound.StartHearing();
             PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZECANCEL, 0);
             return FALSE;
