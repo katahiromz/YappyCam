@@ -1208,7 +1208,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
 
         int cx = frame.cols;
         int cy = frame.rows;
-        if (cx < width || cy < height)
+        if (cx != width || cy != height)
         {
             cv::resize(frame, frame, cv::Size(width, height));
         }

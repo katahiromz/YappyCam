@@ -124,6 +124,13 @@ BOOL Finalize(const char *dir, const char *avi_file)
             continue;
         }
 
+        int cx = frame.cols;
+        int cy = frame.rows;
+        if (cx != width || cy != height)
+        {
+            cv::resize(frame, frame, cv::Size(width, height));
+        }
+
         // write frame
         writer << frame;
     }
