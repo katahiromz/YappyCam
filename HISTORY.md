@@ -14,3 +14,4 @@
     - Fullscreen game is supported.
     - "Open folder" feature is added.
     - "img-%04u.bmp" became default.
+    - 4.5 FPS became default.
