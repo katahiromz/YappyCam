@@ -156,8 +156,6 @@ BOOL Finalize(const char *dir, const char *avi_file)
         assert(ret);
     }
 
-    DeleteFileA(output_name.c_str());
-
     return ret;
 }
 

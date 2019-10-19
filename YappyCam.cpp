@@ -99,7 +99,7 @@ void Settings::init()
     m_nCameraID = 0;
     m_nBrightness = 0;
     m_nContrast = 100;
-    m_dwFOURCC = 0x7634706d; // mp4v
+    m_dwFOURCC = 0x34363248; // H.264/MPEG-4 AVC
 
     m_nHotKey[0] = MAKEWORD('R', HOTKEYF_ALT);
     m_nHotKey[1] = MAKEWORD('P', HOTKEYF_ALT);
@@ -1845,8 +1845,11 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             }
             else
             {
-                // black out if no image
-                PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
+                if (!IsMinimized(hwnd))
+                {
+                    // black out if no image
+                    PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
+                }
             }
 
             DeleteDC(hdcMem);

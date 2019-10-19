@@ -131,7 +131,7 @@ BOOL DoSaveAviFile(HWND hwnd, LPCTSTR pszFileName, PAVISTREAM paviVideo,
     if (nAVIERR != AVIERR_OK)
     {
         assert(0);
-        AVISaveOptionsFree(nCount, lpOptions);
+        //AVISaveOptionsFree(nCount, lpOptions);
         return FALSE;
     }
 
