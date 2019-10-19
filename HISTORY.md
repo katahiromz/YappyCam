@@ -11,7 +11,7 @@
     - Skip the frame if not loaded in finalizing.
     - Fix handling of file path.
     - Change license to the 3-clause BSD license.
-    - Fullscreen game is supported.
+    - Fullscreen games are supported.
     - "Open folder" feature is added.
     - 4.5 FPS became default.
     - Apply `WS_EX_TOOLWINDOW` to configuration.
