@@ -2283,6 +2283,7 @@ BOOL DoSetupHotkeys(HWND hwnd, BOOL bSetup)
 
 static void OnHotKey(HWND hwnd, int idHotKey, UINT fuModifiers, UINT vk)
 {
+    // emulate button click
     switch (idHotKey)
     {
     case HOTKEY_0_ID:
