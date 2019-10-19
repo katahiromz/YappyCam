@@ -6,7 +6,7 @@
     - Reduce rendering if the main window is minimized.
     - Restore the main window on finalization.
     - Use H.264/MPEG-4 AVC.
-- 2019.XX.YY ver.0.8
+- 2019.10.20 ver.0.8
     - Improve message of finalizing.
     - Skip the frame if not loaded in finalizing.
     - Fix handling of file path.
