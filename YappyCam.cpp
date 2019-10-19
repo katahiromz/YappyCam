@@ -2380,7 +2380,7 @@ static void OnDisplayChange(HWND hwnd, UINT bitsPerPixel, UINT cxScreen, UINT cy
     switch (g_settings.GetPictureType())
     {
     case PT_SCREENCAP:
-        if (g_settings.m_bFollowChange)
+        if (!IsWindow(g_hwndPictureInput) && g_settings.m_bFollowChange)
         {
             g_settings.follow_display_change(hwnd);
         }
