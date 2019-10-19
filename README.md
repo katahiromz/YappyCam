@@ -27,6 +27,11 @@ It works on Windows Vista/7/10.
 
 It is a freeware that is released under the terms of the 3-clause BSD license.
 
+## NOTICE
+
+- Please use the camera in a bright place.
+- Video files consume storage space. Pay attention to the available space on the storage medium.
+
 ## Contact us
 
 Katayama Hirofumi MZ
