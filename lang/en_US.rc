@@ -54,7 +54,7 @@ FONT 8, "Tahoma"
     AUTOCHECKBOX "&No sound", chx1, 65, 45, 75, 15
 }
 
-IDD_SCREEN DIALOG 0, 0, 260, 65
+IDD_SCREEN DIALOG 0, 0, 260, 85
 CAPTION "Screen"
 STYLE DS_CONTROL | WS_CHILD | NOT WS_CAPTION
 EXSTYLE WS_EX_CONTROLPARENT
@@ -76,6 +76,7 @@ FONT 8, "Tahoma"
     PUSHBUTTON "&Whole Area", psh1, 70, 45, 60, 14
     PUSHBUTTON "&Set by drag...", psh2, 135, 45, 65, 14
     PUSHBUTTON "&Flash Area", psh3, 205, 45, 50, 14
+    AUTOCHECKBOX "F&ollow WM_DISPLAYCHANGE (for fullscreen games)", chx2, 5, 65, 195, 15
 }
 
 IDD_WEBCAMERA DIALOG 0, 0, 260, 65
@@ -148,6 +149,17 @@ FONT 8, "Tahoma"
     CONTROL "", edt5, "msctls_hotkey32", 0, 80, 85, 80, 14
     LTEXT "E&xit", IDC_STATIC, 5, 107, 70, 12
     CONTROL "", edt6, "msctls_hotkey32", 0, 80, 105, 80, 14
+}
+
+IDD_MULTIRESO DIALOG 0, 0, 210, 135
+CAPTION "Choose resolution"
+STYLE DS_MODALFRAME | WS_POPUPWINDOW | WS_CAPTION
+FONT 8, "Tahoma"
+{
+    LTEXT "Multiple resolutions were found in the frames you shot. Choose one of the following resolutions:", IDC_STATIC, 5, 5, 200, 25
+    LISTBOX lst1, 5, 35, 200, 75, LBS_NOINTEGRALHEIGHT | LBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON "OK", IDOK, 80, 115, 60, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 145, 115, 60, 14
 }
 
 //////////////////////////////////////////////////////////////////////////////

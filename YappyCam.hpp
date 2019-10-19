@@ -72,6 +72,7 @@ struct Settings
     BOOL m_bNoSound;
     INT m_nMonitorID;
     INT m_nCameraID;
+    BOOL m_bFollowChange;
     INT m_nBrightness;
     INT m_nContrast;
     DWORD m_dwFOURCC;
@@ -99,6 +100,7 @@ struct Settings
     void update(HWND hwnd, PictureType type);
     void fix_size(HWND hwnd);
     void fix_size0(HWND hwnd);
+    void follow_display_change(HWND hwnd);
 
     DisplayMode GetDisplayMode() const
     {
@@ -115,6 +117,7 @@ protected:
     {
         m_nDisplayMode = mode;
     }
+    void recreate_bitmap(HWND hwnd);
 };
 extern Settings g_settings;
 

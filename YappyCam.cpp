@@ -97,6 +97,7 @@ void Settings::init()
     m_bNoSound = FALSE;
     m_nMonitorID = 0;
     m_nCameraID = 0;
+    m_bFollowChange = TRUE;
     m_nBrightness = 0;
     m_nContrast = 100;
     m_dwFOURCC = 0x34363248; // H.264/MPEG-4 AVC
@@ -189,6 +190,8 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"NoSound", (DWORD&)m_bNoSound);
     app_key.QueryDword(L"MonitorID", (DWORD&)m_nMonitorID);
     app_key.QueryDword(L"CameraID", (DWORD&)m_nCameraID);
+
+    app_key.QueryDword(L"FollowChange", (DWORD&)m_bFollowChange);
 
     app_key.QueryDword(L"Brightness", (DWORD&)m_nBrightness);
     app_key.QueryDword(L"Contrast", (DWORD&)m_nContrast);
@@ -303,6 +306,8 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"NoSound", m_bNoSound);
     app_key.SetDword(L"MonitorID", m_nMonitorID);
     app_key.SetDword(L"CameraID", m_nCameraID);
+
+    app_key.SetDword(L"FollowChange", m_bFollowChange);
 
     app_key.SetDword(L"Brightness", m_nBrightness);
     app_key.SetDword(L"Contrast", m_nContrast);
@@ -569,48 +574,13 @@ void Settings::fix_size(HWND hwnd)
     fix_size0(hwnd);
 }
 
-BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
+void Settings::recreate_bitmap(HWND hwnd)
 {
-    assert(!s_bWatching);
-
-    g_camera.release();
-    s_frame.release();
     if (g_hbm)
     {
         DeleteObject(g_hbm);
         g_hbm = NULL;
     }
-
-    switch (type)
-    {
-    case PT_BLACK:
-    case PT_WHITE:
-        SetDisplayMode(DM_BITMAP);
-        m_nWidth = 320;
-        m_nHeight = 240;
-        break;
-    case PT_SCREENCAP:
-        SetDisplayMode(DM_BITMAP);
-        m_nWidth = m_cxCap;
-        m_nHeight = m_cyCap;
-        break;
-    case PT_VIDEOCAP:
-        SetDisplayMode(DM_CAPFRAME);
-        g_camera.open(m_nCameraID);
-        if (!g_camera.isOpened())
-        {
-            DoStartStopTimers(hwnd, TRUE);
-            return FALSE;
-        }
-        m_nWidth = (int)g_camera.get(cv::CAP_PROP_FRAME_WIDTH);
-        m_nHeight = (int)g_camera.get(cv::CAP_PROP_FRAME_HEIGHT);
-        break;
-    case PT_FINALIZING:
-        SetDisplayMode(DM_TEXT);
-        break;
-    }
-
-    m_nPictureType = type;
 
     if (HDC hdc = CreateCompatibleDC(NULL))
     {
@@ -648,6 +618,47 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
 
         DeleteDC(hdc);
     }
+}
+
+BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
+{
+    assert(!s_bWatching);
+
+    g_camera.release();
+    s_frame.release();
+
+    switch (type)
+    {
+    case PT_BLACK:
+    case PT_WHITE:
+        SetDisplayMode(DM_BITMAP);
+        m_nWidth = 320;
+        m_nHeight = 240;
+        break;
+    case PT_SCREENCAP:
+        SetDisplayMode(DM_BITMAP);
+        m_nWidth = m_cxCap;
+        m_nHeight = m_cyCap;
+        break;
+    case PT_VIDEOCAP:
+        SetDisplayMode(DM_CAPFRAME);
+        g_camera.open(m_nCameraID);
+        if (!g_camera.isOpened())
+        {
+            DoStartStopTimers(hwnd, TRUE);
+            return FALSE;
+        }
+        m_nWidth = (int)g_camera.get(cv::CAP_PROP_FRAME_WIDTH);
+        m_nHeight = (int)g_camera.get(cv::CAP_PROP_FRAME_HEIGHT);
+        break;
+    case PT_FINALIZING:
+        SetDisplayMode(DM_TEXT);
+        break;
+    }
+
+    m_nPictureType = type;
+
+    recreate_bitmap(hwnd);
 
     fix_size(hwnd);
 
@@ -2243,6 +2254,68 @@ static void OnHotKey(HWND hwnd, int idHotKey, UINT fuModifiers, UINT vk)
     }
 }
 
+void Settings::follow_display_change(HWND hwnd)
+{
+    std::vector<MONITORINFO> monitors;
+    MONITORINFO primary;
+    DoGetMonitorsEx(monitors, primary);
+
+    RECT rc;
+    switch (m_nMonitorID)
+    {
+    case 0: // primary monitor
+        rc = primary.rcMonitor;
+        break;
+    case 1: // virtual screen
+        rc.left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+        rc.top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+        rc.right = rc.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
+        rc.bottom = rc.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
+        break;
+    default:
+        if (size_t(m_nMonitorID) < (monitors.size() - 2))
+        {
+            rc = monitors[m_nMonitorID - 2].rcMonitor;
+        }
+        else
+        {
+            rc = primary.rcMonitor;
+        }
+        break;
+    }
+
+    EnterCriticalSection(&g_lockPicture);
+    g_settings.m_xCap = rc.left;
+    g_settings.m_yCap = rc.top;
+    g_settings.m_cxCap = rc.right - rc.left;
+    g_settings.m_cyCap = rc.bottom - rc.top;
+    g_settings.m_nWidth = g_settings.m_cxCap;
+    g_settings.m_nHeight = g_settings.m_cyCap;
+    g_settings.recreate_bitmap(hwnd);
+    if (g_hdcScreen)
+    {
+        DeleteDC(g_hdcScreen);
+    }
+    g_hdcScreen = CreateDC(L"DISPLAY", NULL, NULL, NULL);
+    LeaveCriticalSection(&g_lockPicture);
+}
+
+static void OnDisplayChange(HWND hwnd, UINT bitsPerPixel, UINT cxScreen, UINT cyScreen)
+{
+    switch (g_settings.GetPictureType())
+    {
+    case PT_SCREENCAP:
+        if (g_settings.m_bFollowChange)
+        {
+            g_settings.follow_display_change(hwnd);
+        }
+        break;
+    default:
+        break;
+    }
+    SendMessage(hwnd, DM_REPOSITION, 0, 0);
+}
+
 // the dialog procedure of the main window
 static INT_PTR CALLBACK
 DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -2259,6 +2332,7 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HANDLE_MSG(hwnd, WM_SIZE, OnSize);
         HANDLE_MSG(hwnd, WM_TIMER, OnTimer);
         HANDLE_MSG(hwnd, WM_HOTKEY, OnHotKey);
+        HANDLE_MSG(hwnd, WM_DISPLAYCHANGE, OnDisplayChange);
         case WM_SIZING:
         {
             if (OnSizing(hwnd, (DWORD)wParam, (LPRECT)lParam))

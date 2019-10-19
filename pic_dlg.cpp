@@ -235,6 +235,15 @@ static void Page0_SetData(HWND hwnd)
         CheckDlgButton(hwnd, chx1, BST_UNCHECKED);
     }
 
+    if (g_settings.m_bFollowChange)
+    {
+        CheckDlgButton(hwnd, chx2, BST_CHECKED);
+    }
+    else
+    {
+        CheckDlgButton(hwnd, chx2, BST_UNCHECKED);
+    }
+
     HWND hCmb1 = GetDlgItem(hwnd, cmb1);
     ComboBox_SetCurSel(hCmb1, g_settings.m_nMonitorID);
 
@@ -381,6 +390,18 @@ static void Page0_OnChx1(HWND hwnd)
     }
 }
 
+static void Page0_OnChx2(HWND hwnd)
+{
+    if (IsDlgButtonChecked(hwnd, chx2) == BST_CHECKED)
+    {
+        g_settings.m_bFollowChange = TRUE;
+    }
+    else
+    {
+        g_settings.m_bFollowChange = FALSE;
+    }
+}
+
 static void Page0_OnPsh1(HWND hwnd)
 {
     Page0_SetMonitorID(hwnd, g_settings.m_nMonitorID);
@@ -453,6 +474,12 @@ static void Page0_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         if (codeNotify == BN_CLICKED)
         {
             Page0_OnChx1(hwnd);
+        }
+        break;
+    case chx2:
+        if (codeNotify == BN_CLICKED)
+        {
+            Page0_OnChx2(hwnd);
         }
         break;
     case psh1:
