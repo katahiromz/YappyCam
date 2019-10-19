@@ -10,3 +10,4 @@
     - Improve message of finalizing.
     - Skip the frame if not loaded in finalizing.
     - Fix handling of file path.
+    - Change license to the 3-clause BSD license.

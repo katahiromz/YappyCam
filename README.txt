@@ -21,7 +21,7 @@ It works on Windows Vista/7/10.
 
 ## License
 
-It is a freeware that is released under the terms of the MIT license.
+It is a freeware that is released under the terms of the 3-clause BSD license.
 
 ## Contact us
 
