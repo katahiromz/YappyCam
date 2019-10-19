@@ -1206,6 +1206,13 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
             continue;
         }
 
+        int cx = frame.cols;
+        int cy = frame.rows;
+        if (cx < width || cy < height)
+        {
+            cv::resize(frame, frame, cv::Size(width, height));
+        }
+
         // update status text
         StringCbPrintf(szText, sizeof(szText),
                        LoadStringDx(IDS_FINALIZEPERCENTS),
@@ -2319,27 +2326,42 @@ void Settings::follow_display_change(HWND hwnd)
     DoGetMonitorsEx(monitors, primary);
 
     RECT rc;
-    switch (m_nMonitorID)
+    HWND hwndActive = GetForegroundWindow();
+    if (hwndActive || (GetWindowStyle(hwndActive) & WS_EX_TOPMOST))
     {
-    case 0: // primary monitor
-        rc = primary.rcMonitor;
-        break;
-    case 1: // virtual screen
-        rc.left = GetSystemMetrics(SM_XVIRTUALSCREEN);
-        rc.top = GetSystemMetrics(SM_YVIRTUALSCREEN);
-        rc.right = rc.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
-        rc.bottom = rc.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
-        break;
-    default:
-        if (size_t(m_nMonitorID) < (monitors.size() - 2))
+        // I assume it a fullscreen window.
+        HMONITOR hMonitor;
+        hMonitor = MonitorFromWindow(hwndActive, MONITOR_DEFAULTTOPRIMARY);
+
+        MONITORINFO mi = { sizeof(mi) };
+        GetMonitorInfo(hMonitor, &mi);
+        rc = mi.rcMonitor;
+    }
+    else
+    {
+        // I assume it is not a fullscreen window...
+        switch (m_nMonitorID)
         {
-            rc = monitors[m_nMonitorID - 2].rcMonitor;
-        }
-        else
-        {
+        case 0: // primary monitor
             rc = primary.rcMonitor;
+            break;
+        case 1: // virtual screen
+            rc.left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+            rc.top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+            rc.right = rc.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
+            rc.bottom = rc.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
+            break;
+        default:
+            if (size_t(m_nMonitorID) < (monitors.size() - 2))
+            {
+                rc = monitors[m_nMonitorID - 2].rcMonitor;
+            }
+            else
+            {
+                rc = primary.rcMonitor;
+            }
+            break;
         }
-        break;
     }
 
     EnterCriticalSection(&g_lockPicture);
