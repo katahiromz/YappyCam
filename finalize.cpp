@@ -118,7 +118,7 @@ BOOL Finalize(const char *dir, const char *avi_file)
         frame = cv::imread(szImageName);
         if (!frame.data)
         {
-            break;
+            continue;
         }
 
         // write frame
