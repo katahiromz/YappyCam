@@ -1395,6 +1395,14 @@ void DoStop(HWND hwnd)
     // Flush!
     WritePrivateProfileString(NULL, NULL, NULL, strMovieInfoFile.c_str());
 
+    HWND hwndActive = GetForegroundWindow();
+    if (hwndActive != g_hMainWnd && hwndActive != NULL &&
+        (GetWindowStyle(hwndActive) & WS_EX_TOPMOST))
+    {
+        // I assume it a fullscreen window.
+        ShowWindow(hwndActive, SW_MINIMIZE);
+    }
+
     // ask for finalizing
     if (IsMinimized(hwnd))
     {
@@ -2327,7 +2335,8 @@ void Settings::follow_display_change(HWND hwnd)
 
     RECT rc;
     HWND hwndActive = GetForegroundWindow();
-    if (hwndActive || (GetWindowStyle(hwndActive) & WS_EX_TOPMOST))
+    if (hwndActive != g_hMainWnd && hwndActive != NULL &&
+        (GetWindowStyle(hwndActive) & WS_EX_TOPMOST))
     {
         // I assume it a fullscreen window.
         HMONITOR hMonitor;
