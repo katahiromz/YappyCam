@@ -378,7 +378,14 @@ bool Settings::create_dirs() const
 
 void Settings::change_dirs(const WCHAR *dir)
 {
-    m_strDir = dir;
+    std::wstring strDir = dir;
+    if (strDir.size())
+    {
+        WCHAR ch = strDir[strDir.size() - 1];
+        if (ch == '/' || ch == '\\')
+            strDir.resize(strDir.size() - 1);
+    }
+    m_strDir = strDir;
 
     TCHAR szPath[MAX_PATH];
     StringCbCopy(szPath, sizeof(szPath), dir);

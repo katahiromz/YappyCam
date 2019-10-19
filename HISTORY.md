@@ -9,3 +9,4 @@
 - 2019.XX.YY ver.0.8
     - Improve message of finalizing.
     - Skip the frame if not loaded in finalizing.
+    - Fix handling of file path.
