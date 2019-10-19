@@ -6,6 +6,7 @@
 #endif
 #include <mmsystem.h>
 #include <vfw.h>
+#include <vector>
 
 void ErrorBoxDx(HWND hwnd, LPCTSTR pszText);
 LPTSTR LoadStringDx(INT nID);
@@ -19,5 +20,7 @@ BOOL DoSaveAviFile(HWND hwnd, LPCTSTR pszFileName, PAVISTREAM paviVideo,
                    PAVISTREAM paviAudio);
 BOOL DoUniteAviAndWav(HWND hwnd, const WCHAR *new_avi,
                       const WCHAR *old_avi, const WCHAR *wav_file);
+
+BOOL DoGetMonitorsEx(std::vector<MONITORINFO>& monitors, MONITORINFO& primary);
 
 #endif  // ndef MISC_HPP_

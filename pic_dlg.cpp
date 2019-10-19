@@ -8,33 +8,9 @@
 static std::vector<MONITORINFO> s_monitors;
 static MONITORINFO s_primary;
 
-static BOOL CALLBACK
-MyMonitorEnumProc(HMONITOR hMonitor, HDC hdc, LPRECT prc, LPARAM lParam)
-{
-    MONITORINFO mi = { sizeof(mi) };
-
-    GetMonitorInfo(hMonitor, &mi);
-    s_monitors.push_back(mi);
-
-    return TRUE;
-}
-
 static BOOL DoGetMonitors(void)
 {
-    s_monitors.clear();
-
-    EnumDisplayMonitors(NULL, NULL, MyMonitorEnumProc, 0);
-
-    for (auto& info : s_monitors)
-    {
-        if (info.dwFlags & MONITORINFOF_PRIMARY)
-        {
-            s_primary = info;
-            break;
-        }
-    }
-
-    return TRUE;
+    return DoGetMonitorsEx(s_monitors, s_primary);
 }
 
 ////////////////////////////////////////////////////////////////////////////

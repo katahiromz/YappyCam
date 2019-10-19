@@ -187,3 +187,33 @@ BOOL DoUniteAviAndWav(HWND hwnd, const WCHAR *new_avi,
 
     return ret;
 }
+
+static BOOL CALLBACK
+MyMonitorEnumProc(HMONITOR hMonitor, HDC hdc, LPRECT prc, LPARAM lParam)
+{
+    MONITORINFO mi = { sizeof(mi) };
+    auto& monitors = *(std::vector<MONITORINFO> *)lParam;
+
+    GetMonitorInfo(hMonitor, &mi);
+    monitors.push_back(mi);
+
+    return TRUE;
+}
+
+BOOL DoGetMonitorsEx(std::vector<MONITORINFO>& monitors, MONITORINFO& primary)
+{
+    monitors.clear();
+
+    EnumDisplayMonitors(NULL, NULL, MyMonitorEnumProc, (LPARAM)&monitors);
+
+    for (auto& info : monitors)
+    {
+        if (info.dwFlags & MONITORINFOF_PRIMARY)
+        {
+            primary = info;
+            break;
+        }
+    }
+
+    return TRUE;
+}
