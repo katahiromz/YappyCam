@@ -47,11 +47,12 @@ Source: "..\vc64\opencv_world411.dll"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{commonprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
-Name: "{commonprograms}\README.txt"; Filename: "{app}\README.txt"
-Name: "{commonprograms}\READMEJP.txt"; Filename: "{app}\READMEJP.txt"
-Name: "{commonprograms}\LICENSE.txt"; Filename: "{app}\LICENSE.txt"
+Name: "{commonprograms}\{#MyAppName}\YappyCam"; Filename: "{app}\{#MyAppExeName}"
+Name: "{commonprograms}\{#MyAppName}\{cm:UninstallProgram,YappyCam}"; Filename: "{app}\unins000.exe"
+Name: "{commonprograms}\{#MyAppName}\README.txt"; Filename: "{app}\README.txt"
+Name: "{commonprograms}\{#MyAppName}\READMEJP.txt"; Filename: "{app}\READMEJP.txt"
+Name: "{commonprograms}\{#MyAppName}\LICENSE.txt"; Filename: "{app}\LICENSE.txt"
+Name: "{commondesktop}\YappyCam"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
