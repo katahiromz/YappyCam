@@ -812,8 +812,8 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     m_sound.SetDevice(m_sound_devices[g_settings.m_iSoundDev]);
 
     // uncheck some buttons
-    Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
-    Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
+    CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
+    CheckDlgButton(hwnd, psh2, BST_UNCHECKED);
 
     // fix window size
     g_settings.fix_size(hwnd);
@@ -832,7 +832,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     return TRUE;
 }
 
-void DoConfig(HWND hwnd)
+static void OnConfig(HWND hwnd)
 {
     if (!IsWindowEnabled(GetDlgItem(hwnd, psh4)))
     {
@@ -840,6 +840,19 @@ void DoConfig(HWND hwnd)
     }
 
     HWND hButton = GetDlgItem(hwnd, psh4);
+
+    if (GetAsyncKeyState(VK_MENU) < 0 &&
+        GetAsyncKeyState(L'C') < 0)
+    {
+    }
+    else
+    {
+        if (IsDlgButtonChecked(hwnd, psh4) == BST_UNCHECKED)
+        {
+            SendDlgItemMessage(hwnd, psh4, BM_CLICK, 0, 0);
+            return;
+        }
+    }
 
     // get the pos and size of the button, in screen coordinates
     RECT rc;
@@ -860,7 +873,7 @@ void DoConfig(HWND hwnd)
     HMENU hMenu = LoadMenu(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_MAINMENU));
     if (!hMenu)
     {
-        Button_SetCheck(hButton, BST_UNCHECKED);
+        CheckDlgButton(hwnd, psh4, BST_UNCHECKED);
         return;
     }
     HMENU hSubMenu = GetSubMenu(hMenu, 0);
@@ -887,44 +900,13 @@ void DoConfig(HWND hwnd)
     {
         PostMessage(hwnd, WM_COMMAND, nCmd, 0);
     }
-}
-
-static void OnConfig(HWND hwnd)
-{
-    HWND hButton = GetDlgItem(hwnd, psh4);
-
-    // manage the pressed status of psh4
-    if (GetAsyncKeyState(VK_MENU) < 0 &&
-        GetAsyncKeyState(L'C') < 0)
-    {
-        // Alt+C
-        Button_SetCheck(hButton, BST_CHECKED);
-    }
-    else
-    {
-        if (IsDlgButtonChecked(hwnd, psh4) == BST_CHECKED)
-        {
-            Button_SetCheck(hButton, BST_CHECKED);
-        }
-        else
-        {
-            Button_SetCheck(hButton, BST_UNCHECKED);
-            return;
-        }
-    }
-
-    DoConfig(hwnd);
-
-    POINT pt;
-    GetCursorPos(&pt);
-
-    RECT rc;
-    GetWindowRect(hwnd, &rc);
 
     // unpressed if necessary
+    GetCursorPos(&pt);
+    GetWindowRect(hButton, &rc);
     if (!PtInRect(&rc, pt) || GetAsyncKeyState(VK_LBUTTON) >= 0)
     {
-        Button_SetCheck(hButton, BST_UNCHECKED);
+        CheckDlgButton(hwnd, psh4, BST_UNCHECKED);
     }
 }
 
@@ -1315,7 +1297,7 @@ BOOL DoCreateFinalizingThread(HWND hwnd)
     return s_hFinalizingThread != NULL;
 }
 
-void DoStop(HWND hwnd)
+void OnStop(HWND hwnd)
 {
     if (!IsWindowEnabled(GetDlgItem(hwnd, psh3)))
         return;
@@ -1451,8 +1433,8 @@ static void OnFinalized(HWND hwnd)
     }
 
     // uncheck buttons
-    Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
-    Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
+    CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
+    CheckDlgButton(hwnd, psh2, BST_UNCHECKED);
 
     // if any config window is shown, enable some buttons
     if (!IsWindow(g_hwndSoundInput) &&
@@ -1520,8 +1502,8 @@ static void OnFinalizeFail(HWND hwnd)
     }
 
     // uncheck some buttons
-    Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
-    Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
+    CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
+    CheckDlgButton(hwnd, psh2, BST_UNCHECKED);
 
     // enable some buttons
     if (!IsWindow(g_hwndSoundInput) &&
@@ -1562,8 +1544,8 @@ static void OnFinalizeCancel(HWND hwnd)
     }
 
     // uncheck some buttons
-    Button_SetCheck(GetDlgItem(hwnd, psh1), BST_UNCHECKED);
-    Button_SetCheck(GetDlgItem(hwnd, psh2), BST_UNCHECKED);
+    CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
+    CheckDlgButton(hwnd, psh2, BST_UNCHECKED);
 
     // enable some buttons
     if (!IsWindow(g_hwndSoundInput) &&
@@ -1608,21 +1590,17 @@ void DoClosePopups(HWND hwnd)
         PostMessage(g_hwndHotKeys, WM_CLOSE, 0, 0);
 }
 
-void DoRec(HWND hwnd, BOOL bFromButton)
+void OnRecStop(HWND hwnd)
 {
     if (!IsWindowEnabled(GetDlgItem(hwnd, psh1)))
     {
         return;
     }
 
-    if (!bFromButton)
+    if (IsDlgButtonChecked(hwnd, psh1) == BST_UNCHECKED)
     {
-        if (IsDlgButtonChecked(hwnd, psh1) == BST_CHECKED)
-        {
-            DoStop(hwnd);
-            return;
-        }
-        CheckDlgButton(hwnd, psh1, BST_CHECKED);
+        OnStop(hwnd);
+        return;
     }
 
     // build image file path
@@ -1671,7 +1649,7 @@ void DoRec(HWND hwnd, BOOL bFromButton)
     }
 }
 
-void DoResume(HWND hwnd)
+void OnResume(HWND hwnd)
 {
     if (!IsWindowEnabled(GetDlgItem(hwnd, psh2)))
         return;
@@ -1683,7 +1661,7 @@ void DoResume(HWND hwnd)
     }
 }
 
-void DoPause(HWND hwnd)
+void OnPause(HWND hwnd)
 {
     // disable recording
     s_bWriting = FALSE;
@@ -1693,28 +1671,12 @@ void DoPause(HWND hwnd)
     }
 }
 
-void DoPauseResume(HWND hwnd, BOOL bFromButton)
+void OnPauseResume(HWND hwnd)
 {
-    if (bFromButton)
-    {
-        if (IsDlgButtonChecked(hwnd, psh2) == BST_CHECKED)
-            DoPause(hwnd);
-        else
-            DoResume(hwnd);
-    }
+    if (IsDlgButtonChecked(hwnd, psh2) == BST_CHECKED)
+        OnPause(hwnd);
     else
-    {
-        if (IsDlgButtonChecked(hwnd, psh2) != BST_CHECKED)
-        {
-            DoPause(hwnd);
-            CheckDlgButton(hwnd, psh2, BST_CHECKED);
-        }
-        else
-        {
-            DoResume(hwnd);
-            CheckDlgButton(hwnd, psh2, BST_UNCHECKED);
-        }
-    }
+        OnResume(hwnd);
 }
 
 static void OnAbout(HWND hwnd)
@@ -1767,19 +1729,19 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     case psh1:
         if (codeNotify == BN_CLICKED)
         {
-            DoRec(hwnd, TRUE);
+            OnRecStop(hwnd);
         }
         break;
     case psh2:
         if (codeNotify == BN_CLICKED)
         {
-            DoPauseResume(hwnd, TRUE);
+            OnPauseResume(hwnd);
         }
         break;
     case psh3:
         if (codeNotify == BN_CLICKED)
         {
-            DoStop(hwnd);
+            OnStop(hwnd);
         }
         break;
     case psh4:
@@ -2315,16 +2277,20 @@ static void OnHotKey(HWND hwnd, int idHotKey, UINT fuModifiers, UINT vk)
     switch (idHotKey)
     {
     case HOTKEY_0_ID:
-        DoRec(hwnd, FALSE);
+        SetForegroundWindow(hwnd);
+        SendDlgItemMessage(hwnd, psh1, BM_CLICK, 0, 0);
         break;
     case HOTKEY_1_ID:
-        DoPauseResume(hwnd, FALSE);
+        SetForegroundWindow(hwnd);
+        SendDlgItemMessage(hwnd, psh2, BM_CLICK, 0, 0);
         break;
     case HOTKEY_2_ID:
-        DoStop(hwnd);
+        SetForegroundWindow(hwnd);
+        SendDlgItemMessage(hwnd, psh3, BM_CLICK, 0, 0);
         break;
     case HOTKEY_3_ID:
-        DoConfig(hwnd);
+        SetForegroundWindow(hwnd);
+        SendDlgItemMessage(hwnd, psh4, BM_CLICK, 0, 0);
         break;
     case HOTKEY_4_ID:
         DoMinimizeRestore(hwnd);
