@@ -247,6 +247,12 @@ static BOOL Page0_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     HWND hCmb1 = GetDlgItem(hwnd, cmb1);
 
+    // g_settings.m_nMonitorID == 0: primary monitor.
+    // g_settings.m_nMonitorID == 1: virtual screen.
+    // g_settings.m_nMonitorID == 2: Monitor #0.
+    // g_settings.m_nMonitorID == 3: Monitor #1.
+    // ...
+
     ComboBox_AddString(hCmb1, LoadStringDx(IDS_PRIMARYMONITOR));
     ComboBox_AddString(hCmb1, LoadStringDx(IDS_VIRTUALSCREEN));
 
@@ -260,10 +266,10 @@ static BOOL Page0_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     }
     ComboBox_SetCurSel(hCmb1, g_settings.m_nMonitorID);
 
-    SendDlgItemMessage(hwnd, scr1, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
-    SendDlgItemMessage(hwnd, scr2, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
-    SendDlgItemMessage(hwnd, scr3, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
-    SendDlgItemMessage(hwnd, scr4, UDM_SETRANGE, 0, MAKELPARAM(3000, -3000));
+    SendDlgItemMessage(hwnd, scr1, UDM_SETRANGE, 0, MAKELPARAM(32767, -32768));
+    SendDlgItemMessage(hwnd, scr2, UDM_SETRANGE, 0, MAKELPARAM(32767, -32768));
+    SendDlgItemMessage(hwnd, scr3, UDM_SETRANGE, 0, MAKELPARAM(32767, -32768));
+    SendDlgItemMessage(hwnd, scr4, UDM_SETRANGE, 0, MAKELPARAM(32767, -32768));
 
     Page0_SetData(hwnd);
 
