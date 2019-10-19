@@ -15,3 +15,4 @@
     - "Open folder" feature is added.
     - 4.5 FPS became default.
     - Apply `WS_EX_TOOLWINDOW` to configuration.
+    - Improved UI.
