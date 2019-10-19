@@ -6,6 +6,15 @@ YappyCam is a Windows software to create movie files from screen capture or Web 
 
 It can also record sound from speaker or microphone.
 
+## Hotkeys
+
+- Alt+R --- Record/Stop.
+- Alt+P --- Pause.
+- Alt+S --- Stop.
+- Alt+C --- Configuration.
+- Alt+M --- Minimize/Restore.
+- Alt+X --- Exit.
+
 ## Platforms
 
 It works on Windows Vista/7/10.

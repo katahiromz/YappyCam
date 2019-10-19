@@ -10,6 +10,15 @@ It can also record sound from speaker or microphone.
 
 Download: https://katahiromz.web.fc2.com/yappycam/en
 
+## Hotkeys
+
+- `Alt+R` --- Record/Stop.
+- `Alt+P` --- Pause.
+- `Alt+S` --- Stop.
+- `Alt+C` --- Configuration.
+- `Alt+M` --- Minimize/Restore.
+- `Alt+X` --- Exit.
+
 ## Platforms
 
 It works on Windows Vista/7/10.
