@@ -63,6 +63,7 @@ add_executable(YappyCam WIN32
     YappyCam.cpp
     hotkeys_dlg.cpp
     misc.cpp
+    multires_dlg.cpp
     sound.cpp
     sound_dlg.cpp
     pic_dlg.cpp

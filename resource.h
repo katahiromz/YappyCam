@@ -48,6 +48,7 @@
 #define IDS_VERSIONTEXT                     120
 #define IDS_VERSIONCAPTION                  121
 #define IDS_QUERYINIT                       122
+#define IDS_SCANNING                        123
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101

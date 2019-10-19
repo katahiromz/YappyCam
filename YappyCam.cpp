@@ -1110,6 +1110,64 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
     double fps = nFPSx100 / 100.0;
     int fourcc = int(g_settings.m_dwFOURCC);
 
+    std::unordered_map<DWORD, DWORD> resolutions;
+    resolutions[MAKELONG(width, height)] = 1;
+
+    // for each frames...
+    for (INT i = nStartIndex; i <= nEndIndex; ++i)
+    {
+        if (s_bFinalizeCancelled)
+        {
+            // cancelled
+            assert(0);
+            StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZECANCELLED));
+            g_settings.m_strStatusText = szText;
+            SendMessage(hScr1, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+            SendMessage(hScr1, PBM_SETPOS, 0, 0);
+            InvalidateRect(g_hMainWnd, NULL, TRUE);
+
+            m_sound.StartHearing();
+            PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZECANCEL, 0);
+            return FALSE;
+        }
+
+        // load frame image
+        StringCbPrintfA(szImageName, sizeof(szImageName), image_name.c_str(), i);
+        frame = cv::imread(szImageName);
+        if (!frame.data)
+        {
+            continue;
+        }
+
+        width = frame.cols;
+        height = frame.rows;
+        resolutions[MAKELONG(width, height)]++;
+
+        // update status text
+        StringCbPrintf(szText, sizeof(szText),
+                       LoadStringDx(IDS_SCANNING),
+                       i * 100 / s_nFramesToWrite);
+        g_settings.m_strStatusText = szText;
+
+        // update progress
+        PostMessage(hScr1, PBM_SETPOS, i, 0);
+
+        // redraw window
+        InvalidateRect(g_hMainWnd, NULL, TRUE);
+    }
+
+    if (resolutions.size() > 1)
+    {
+        DWORD dwReso = DoMultiResoDialogBox(g_hMainWnd, resolutions);
+        WORD cx = LOWORD(dwReso);
+        WORD cy = HIWORD(dwReso);
+        if (cx != 0 && cy != 0)
+        {
+            width = cx;
+            height = cy;
+        }
+    }
+
     // video writer
     cv::VideoWriter writer(output_name.c_str(), fourcc, fps, cv::Size(width, height));
     if (!writer.isOpened())
@@ -1129,7 +1187,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
         {
             // cancelled
             assert(0);
-            StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
+            StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZECANCELLED));
             g_settings.m_strStatusText = szText;
             SendMessage(hScr1, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
             SendMessage(hScr1, PBM_SETPOS, 0, 0);

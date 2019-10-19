@@ -190,6 +190,7 @@ STRINGTABLE
     IDS_VERSIONTEXT, "YappyCam Version 0.8\nKatayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>"
     IDS_VERSIONCAPTION, "About YappyCam"
     IDS_QUERYINIT, "Do you want to initialize this application settings?"
+    IDS_SCANNING, "Scanning... - %u%%"
 }
 
 //////////////////////////////////////////////////////////////////////////////

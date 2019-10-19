@@ -8,6 +8,7 @@
 #include <shlwapi.h>
 #include <strsafe.h>
 #include <string>
+#include <unordered_map>
 #include <opencv2/opencv.hpp>
 #include "sound.hpp"
 #include "resource.h"
@@ -151,5 +152,8 @@ void DoStartStopTimers(HWND hwnd, BOOL bStart);
 #define HOTKEY_4_ID  0x1004
 #define HOTKEY_5_ID  0x1005
 BOOL DoSetupHotkeys(HWND hwnd, BOOL bSetup);
+
+typedef std::unordered_map<DWORD, DWORD> RESO_MAP;
+DWORD DoMultiResoDialogBox(HWND hwndParent, RESO_MAP& map);
 
 #endif  // ndef YAPPYCAM_HPP_
