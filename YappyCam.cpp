@@ -1297,6 +1297,8 @@ BOOL DoCreateFinalizingThread(HWND hwnd)
     return s_hFinalizingThread != NULL;
 }
 
+static BOOL s_bPsh3ByHotKey = FALSE;
+
 void OnStop(HWND hwnd)
 {
     if (!IsWindowEnabled(GetDlgItem(hwnd, psh3)))
@@ -1319,6 +1321,13 @@ void OnStop(HWND hwnd)
         SendDlgItemMessage(hwnd, psh2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmPause);
         SendDlgItemMessage(hwnd, psh3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmStop);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
+
+        if (s_bPsh3ByHotKey)
+        {
+            SendDlgItemMessage(hwnd, psh3, BM_SETSTATE, TRUE, 0);
+            Sleep(100);
+            SendDlgItemMessage(hwnd, psh3, BM_SETSTATE, FALSE, 0);
+        }
 
         // restart hearing and watching
         m_sound.StartHearing();
@@ -2286,7 +2295,9 @@ static void OnHotKey(HWND hwnd, int idHotKey, UINT fuModifiers, UINT vk)
         break;
     case HOTKEY_2_ID:
         SetForegroundWindow(hwnd);
+        s_bPsh3ByHotKey = TRUE;
         SendDlgItemMessage(hwnd, psh3, BM_CLICK, 0, 0);
+        s_bPsh3ByHotKey = FALSE;
         break;
     case HOTKEY_3_ID:
         SetForegroundWindow(hwnd);
