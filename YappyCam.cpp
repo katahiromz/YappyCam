@@ -1751,6 +1751,11 @@ static void OnInitSettings(HWND hwnd)
     }
 }
 
+static void OnOpenFolder(HWND hwnd)
+{
+    ShellExecute(hwnd, NULL, g_settings.m_strDir.c_str(), NULL, NULL, SW_SHOWNORMAL);
+}
+
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
@@ -1845,6 +1850,9 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         break;
     case ID_INITSETTINGS:
         OnInitSettings(hwnd);
+        break;
+    case ID_OPENFOLDER:
+        OnOpenFolder(hwnd);
         break;
     }
 }

@@ -61,12 +61,13 @@
 #define ID_EXIT                             108
 #define ID_HOTKEYS                          109
 #define ID_INITSETTINGS                     110
+#define ID_OPENFOLDER                       111
 
 #ifdef APSTUDIO_INVOKED
     #ifndef APSTUDIO_READONLY_SYMBOLS
         #define _APS_NO_MFC                 1
         #define _APS_NEXT_RESOURCE_VALUE    1001
-        #define _APS_NEXT_COMMAND_VALUE     111
+        #define _APS_NEXT_COMMAND_VALUE     112
         #define _APS_NEXT_CONTROL_VALUE     1000
         #define _APS_NEXT_SYMED_VALUE       300
     #endif

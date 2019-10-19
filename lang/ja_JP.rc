@@ -17,6 +17,7 @@ IDR_MAINMENU MENU
         MENUITEM SEPARATOR
         MENUITEM "保存オプション(&O)...", ID_SAVETO
         MENUITEM "ホットキー(&H)...", ID_HOTKEYS
+        MENUITEM "フォルダーを開く(&F)", ID_OPENFOLDER
         MENUITEM SEPARATOR
         MENUITEM "設定の初期化(&I)", ID_INITSETTINGS
         MENUITEM SEPARATOR
