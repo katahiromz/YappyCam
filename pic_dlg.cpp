@@ -786,6 +786,8 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     ComboBox_AddString(hCmb2, L"2.0");
     ComboBox_AddString(hCmb2, L"3.0");
     ComboBox_AddString(hCmb2, L"4.0");
+    ComboBox_AddString(hCmb2, L"5.0");
+    ComboBox_AddString(hCmb2, L"6.0");
     SetDlgItemDouble(hwnd, cmb2, (g_settings.m_nFPSx100 / 100.0), "%0.1f");
 
     INT x = g_settings.m_nPicDlgX;
