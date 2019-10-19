@@ -1127,12 +1127,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
         frame = cv::imread(szImageName);
         if (!frame.data)
         {
-            assert(0);
-            StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
-            g_settings.m_strStatusText = szText;
-            m_sound.StartHearing();
-            PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
-            return FALSE;
+            continue;
         }
 
         // update status text
