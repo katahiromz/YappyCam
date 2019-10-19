@@ -1306,6 +1306,10 @@ void DoStop(HWND hwnd)
     WritePrivateProfileString(NULL, NULL, NULL, strMovieInfoFile.c_str());
 
     // ask for finalizing
+    if (IsMinimized(hwnd))
+    {
+        ShowWindow(hwnd, SW_RESTORE);
+    }
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                    s_nGotMovieID);
     StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEQUE), szPath);
@@ -1768,9 +1772,13 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
 
                 cv::Mat image;
                 s_frame.convertTo(image, -1, alpha, beta);
-                StretchDIBits(hdc, 0, 0, cx, cy,
-                              0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
-                              image.data, &g_bi, DIB_RGB_COLORS, SRCCOPY);
+
+                if (!IsMinimized(hwnd))
+                {
+                    StretchDIBits(hdc, 0, 0, cx, cy,
+                                  0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
+                                  image.data, &g_bi, DIB_RGB_COLORS, SRCCOPY);
+                }
                 if (s_bWriting && g_writer.isOpened())
                 {
                     // write a frame
@@ -1781,9 +1789,12 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             else
             {
                 // no modification
-                StretchDIBits(hdc, 0, 0, cx, cy,
-                              0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
-                              s_frame.data, &g_bi, DIB_RGB_COLORS, SRCCOPY);
+                if (!IsMinimized(hwnd))
+                {
+                    StretchDIBits(hdc, 0, 0, cx, cy,
+                                  0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
+                                  s_frame.data, &g_bi, DIB_RGB_COLORS, SRCCOPY);
+                }
                 if (s_bWriting && g_writer.isOpened())
                 {
                     // write a frame
@@ -1794,8 +1805,11 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
         }
         else
         {
-            // black out if no image
-            PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
+            if (!IsMinimized(hwnd))
+            {
+                // black out if no image
+                PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
+            }
         }
         break;
     case DM_BITMAP:
@@ -1804,20 +1818,22 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             BITMAP bm;
             if (GetObject(g_hbm, sizeof(bm), &bm))
             {
-                if (g_hbm)
+                if (!IsMinimized(hwnd))
                 {
-                    HGDIOBJ hbmOld = SelectObject(hdcMem, g_hbm);
-                    StretchBlt(hdc, 0, 0, cx, cy,
-                               hdcMem, 0, 0, bm.bmWidth, bm.bmHeight,
-                               SRCCOPY);
-                    SelectObject(hdcMem, hbmOld);
+                    if (g_hbm)
+                    {
+                        HGDIOBJ hbmOld = SelectObject(hdcMem, g_hbm);
+                        StretchBlt(hdc, 0, 0, cx, cy,
+                                   hdcMem, 0, 0, bm.bmWidth, bm.bmHeight,
+                                   SRCCOPY);
+                        SelectObject(hdcMem, hbmOld);
+                    }
+                    else
+                    {
+                        // black out if no image
+                        PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
+                    }
                 }
-                else
-                {
-                    // black out if no image
-                    PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
-                }
-
                 if (g_hbm && s_bWriting && g_writer.isOpened())
                 {
                     // write a frame
@@ -1837,6 +1853,7 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
         }
         break;
     case DM_TEXT:
+        if (!IsMinimized(hwnd))
         {
             // white background
             RECT rc;
