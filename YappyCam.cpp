@@ -1194,6 +1194,10 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
         // success
         StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZED));
         g_settings.m_strStatusText = szText;
+        SendMessage(hScr1, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+        SendMessage(hScr1, PBM_SETPOS, 100, 0);
+        InvalidateRect(g_hMainWnd, NULL, TRUE);
+
         m_sound.StartHearing();
         PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZED, 0);
         return TRUE;
@@ -1203,6 +1207,10 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
         // failure
         StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
         g_settings.m_strStatusText = szText;
+        SendMessage(hScr1, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+        SendMessage(hScr1, PBM_SETPOS, 0, 0);
+        InvalidateRect(g_hMainWnd, NULL, TRUE);
+
         m_sound.StartHearing();
         PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
         return FALSE;
