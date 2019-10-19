@@ -118,7 +118,7 @@ void Settings::init()
     PathAppend(szPath, TEXT("movie-%03u"));
     m_strMovieDir = szPath;
 
-    m_strImageFileName = TEXT("img-%04u.bmp");
+    m_strImageFileName = TEXT("img-%04u.png");
 
     SHGetSpecialFolderPath(NULL, szPath, CSIDL_MYVIDEO, FALSE);
     PathAppend(szPath, TEXT("YappyCam"));

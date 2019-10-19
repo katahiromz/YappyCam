@@ -13,5 +13,4 @@
     - Change license to the 3-clause BSD license.
     - Fullscreen game is supported.
     - "Open folder" feature is added.
-    - "img-%04u.bmp" became default.
     - 4.5 FPS became default.
