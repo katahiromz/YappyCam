@@ -154,6 +154,6 @@ void DoStartStopTimers(HWND hwnd, BOOL bStart);
 BOOL DoSetupHotkeys(HWND hwnd, BOOL bSetup);
 
 typedef std::unordered_map<DWORD, DWORD> RESO_MAP;
-DWORD DoMultiResoDialogBox(HWND hwndParent, RESO_MAP& map);
+DWORD DoMultiResoDialogBox(HWND hwndParent, const RESO_MAP& map);
 
 #endif  // ndef YAPPYCAM_HPP_

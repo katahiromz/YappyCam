@@ -106,7 +106,7 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-DWORD DoMultiResoDialogBox(HWND hwndParent, RESO_MAP& map)
+DWORD DoMultiResoDialogBox(HWND hwndParent, const RESO_MAP& map)
 {
     s_map = map;
 

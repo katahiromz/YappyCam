@@ -155,8 +155,12 @@ BOOL DoHotKeysDialogBox(HWND hwndParent)
                  hwndParent,
                  DialogProc);
 
-    ShowWindow(g_hwndHotKeys, SW_SHOWNORMAL);
-    UpdateWindow(g_hwndHotKeys);
+    if (g_hwndHotKeys)
+    {
+        ShowWindow(g_hwndHotKeys, SW_SHOWNORMAL);
+        UpdateWindow(g_hwndHotKeys);
 
-    return g_hwndHotKeys != NULL;
+        return TRUE;
+    }
+    return FALSE;
 }

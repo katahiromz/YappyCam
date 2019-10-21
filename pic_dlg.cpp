@@ -51,10 +51,9 @@ static BOOL SBD_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
             SelectObject(hdcMem, hbmOld);
 
             LPDWORD pdwBits = (LPDWORD)s_SBD_pvBits;
-            BOOL b = FALSE;
             for (INT y = 0; y < s_SBD_cy; ++y)
             {
-                b = (y & 1);
+                BOOL b = (y & 1);
                 for (INT x = 0; x < s_SBD_cx; ++x)
                 {
                     if (b)
@@ -954,9 +953,13 @@ BOOL DoPictureInputDialogBox(HWND hwndParent)
                  MAKEINTRESOURCE(IDD_PICINPUT),
                  hwndParent,
                  DialogProc);
+    assert(g_hwndPictureInput);
+    if (g_hwndPictureInput)
+    {
+        ShowWindow(g_hwndPictureInput, SW_SHOWNORMAL);
+        UpdateWindow(g_hwndPictureInput);
 
-    ShowWindow(g_hwndPictureInput, SW_SHOWNORMAL);
-    UpdateWindow(g_hwndPictureInput);
-
-    return g_hwndPictureInput != NULL;
+        return TRUE;
+    }
+    return FALSE;
 }

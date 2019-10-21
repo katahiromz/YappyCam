@@ -42,7 +42,7 @@ void DoUpdateDeviceEx(HWND hwnd, INT iDev, INT iFormat)
     g_settings.m_iSoundDev = iDev;
     g_settings.m_iWaveFormat = iFormat;
 
-    auto& format = m_wave_formats[iFormat];
+    const auto& format = m_wave_formats[iFormat];
     m_sound.SetInfo(format.channels, format.samples, format.bits);
     m_sound.SetDevice(m_sound_devices[iDev]);
 }
@@ -195,9 +195,12 @@ BOOL DoSoundInputDialogBox(HWND hwndParent)
                  MAKEINTRESOURCE(IDD_SOUNDINPUT),
                  hwndParent,
                  DialogProc);
-
-    ShowWindow(g_hwndSoundInput, SW_SHOWNORMAL);
-    UpdateWindow(g_hwndSoundInput);
-
-    return g_hwndSoundInput != NULL;
+    assert(g_hwndSoundInput);
+    if (g_hwndSoundInput)
+    {
+        ShowWindow(g_hwndSoundInput, SW_SHOWNORMAL);
+        UpdateWindow(g_hwndSoundInput);
+        return TRUE;
+    }
+    return FALSE;
 }

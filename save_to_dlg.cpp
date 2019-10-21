@@ -115,7 +115,6 @@ static void OnCmb1(HWND hwnd)
     if (!s_bInit)
         return;
 
-    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
     TCHAR szPath[MAX_PATH];
     GetDlgItemText(hwnd, cmb1, szPath, ARRAYSIZE(szPath));
     StrTrim(szPath, L" \t");
@@ -129,7 +128,6 @@ static void OnCmb2(HWND hwnd)
     if (!s_bInit)
         return;
 
-    HWND hCmb2 = GetDlgItem(hwnd, cmb2);
     TCHAR szFilename[MAX_PATH];
     GetDlgItemText(hwnd, cmb2, szFilename, ARRAYSIZE(szFilename));
     StrTrim(szFilename, L" \t");
@@ -142,7 +140,6 @@ static void OnCmb3(HWND hwnd)
     if (!s_bInit)
         return;
 
-    HWND hCmb3 = GetDlgItem(hwnd, cmb3);
     TCHAR szValue[MAX_PATH];
     GetDlgItemText(hwnd, cmb3, szValue, ARRAYSIZE(szValue));
     StrTrim(szValue, L" \t");
@@ -226,9 +223,12 @@ BOOL DoSaveToDialogBox(HWND hwndParent)
                  MAKEINTRESOURCE(IDD_SAVETO),
                  hwndParent,
                  DialogProc);
-
-    ShowWindow(g_hwndSaveTo, SW_SHOWNORMAL);
-    UpdateWindow(g_hwndSaveTo);
-
-    return g_hwndSaveTo != NULL;
+    assert(g_hwndSaveTo);
+    if (g_hwndSaveTo)
+    {
+        ShowWindow(g_hwndSaveTo, SW_SHOWNORMAL);
+        UpdateWindow(g_hwndSaveTo);
+        return TRUE;
+    }
+    return FALSE;
 }

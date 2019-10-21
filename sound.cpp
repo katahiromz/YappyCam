@@ -220,7 +220,6 @@ DWORD Sound::ThreadProc()
     HANDLE waitArray[2] = { m_hShutdownEvent, m_hWakeUp };
 
     bool bKeepRecording = true;
-    bool bFirstPacket = true;
     BYTE *pbData;
     UINT32 uNumFrames;
     DWORD dwFlags;
@@ -259,8 +258,6 @@ DWORD Sound::ThreadProc()
             m_nFrames += uNumFrames;
             hr = m_pCaptureClient->ReleaseBuffer(uNumFrames);
             assert(SUCCEEDED(hr));
-
-            bFirstPacket = false;
         }
 
         DWORD waitResult = ::WaitForMultipleObjects(2, waitArray, FALSE, INFINITE);
