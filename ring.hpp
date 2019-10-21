@@ -3,7 +3,7 @@
 // License: MIT
 
 #ifndef RING_BUFFER_HPP_
-#define RING_BUFFER_HPP_    2   // Version 2
+#define RING_BUFFER_HPP_    3   // Version 3
 
 #include <algorithm>
 #include <type_traits>
@@ -273,7 +273,7 @@ public:
         size_type m_index;
         size_type m_count;
 
-        iterator(self_type& self)
+        explicit iterator(self_type& self)
             : m_self(self)
             , m_index(self.front_index())
             , m_count(self.size())
@@ -350,7 +350,7 @@ public:
         size_type m_index;
         size_type m_count;
 
-        reverse_iterator(self_type& self)
+        explicit reverse_iterator(self_type& self)
             : m_self(self)
             , m_index(self.back_index())
             , m_count(self.size())
@@ -427,7 +427,7 @@ public:
         size_type m_index;
         size_type m_count;
 
-        const_iterator(const iterator& it)
+        explicit const_iterator(const iterator& it)
             : m_self(it.m_self)
             , m_index(it.m_self.front_index())
             , m_count(it.m_self.size())
@@ -441,7 +441,7 @@ public:
             return *this;
         }
 
-        const_iterator(const self_type& self)
+        explicit const_iterator(const self_type& self)
             : m_self(self)
             , m_index(self.front_index())
             , m_count(self.size())
@@ -507,7 +507,7 @@ public:
         size_type m_index;
         size_type m_count;
 
-        const_reverse_iterator(const self_type& self)
+        explicit const_reverse_iterator(const self_type& self)
             : m_self(self)
             , m_index(self.back_index())
             , m_count(self.size())
@@ -521,7 +521,7 @@ public:
             return *this;
         }
 
-        const_reverse_iterator(const reverse_iterator& it)
+        explicit const_reverse_iterator(const reverse_iterator& it)
             : m_self(it.m_self)
             , m_index(it.m_self.front_index())
             , m_count(it.m_self.size())
