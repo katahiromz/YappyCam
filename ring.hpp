@@ -3,7 +3,7 @@
 // License: MIT
 
 #ifndef RING_BUFFER_HPP_
-#define RING_BUFFER_HPP_    1   // Version 1
+#define RING_BUFFER_HPP_    2   // Version 2
 
 #include <algorithm>
 #include <type_traits>
@@ -200,6 +200,15 @@ public:
         front() = std::move(item);
         push_front();
     }
+    template <class... Args>
+    void emplace_front(Args&&... args)
+    {
+        std::allocator<value_type> alloc;
+        using traits = std::allocator_traits<decltype(alloc)>;
+        traits::destroy(alloc, &front());
+        traits::construct(alloc, &front(), std::forward<Args>(args)...);
+        push_front();
+    }
     void pop_front()
     {
         m_front_index = prev_index(m_front_index);
@@ -221,12 +230,25 @@ public:
         back() = std::move(item);
         push_back();
     }
+    template <class... Args>
+    void emplace_back(Args&&... args)
+    {
+        std::allocator<value_type> alloc;
+        using traits = std::allocator_traits<decltype(alloc)>;
+        traits::destroy(&back());
+        traits::construct(alloc, &back(), std::forward<Args>(args)...);
+        push_back();
+    }
     void pop_back()
     {
         m_back_index = next_index(m_back_index);
         m_full = false;
     }
 
+    void push()
+    {
+        push_front();
+    }
     void push(const value_type& item)
     {
         push_front(item);
@@ -234,6 +256,11 @@ public:
     void push(value_type&& item)
     {
         push_front(std::move(item));
+    }
+    template <class... Args>
+    void emplace(Args&&... args)
+    {
+        emplace_front(std::forward<Args>(args)...);
     }
     void pop()
     {
@@ -630,6 +657,43 @@ protected:
 };
 
 ////////////////////////////////////////////////////////////////////////////
+// katahiromz::detail
+
+namespace detail
+{
+    struct test_struct
+    {
+        int m_a;
+        int m_b;
+        static int g;
+        static int f;
+        static int h;
+
+        test_struct(): m_a(0), m_b(0)
+        {
+            ++g;
+        }
+
+        test_struct(int a, int b) : m_a(a), m_b(b)
+        {
+            ++f;
+            ++g;
+        }
+        ~test_struct()
+        {
+            ++h;
+            m_a = 0;
+            m_b = 0;
+            --g;
+        }
+    };
+
+    int test_struct::g = 0;
+    int test_struct::f = 0;
+    int test_struct::h = 0;
+}
+
+////////////////////////////////////////////////////////////////////////////
 // katahiromz::ring_unittest
 
 inline void ring_unittest()
@@ -912,6 +976,74 @@ inline void ring_unittest()
     assert(r.size() == 0);
     assert(r.empty());
     assert(!r.full());
+
+    //
+    // constructor and destructor tests
+    //
+    using test_struct = katahiromz::detail::test_struct;
+
+    assert(test_struct::g == 0);
+    ring<test_struct, 3> rA;
+    assert(test_struct::g == 3);
+
+    assert(rA[0].m_a == 0);
+    assert(rA[0].m_b == 0);
+    assert(rA[1].m_a == 0);
+    assert(rA[1].m_b == 0);
+    assert(rA[2].m_a == 0);
+    assert(rA[2].m_b == 0);
+    assert(test_struct::f == 0);
+    assert(test_struct::h == 0);
+
+    rA.emplace_front(1, 2);
+    assert(test_struct::g == 3);
+    assert(rA[0].m_a == 1);
+    assert(rA[0].m_b == 2);
+    assert(rA[1].m_a == 0);
+    assert(rA[1].m_b == 0);
+    assert(rA[2].m_a == 0);
+    assert(rA[2].m_b == 0);
+    assert(test_struct::f == 1);
+    assert(test_struct::h == 1);
+
+    rA.emplace_front(3, 4);
+    assert(rA[0].m_a == 1);
+    assert(rA[0].m_b == 2);
+    assert(rA[1].m_a == 3);
+    assert(rA[1].m_b == 4);
+    assert(rA[2].m_a == 0);
+    assert(rA[2].m_b == 0);
+    assert(test_struct::g == 3);
+    assert(test_struct::f == 2);
+    assert(test_struct::h == 2);
+
+    rA.pop_back();
+    assert(test_struct::g == 3);
+    assert(test_struct::f == 2);
+    assert(test_struct::h == 2);
+
+    rA.emplace_front(5, 6);
+    assert(rA[0].m_a == 1);
+    assert(rA[0].m_b == 2);
+    assert(rA[1].m_a == 3);
+    assert(rA[1].m_b == 4);
+    assert(rA[2].m_a == 5);
+    assert(rA[2].m_b == 6);
+    assert(test_struct::g == 3);
+    assert(test_struct::f == 3);
+    assert(test_struct::h == 3);
+
+    rA.emplace_front(7, 8);
+    assert(rA[0].m_a == 7);
+    assert(rA[0].m_b == 8);
+    assert(rA[1].m_a == 3);
+    assert(rA[1].m_b == 4);
+    assert(rA[2].m_a == 5);
+    assert(rA[2].m_b == 6);
+    assert(test_struct::g == 3);
+    assert(test_struct::f == 4);
+    assert(test_struct::h == 4);
+    assert(rA.full());
 } // ring_unittest
 
 ////////////////////////////////////////////////////////////////////////////
