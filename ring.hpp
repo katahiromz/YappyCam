@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <stdexcept>
-#include <cstddef>
+#include <cstring>
 #include <cassert>
 
 namespace katahiromz {
@@ -274,20 +274,20 @@ public:
             count = size();
 
         difference_type i, k;
-        if (m_back_index <= m_front_index)
-        {
-            for (i = 0, k = m_front_index - 1; i < count; ++i, --k)
-            {
-                values[i] = m_data[k];
-            }
-        }
-        else
+        if (m_full || m_back_index > m_front_index)
         {
             for (i = 0, k = m_front_index - 1; i < count && k >= 0; ++i, --k)
             {
                 values[i] = m_data[k];
             }
             for (k = t_size - 1; i < count && k >= m_back_index; ++i, --k)
+            {
+                values[i] = m_data[k];
+            }
+        }
+        else
+        {
+            for (i = 0, k = m_front_index - 1; i < count && k >= m_back_index; ++i, --k)
             {
                 values[i] = m_data[k];
             }
@@ -300,20 +300,20 @@ public:
             count = size();
 
         size_type i, k;
-        if (m_back_index <= m_front_index)
+        if (m_full || m_back_index > m_front_index)
         {
-            for (i = 0, k = m_back_index; i < count; ++i, ++k)
+            for (i = 0, k = m_back_index; i < count && k < t_size; ++i, ++k)
+            {
+                values[i] = m_data[k];
+            }
+            for (k = 0; i < count && k < m_front_index; ++i, ++k)
             {
                 values[i] = m_data[k];
             }
         }
         else
         {
-            for (i = 0, k = m_front_index; i < count && k < t_size; ++i, ++k)
-            {
-                values[i] = m_data[k];
-            }
-            for (k = 0; i < count && k < m_front_index; ++i, ++k)
+            for (i = 0, k = m_back_index; i < count && k < m_front_index; ++i, ++k)
             {
                 values[i] = m_data[k];
             }
@@ -981,6 +981,21 @@ inline void ring_unittest()
     assert(r[1] == 2);
     assert(r[2] == 3);
     assert(r[3] == 4);
+    assert(r.full());
+
+    int data[4] = { 0 };
+    r.peek_back(data, 4);
+    assert(data[0] == 2);
+    assert(data[1] == 3);
+    assert(data[2] == 4);
+    assert(data[3] == 5);
+
+    std::memset(data, 0, sizeof(data));
+    r.peek_front(data, 4);
+    assert(data[0] == 5);
+    assert(data[1] == 4);
+    assert(data[2] == 3);
+    assert(data[3] == 2);
 
     i = 0;
     for (const auto& item : r)
@@ -998,6 +1013,81 @@ inline void ring_unittest()
             break;
         case 3:
             assert(item == 2);
+            break;
+        default:
+            assert(false);
+            break;
+        }
+        ++i;
+    }
+    assert(i == 4);
+
+    i = 0;
+    for (auto it = r.begin(); it != r.end(); ++it)
+    {
+        switch (i)
+        {
+        case 0:
+            assert(*it == 5);
+            break;
+        case 1:
+            assert(*it == 4);
+            break;
+        case 2:
+            assert(*it == 3);
+            break;
+        case 3:
+            assert(*it == 2);
+            break;
+        default:
+            assert(false);
+            break;
+        }
+        ++i;
+    }
+    assert(i == 4);
+
+    i = 0;
+    for (auto it = r.cbegin(); it != r.cend(); ++it)
+    {
+        switch (i)
+        {
+        case 0:
+            assert(*it == 5);
+            break;
+        case 1:
+            assert(*it == 4);
+            break;
+        case 2:
+            assert(*it == 3);
+            break;
+        case 3:
+            assert(*it == 2);
+            break;
+        default:
+            assert(false);
+            break;
+        }
+        ++i;
+    }
+    assert(i == 4);
+
+    i = 0;
+    for (auto it = r.rbegin(); it != r.rend(); ++it)
+    {
+        switch (i)
+        {
+        case 0:
+            assert(*it == 2);
+            break;
+        case 1:
+            assert(*it == 3);
+            break;
+        case 2:
+            assert(*it == 4);
+            break;
+        case 3:
+            assert(*it == 5);
             break;
         default:
             assert(false);
