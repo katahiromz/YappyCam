@@ -3,7 +3,7 @@
 // License: MIT
 
 #ifndef RING_BUFFER_HPP_
-#define RING_BUFFER_HPP_    6   // Version 6
+#define RING_BUFFER_HPP_    7   // Version 7
 
 #include <algorithm>
 #include <type_traits>
@@ -272,6 +272,8 @@ public:
     {
         if (count > size())
             count = size();
+        if (count == 0)
+            return 0;
 
         if (m_full || m_back_index > m_front_index)
         {
@@ -306,6 +308,8 @@ public:
     {
         if (count > size())
             count = size();
+        if (count == 0)
+            return 0;
 
         if (m_full || m_back_index > m_front_index)
         {
