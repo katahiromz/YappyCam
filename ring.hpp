@@ -994,6 +994,12 @@ inline void ring_unittest()
     assert(r.full());
 
     int data[4] = { 0 };
+    r.peek_back(data, 2);
+    assert(data[0] == 2);
+    assert(data[1] == 3);
+    assert(data[2] == 0);
+    assert(data[3] == 0);
+
     r.peek_back(data, 4);
     assert(data[0] == 2);
     assert(data[1] == 3);
@@ -1001,6 +1007,12 @@ inline void ring_unittest()
     assert(data[3] == 5);
 
     std::memset(data, 0, sizeof(data));
+    r.peek_front(data, 2);
+    assert(data[0] == 5);
+    assert(data[1] == 4);
+    assert(data[2] == 0);
+    assert(data[3] == 0);
+
     r.peek_front(data, 4);
     assert(data[0] == 5);
     assert(data[1] == 4);
