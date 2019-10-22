@@ -3,7 +3,7 @@
 // License: MIT
 
 #ifndef RING_BUFFER_HPP_
-#define RING_BUFFER_HPP_    9   // Version 9
+#define RING_BUFFER_HPP_    10   // Version 10
 
 #include <algorithm>
 #include <type_traits>
@@ -291,7 +291,7 @@ public:
 
     void skip_front(size_type count)
     {
-        assert(count <= t_size);
+        assert(count <= size());
         m_front_index += t_size - count;
         m_front_index %= t_size;
         if (count > 0)
@@ -299,7 +299,7 @@ public:
     }
     void skip_back(size_type count)
     {
-        assert(count <= t_size);
+        assert(count <= size());
         m_back_index += count;
         m_back_index %= t_size;
         if (count > 0)
