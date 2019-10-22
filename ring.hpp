@@ -3,7 +3,7 @@
 // License: MIT
 
 #ifndef RING_BUFFER_HPP_
-#define RING_BUFFER_HPP_    7   // Version 7
+#define RING_BUFFER_HPP_    8   // Version 8
 
 #include <algorithm>
 #include <type_traits>
@@ -268,70 +268,28 @@ public:
         pop_back();
     }
 
-    size_type peek_front(T_VALUE *values, size_type count) const
+    void peek_front(T_VALUE *values, size_type count) const
     {
         if (count > size())
             count = size();
-        if (count == 0)
-            return 0;
 
-        if (m_full || m_back_index > m_front_index)
+        size_type i = 0, k = prev_index(m_front_index);
+        while (count-- > 0)
         {
-            difference_type i, k;
-            for (i = 0, k = m_front_index - 1;
-                 i < difference_type(count) && k >= 0;
-                 ++i, --k)
-            {
-                values[i] = m_data[k];
-            }
-            for (k = t_size - 1;
-                 i < difference_type(count) && k >= difference_type(m_back_index);
-                 ++i, --k)
-            {
-                values[i] = m_data[k];
-            }
-            return i;
-        }
-        else
-        {
-            difference_type i, k;
-            for (i = 0, k = prev_index(m_front_index);
-                 i < difference_type(count) && k >= difference_type(m_back_index);
-                 ++i, --k)
-            {
-                values[i] = m_data[k];
-            }
-            return i;
+            values[i++] = m_data[k];
+            k = prev_index(k);
         }
     }
-    size_type peek_back(T_VALUE *values, size_type count) const
+    void peek_back(T_VALUE *values, size_type count) const
     {
         if (count > size())
             count = size();
-        if (count == 0)
-            return 0;
 
-        if (m_full || m_back_index > m_front_index)
+        size_type i = 0, k = m_back_index;
+        while (count-- > 0)
         {
-            size_type i, k;
-            for (i = 0, k = m_back_index; i < count && k < t_size; ++i, ++k)
-            {
-                values[i] = m_data[k];
-            }
-            for (k = 0; i < count && k < m_front_index; ++i, ++k)
-            {
-                values[i] = m_data[k];
-            }
-            return i;
-        }
-        else
-        {
-            size_type i, k;
-            for (i = 0, k = m_back_index; i < count && k < m_front_index; ++i, ++k)
-            {
-                values[i] = m_data[k];
-            }
-            return i;
+            values[i++] = m_data[k];
+            k = next_index(k);
         }
     }
 
