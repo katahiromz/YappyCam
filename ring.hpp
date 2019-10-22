@@ -3,7 +3,7 @@
 // License: MIT
 
 #ifndef RING_BUFFER_HPP_
-#define RING_BUFFER_HPP_    4   // Version 4
+#define RING_BUFFER_HPP_    6   // Version 6
 
 #include <algorithm>
 #include <type_traits>
@@ -273,35 +273,43 @@ public:
         if (count > size())
             count = size();
 
-        difference_type i, k;
         if (m_full || m_back_index > m_front_index)
         {
-            for (i = 0, k = m_front_index - 1; i < count && k >= 0; ++i, --k)
+            difference_type i, k;
+            for (i = 0, k = m_front_index - 1;
+                 i < difference_type(count) && k >= 0;
+                 ++i, --k)
             {
                 values[i] = m_data[k];
             }
-            for (k = t_size - 1; i < count && k >= m_back_index; ++i, --k)
+            for (k = t_size - 1;
+                 i < difference_type(count) && k >= difference_type(m_back_index);
+                 ++i, --k)
             {
                 values[i] = m_data[k];
             }
+            return i;
         }
         else
         {
-            for (i = 0, k = m_front_index - 1; i < count && k >= m_back_index; ++i, --k)
+            difference_type i, k;
+            for (i = 0, k = (m_front_index + t_size - 1) % t_size;
+                 i < difference_type(count) && k >= difference_type(m_back_index);
+                 ++i, --k)
             {
                 values[i] = m_data[k];
             }
+            return i;
         }
-        return i;
     }
     size_type peek_back(T_VALUE *values, size_type count) const
     {
         if (count > size())
             count = size();
 
-        size_type i, k;
         if (m_full || m_back_index > m_front_index)
         {
+            size_type i, k;
             for (i = 0, k = m_back_index; i < count && k < t_size; ++i, ++k)
             {
                 values[i] = m_data[k];
@@ -310,15 +318,17 @@ public:
             {
                 values[i] = m_data[k];
             }
+            return i;
         }
         else
         {
+            size_type i, k;
             for (i = 0, k = m_back_index; i < count && k < m_front_index; ++i, ++k)
             {
                 values[i] = m_data[k];
             }
+            return i;
         }
-        return i;
     }
 
     void skip_front(size_type count)
