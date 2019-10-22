@@ -3,7 +3,7 @@
 // License: MIT
 
 #ifndef RING_BUFFER_HPP_
-#define RING_BUFFER_HPP_    8   // Version 8
+#define RING_BUFFER_HPP_    9   // Version 9
 
 #include <algorithm>
 #include <type_traits>
@@ -270,9 +270,7 @@ public:
 
     void peek_front(T_VALUE *values, size_type count) const
     {
-        if (count > size())
-            count = size();
-
+        assert(count <= size());
         size_type i = 0, k = prev_index(m_front_index);
         while (count-- > 0)
         {
@@ -282,9 +280,7 @@ public:
     }
     void peek_back(T_VALUE *values, size_type count) const
     {
-        if (count > size())
-            count = size();
-
+        assert(count <= size());
         size_type i = 0, k = m_back_index;
         while (count-- > 0)
         {
