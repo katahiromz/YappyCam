@@ -3,7 +3,7 @@
 // License: MIT
 
 #ifndef RING_BUFFER_HPP_
-#define RING_BUFFER_HPP_    3   // Version 3
+#define RING_BUFFER_HPP_    4   // Version 4
 
 #include <algorithm>
 #include <type_traits>
@@ -25,6 +25,7 @@ public:
     typedef       T_VALUE& reference;
     typedef const T_VALUE& const_reference;
     typedef std::size_t size_type;
+    typedef std::ptrdiff_t difference_type;
 
     ring()
         : m_front_index(0)
@@ -265,6 +266,78 @@ public:
     void pop()
     {
         pop_back();
+    }
+
+    size_type peek_front(void *data, size_type count) const
+    {
+        if (count > size())
+            count = size();
+
+        difference_type i, k;
+        T_VALUE *values = reinterpret_cast<T_VALUE *>(data);
+        if (m_back_index <= m_front_index)
+        {
+            for (i = 0, k = m_front_index - 1; i < count; ++i, --k)
+            {
+                values[i] = m_data[k];
+            }
+        }
+        else
+        {
+            for (i = 0, k = m_front_index - 1; i < count && k >= 0; ++i, --k)
+            {
+                values[i] = m_data[k];
+            }
+            for (k = t_size - 1; i < count && k >= m_back_index; ++i, --k)
+            {
+                values[i] = m_data[k];
+            }
+        }
+        return i;
+    }
+    size_type peek_back(void *data, size_type count) const
+    {
+        if (count > size())
+            count = size();
+
+        size_type i, k;
+        T_VALUE *values = reinterpret_cast<T_VALUE *>(data);
+        if (m_back_index <= m_front_index)
+        {
+            for (i = 0, k = m_back_index; i < count; ++i, ++k)
+            {
+                values[i] = m_data[k];
+            }
+        }
+        else
+        {
+            for (i = 0, k = m_front_index; i < count && k < t_size; ++i, ++k)
+            {
+                values[i] = m_data[k];
+            }
+            for (k = 0; i < count && k < m_front_index; ++i, ++k)
+            {
+                values[i] = m_data[k];
+            }
+        }
+        return i;
+    }
+
+    void skip_front(size_type count)
+    {
+        assert(count <= t_size);
+        m_front_index += t_size - count;
+        m_front_index %= t_size;
+        if (count > 0)
+            m_full = false;
+    }
+    void skip_back(size_type count)
+    {
+        assert(count <= t_size);
+        m_back_index += count;
+        m_back_index %= t_size;
+        if (count > 0)
+            m_full = false;
     }
 
     struct iterator
