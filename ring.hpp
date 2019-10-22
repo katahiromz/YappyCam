@@ -268,13 +268,12 @@ public:
         pop_back();
     }
 
-    size_type peek_front(void *data, size_type count) const
+    size_type peek_front(T_VALUE *values, size_type count) const
     {
         if (count > size())
             count = size();
 
         difference_type i, k;
-        T_VALUE *values = reinterpret_cast<T_VALUE *>(data);
         if (m_back_index <= m_front_index)
         {
             for (i = 0, k = m_front_index - 1; i < count; ++i, --k)
@@ -295,13 +294,12 @@ public:
         }
         return i;
     }
-    size_type peek_back(void *data, size_type count) const
+    size_type peek_back(T_VALUE *values, size_type count) const
     {
         if (count > size())
             count = size();
 
         size_type i, k;
-        T_VALUE *values = reinterpret_cast<T_VALUE *>(data);
         if (m_back_index <= m_front_index)
         {
             for (i = 0, k = m_back_index; i < count; ++i, ++k)
