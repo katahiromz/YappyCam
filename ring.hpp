@@ -295,7 +295,7 @@ public:
         else
         {
             difference_type i, k;
-            for (i = 0, k = (m_front_index + t_size - 1) % t_size;
+            for (i = 0, k = prev_index(m_front_index);
                  i < difference_type(count) && k >= difference_type(m_back_index);
                  ++i, --k)
             {
