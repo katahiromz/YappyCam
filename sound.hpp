@@ -30,7 +30,7 @@ bool get_wave_formats(std::vector<WAVE_FORMAT_INFO>& formats);
 /////////////////////////////////////////////////////////////////////////////
 // Sound class
 
-#define SOUND_BUFFER_SIZE (40 * 1024)
+#define SOUND_BUFFER_SIZE (8 * 1024)
 
 class Sound
 {
