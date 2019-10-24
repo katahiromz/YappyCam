@@ -33,7 +33,7 @@ BOOL get_device_name(CComPtr<IMMDevice> pMMDevice, std::wstring& name)
 
 void DoUpdateDeviceEx(HWND hwnd, INT iDev, INT iFormat)
 {
-    if (iDev < 0 || size_t(iDev) >= m_sound_devices.size())
+    if (iDev < 0 || size_t(iDev) >= g_sound_devices.size())
         return;
 
     if (iFormat < 0 || size_t(iFormat) >= m_wave_formats.size())
@@ -43,8 +43,8 @@ void DoUpdateDeviceEx(HWND hwnd, INT iDev, INT iFormat)
     g_settings.m_iWaveFormat = iFormat;
 
     const auto& format = m_wave_formats[iFormat];
-    m_sound.SetInfo(format.channels, format.samples, format.bits);
-    m_sound.SetDevice(m_sound_devices[iDev]);
+    g_sound.SetInfo(format.channels, format.samples, format.bits);
+    g_sound.SetDevice(g_sound_devices[iDev]);
 }
 
 void DoUpdateDevice(HWND hwnd)
@@ -63,20 +63,20 @@ void DoUpdateDevice(HWND hwnd)
 
 static void OnCmb1(HWND hwnd)
 {
-    m_sound.StopHearing();
+    g_sound.StopHearing();
 
     DoUpdateDevice(hwnd);
 
-    m_sound.StartHearing();
+    g_sound.StartHearing();
 }
 
 static void OnCmb2(HWND hwnd)
 {
-    m_sound.StopHearing();
+    g_sound.StopHearing();
 
     DoUpdateDevice(hwnd);
 
-    m_sound.StartHearing();
+    g_sound.StartHearing();
 }
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
@@ -85,7 +85,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     HWND hCmb1 = GetDlgItem(hwnd, cmb1);
     std::wstring name;
-    for (auto& dev : m_sound_devices)
+    for (auto& dev : g_sound_devices)
     {
         get_device_name(dev, name);
         ComboBox_AddString(hCmb1, name.c_str());

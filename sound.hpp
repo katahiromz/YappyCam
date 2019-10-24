@@ -14,6 +14,7 @@
 #include <vector>
 #include <cstdio>
 #include <strsafe.h>
+#include "resource.h"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -30,7 +31,8 @@ bool get_wave_formats(std::vector<WAVE_FORMAT_INFO>& formats);
 /////////////////////////////////////////////////////////////////////////////
 // Sound class
 
-#define SOUND_BUFFER_SIZE (8 * 1024)
+#define SOUND_BUFFER_SIZE (12 * 1024)
+#define SOUND_INCREMENT 4800
 
 class Sound
 {
@@ -41,7 +43,6 @@ public:
     BOOL m_bRecording;
     FILE *m_fp;
     CRITICAL_SECTION m_lock;
-    static char s_sound_buf[SOUND_BUFFER_SIZE];
 
     Sound();
     ~Sound();
@@ -121,43 +122,10 @@ inline BOOL Sound::StopHearing()
         m_hThread = NULL;
     }
 
-    ::PlaySound(NULL, NULL, 0);
+    ::PlaySound(MAKEINTRESOURCE(IDR_SILENT_WAV), GetModuleHandle(NULL),
+                SND_ASYNC | SND_PURGE | SND_RESOURCE);
 
     return TRUE;
-}
-
-inline void Sound::FlushData(BOOL bLock)
-{
-    if (bLock)
-    {
-        EnterCriticalSection(&m_lock);
-    }
-
-    fclose(m_fp);
-    m_fp = NULL;
-
-    if (bLock)
-    {
-        LeaveCriticalSection(&m_lock);
-    }
-}
-
-inline BOOL Sound::OpenSoundFile()
-{
-    assert(!m_fp);
-    m_fp = _wfopen(m_szSoundFile, L"wb");
-    if (m_fp)
-    {
-        setvbuf(m_fp, s_sound_buf, _IOFBF, sizeof(s_sound_buf));
-        if (fwrite(&m_wfx, sizeof(m_wfx), 1, m_fp))
-        {
-            return TRUE;
-        }
-        fclose(m_fp);
-        m_fp = NULL;
-        DeleteFile(m_szSoundFile);
-    }
-    return FALSE;
 }
 
 /////////////////////////////////////////////////////////////////////////////

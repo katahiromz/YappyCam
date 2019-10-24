@@ -71,6 +71,10 @@ FILETYPE        0x1
 
 IDR_SILENT_WAV WAVE "res/Wave_1.wav"
 
+IDR_STARTREC WAVE "res/Wave_2.wav"
+
+IDR_ENDREC WAVE "res/Wave_3.wav"
+
 //////////////////////////////////////////////////////////////////////////////
 // Languages
 

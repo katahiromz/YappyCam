@@ -8,15 +8,17 @@
 #include <shlwapi.h>
 #include <strsafe.h>
 #include <string>
+#include <mutex>
 #include <unordered_map>
 #include <opencv2/opencv.hpp>
 #include "sound.hpp"
 #include "resource.h"
 #include "mregkey.hpp"
+#include "ring.hpp"
 #include "misc.hpp"
 
 #define MIN_FPS 0.1
-#define MAX_FPS 7.0
+#define MAX_FPS 9.0
 #define DEFAULT_FPS 4.5
 
 enum DisplayMode
@@ -122,7 +124,7 @@ protected:
 };
 extern Settings g_settings;
 
-extern Sound m_sound;
+extern Sound g_sound;
 
 extern HWND g_hMainWnd;
 extern HWND g_hwndSoundInput;
@@ -130,11 +132,8 @@ extern HWND g_hwndPictureInput;
 extern HWND g_hwndSaveTo;
 extern HWND g_hwndHotKeys;
 
-extern cv::VideoCapture g_camera;
-extern CRITICAL_SECTION g_lockPicture;
-
 typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
-extern sound_devices_t m_sound_devices;
+extern sound_devices_t g_sound_devices;
 extern std::vector<WAVE_FORMAT_INFO> m_wave_formats;
 
 // dialogs
@@ -155,5 +154,30 @@ BOOL DoSetupHotkeys(HWND hwnd, BOOL bSetup);
 
 typedef std::unordered_map<DWORD, DWORD> RESO_MAP;
 DWORD DoMultiResoDialogBox(HWND hwndParent, const RESO_MAP& map);
+
+class mutex_debug : public std::mutex
+{
+    const char *m_name;
+public:
+    mutex_debug(const char *name) noexcept
+        : std::mutex()
+        , m_name(name)
+    {
+    }
+    void lock()
+    {
+        //printf("lock: ");
+        //puts(m_name);
+        //fflush(stdout);
+        std::mutex::lock();
+    }
+    void unlock()
+    {
+        //printf("unlock: ");
+        //puts(m_name);
+        //fflush(stdout);
+        std::mutex::unlock();
+    }
+};
 
 #endif  // ndef YAPPYCAM_HPP_

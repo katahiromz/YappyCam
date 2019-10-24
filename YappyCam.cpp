@@ -32,33 +32,71 @@ HICON g_hMainIconSmall = NULL;
 
 // for sound recording
 typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
-sound_devices_t m_sound_devices;
-Sound m_sound;
+sound_devices_t g_sound_devices;
+Sound g_sound;
 std::vector<WAVE_FORMAT_INFO> m_wave_formats;
 
 // for camera capture
-cv::VideoCapture g_camera;
+static cv::VideoCapture s_camera;
 
 // for video writing
-cv::VideoWriter g_writer;
+static cv::VideoWriter s_writer;
 static BOOL s_bWriting = FALSE;
 static BOOL s_bWatching = FALSE;
 
-// mutex
-CRITICAL_SECTION g_lockPicture;
-
-HDC g_hdcScreen = NULL;     // screen DC
+static HDC s_hdcScreen = NULL;     // screen DC
+static HDC s_hdcMem = NULL;        // memory DC
 
 // frame info
 static cv::Mat s_frame;
 static INT s_nFrames = 0;
-HBITMAP g_hbm = NULL;
-BITMAPINFO g_bi =
+static HBITMAP s_hbmBitmap = NULL;
+static LPVOID s_pvBits = NULL;
+static mutex_debug s_bitmap_lock("s_bitmap_lock");
+static BITMAPINFO s_bi =
 {
     {
         sizeof(BITMAPINFOHEADER), 0, 0, 1
     }
 };
+
+// picture writer
+static HANDLE s_hPictureConsumerThread = NULL;
+static HANDLE s_hPictureReadyEvent = NULL;
+static HANDLE s_hPictureQuitEvent = NULL;
+static katahiromz::ring<cv::Mat, 4> s_image_ring;
+static mutex_debug s_image_lock("s_image_lock");
+
+DWORD WINAPI PictureConsumerThreadProc(LPVOID pContext)
+{
+    HANDLE hWaits[] = { s_hPictureReadyEvent, s_hPictureQuitEvent };
+
+    for (;;)
+    {
+        while (s_writer.isOpened() && !s_image_ring.empty())
+        {
+            std::lock_guard<std::mutex> lock(s_image_lock);
+            s_writer << s_image_ring.back();
+            ++s_nFrames;
+            s_image_ring.pop_back();
+        }
+
+        DWORD dwWait = WaitForMultipleObjects(ARRAYSIZE(hWaits), hWaits, FALSE, INFINITE);
+        if (dwWait == WAIT_OBJECT_0)
+            continue;
+        if (dwWait == WAIT_OBJECT_0 + 1)
+            break;
+    }
+
+    while (!s_image_ring.empty() && s_writer.isOpened())
+    {
+        std::lock_guard<std::mutex> lock(s_image_lock);
+        s_writer << s_image_ring.back();
+        s_image_ring.pop_back();
+    }
+
+    return 0;
+}
 
 void Settings::init()
 {
@@ -331,6 +369,8 @@ bool Settings::save(HWND hwnd) const
     return true;
 }
 
+static void OnTimer(HWND hwnd, UINT id);
+
 void DoStartStopTimers(HWND hwnd, BOOL bStart)
 {
     if (bStart)
@@ -339,6 +379,7 @@ void DoStartStopTimers(HWND hwnd, BOOL bStart)
 
         DWORD dwMSEC = DWORD(1000 * 100 / g_settings.m_nFPSx100);
         SetTimer(hwnd, CAP_TIMER_ID, dwMSEC, NULL);
+        OnTimer(hwnd, CAP_TIMER_ID);
 
         s_bWatching = TRUE;
     }
@@ -528,7 +569,9 @@ void Settings::fix_size0(HWND hwnd)
     RECT rc;
     GetWindowRect(hwnd, &rc);
     OnSizing(hwnd, WMSZ_BOTTOMRIGHT, &rc);
-    MoveWindow(hwnd, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, TRUE);
+    SetWindowPos(hwnd, NULL,
+                 rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
+                 SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOZORDER);
     SendMessage(hwnd, DM_REPOSITION, 0, 0);
 }
 
@@ -576,55 +619,56 @@ void Settings::fix_size(HWND hwnd)
 
 void Settings::recreate_bitmap(HWND hwnd)
 {
-    if (g_hbm)
+    s_bitmap_lock.lock();
+    if (s_hbmBitmap)
     {
-        DeleteObject(g_hbm);
-        g_hbm = NULL;
+        DeleteObject(s_hbmBitmap);
+        s_hbmBitmap = NULL;
     }
+    s_bitmap_lock.unlock();
 
-    if (HDC hdc = CreateCompatibleDC(NULL))
+    HGDIOBJ hbmOld;
+
+    s_bi.bmiHeader.biWidth = m_nWidth;
+    s_bi.bmiHeader.biHeight = -m_nHeight;
+    s_bi.bmiHeader.biBitCount = 24;
+    s_bi.bmiHeader.biCompression = BI_RGB;
+
+    s_bitmap_lock.lock();
+    s_hbmBitmap = CreateDIBSection(s_hdcMem, &s_bi, DIB_RGB_COLORS, &s_pvBits, NULL, 0);
+    s_bitmap_lock.unlock();
+
+    s_bitmap_lock.lock();
+    switch (m_nPictureType)
     {
-        LPVOID pvBits;
-        HGDIOBJ hbmOld;
-
-        g_bi.bmiHeader.biWidth = m_nWidth;
-        g_bi.bmiHeader.biHeight = -m_nHeight;
-        g_bi.bmiHeader.biBitCount = 24;
-        g_bi.bmiHeader.biCompression = BI_RGB;
-        g_hbm = CreateDIBSection(hdc, &g_bi, DIB_RGB_COLORS, &pvBits, NULL, 0);
-
-        switch (m_nPictureType)
-        {
-        case PT_BLACK:
-        case PT_SCREENCAP:
-            hbmOld = SelectObject(hdc, g_hbm);
-            PatBlt(hdc, 0, 0, m_nWidth, m_nHeight, BLACKNESS);
-            SelectObject(hdc, hbmOld);
-            break;
-        case PT_WHITE:
-            hbmOld = SelectObject(hdc, g_hbm);
-            PatBlt(hdc, 0, 0, m_nWidth, m_nHeight, WHITENESS);
-            SelectObject(hdc, hbmOld);
-            break;
-        case PT_VIDEOCAP:
-            DeleteObject(g_hbm);
-            g_hbm = NULL;
-            break;
-        case PT_FINALIZING:
-            DeleteObject(g_hbm);
-            g_hbm = NULL;
-            break;
-        }
-
-        DeleteDC(hdc);
+    case PT_BLACK:
+    case PT_SCREENCAP:
+        hbmOld = SelectObject(s_hdcMem, s_hbmBitmap);
+        PatBlt(s_hdcMem, 0, 0, m_nWidth, m_nHeight, BLACKNESS);
+        SelectObject(s_hdcMem, hbmOld);
+        break;
+    case PT_WHITE:
+        hbmOld = SelectObject(s_hdcMem, s_hbmBitmap);
+        PatBlt(s_hdcMem, 0, 0, m_nWidth, m_nHeight, WHITENESS);
+        SelectObject(s_hdcMem, hbmOld);
+        break;
+    case PT_VIDEOCAP:
+        DeleteObject(s_hbmBitmap);
+        s_hbmBitmap = NULL;
+        break;
+    case PT_FINALIZING:
+        DeleteObject(s_hbmBitmap);
+        s_hbmBitmap = NULL;
+        break;
     }
+    s_bitmap_lock.unlock();
 }
 
 BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
 {
     assert(!s_bWatching);
 
-    g_camera.release();
+    s_camera.release();
     s_frame.release();
 
     switch (type)
@@ -642,14 +686,14 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         break;
     case PT_VIDEOCAP:
         SetDisplayMode(DM_CAPFRAME);
-        g_camera.open(m_nCameraID);
-        if (!g_camera.isOpened())
+        s_camera.open(m_nCameraID);
+        if (!s_camera.isOpened())
         {
             DoStartStopTimers(hwnd, TRUE);
             return FALSE;
         }
-        m_nWidth = (int)g_camera.get(cv::CAP_PROP_FRAME_WIDTH);
-        m_nHeight = (int)g_camera.get(cv::CAP_PROP_FRAME_HEIGHT);
+        m_nWidth = (int)s_camera.get(cv::CAP_PROP_FRAME_WIDTH);
+        m_nHeight = (int)s_camera.get(cv::CAP_PROP_FRAME_HEIGHT);
         break;
     case PT_FINALIZING:
         SetDisplayMode(DM_TEXT);
@@ -752,7 +796,11 @@ HBITMAP DoLoadBitmap(HINSTANCE hInst, INT id)
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
-    InitializeCriticalSection(&g_lockPicture);
+    s_hPictureReadyEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+    s_hPictureQuitEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+
+    DWORD tid = 0;
+    s_hPictureConsumerThread = ::CreateThread(NULL, 0, PictureConsumerThreadProc, NULL, 0, &tid);
 
     // main window handle
     g_hMainWnd = hwnd;
@@ -766,10 +814,11 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)g_hMainIconSmall);
 
     // device context of the display
-    g_hdcScreen = CreateDC(TEXT("DISPLAY"), NULL, NULL, NULL);
+    s_hdcScreen = CreateDC(TEXT("DISPLAY"), NULL, NULL, NULL);
+    s_hdcMem = CreateCompatibleDC(s_hdcScreen);
 
     // get sound devices and wave formats
-    get_sound_devices(m_sound_devices);
+    get_sound_devices(g_sound_devices);
     get_wave_formats(m_wave_formats);
 
     // load bitmaps
@@ -808,8 +857,8 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     // setup sound device
     auto& format = m_wave_formats[g_settings.m_iWaveFormat];
-    m_sound.SetInfo(format.channels, format.samples, format.bits);
-    m_sound.SetDevice(m_sound_devices[g_settings.m_iSoundDev]);
+    g_sound.SetInfo(format.channels, format.samples, format.bits);
+    g_sound.SetDevice(g_sound_devices[g_settings.m_iSoundDev]);
 
     // uncheck some buttons
     CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
@@ -826,7 +875,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     // restart hearing and watching
     g_settings.update(hwnd);
-    m_sound.StartHearing();
+    g_sound.StartHearing();
     DoStartStopTimers(hwnd, TRUE);
 
     return TRUE;
@@ -983,7 +1032,7 @@ void DoDeleteTempFiles(HWND hwnd)
 
 static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
 {
-    m_sound.StopHearing();
+    g_sound.StopHearing();
 
     // init progress bar
     HWND hScr1 = GetDlgItem(g_hMainWnd, scr1);
@@ -1079,7 +1128,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
         assert(0);
         StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
         g_settings.m_strStatusText = szText;
-        m_sound.StartHearing();
+        g_sound.StartHearing();
         PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
         return FALSE;
     }
@@ -1108,7 +1157,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
             SendMessage(hScr1, PBM_SETPOS, 0, 0);
             InvalidateRect(g_hMainWnd, NULL, TRUE);
 
-            m_sound.StartHearing();
+            g_sound.StartHearing();
             PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZECANCEL, 0);
             return FALSE;
         }
@@ -1157,7 +1206,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
         assert(0);
         StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEFAIL));
         g_settings.m_strStatusText = szText;
-        m_sound.StartHearing();
+        g_sound.StartHearing();
         PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
         return FALSE;
     }
@@ -1175,7 +1224,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
             SendMessage(hScr1, PBM_SETPOS, 0, 0);
             InvalidateRect(g_hMainWnd, NULL, TRUE);
 
-            m_sound.StartHearing();
+            g_sound.StartHearing();
             PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZECANCEL, 0);
             return FALSE;
         }
@@ -1262,7 +1311,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
         SendMessage(hScr1, PBM_SETPOS, 100, 0);
         InvalidateRect(g_hMainWnd, NULL, TRUE);
 
-        m_sound.StartHearing();
+        g_sound.StartHearing();
         PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZED, 0);
         return TRUE;
     }
@@ -1275,7 +1324,7 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
         SendMessage(hScr1, PBM_SETPOS, 0, 0);
         InvalidateRect(g_hMainWnd, NULL, TRUE);
 
-        m_sound.StartHearing();
+        g_sound.StartHearing();
         PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
         return FALSE;
     }
@@ -1306,10 +1355,10 @@ void OnStop(HWND hwnd)
 
     // stop
     DoStartStopTimers(hwnd, FALSE);
-    m_sound.StopHearing();
-    g_writer.release();
+    g_sound.StopHearing();
+    s_writer.release();
     s_bWriting = FALSE;
-    m_sound.SetRecording(FALSE);
+    g_sound.SetRecording(FALSE);
 
     CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
     CheckDlgButton(hwnd, psh2, BST_UNCHECKED);
@@ -1330,12 +1379,18 @@ void OnStop(HWND hwnd)
         }
 
         // restart hearing and watching
-        m_sound.StartHearing();
+        g_sound.StartHearing();
         DoStartStopTimers(hwnd, TRUE);
         return;
     }
 
     // now, the movie has been recorded
+
+    // play sound
+    PlaySound(MAKEINTRESOURCE(IDR_ENDREC), g_hInst, SND_ASYNC | SND_NODEFAULT | SND_RESOURCE);
+
+    // activate
+    SetForegroundWindow(hwnd);
 
     // wait for the thread
     if (s_hFinalizingThread)
@@ -1497,7 +1552,7 @@ static void OnFinalized(HWND hwnd)
 
     // restart hearing and watching
     g_settings.SetPictureType(hwnd, s_nOldPictureType);
-    m_sound.StartHearing();
+    g_sound.StartHearing();
     DoStartStopTimers(hwnd, TRUE);
 }
 
@@ -1539,7 +1594,7 @@ static void OnFinalizeFail(HWND hwnd)
     MessageBox(hwnd, LoadStringDx(IDS_FINALIZEFAIL), NULL, MB_ICONERROR);
 
     // restart hearing and watching
-    m_sound.StartHearing();
+    g_sound.StartHearing();
     DoStartStopTimers(hwnd, TRUE);
 }
 
@@ -1581,7 +1636,7 @@ static void OnFinalizeCancel(HWND hwnd)
     MessageBox(hwnd, LoadStringDx(IDS_FINALIZECANCELLED), NULL, MB_ICONERROR);
 
     // restart hearing and watching
-    m_sound.StartHearing();
+    g_sound.StartHearing();
     DoStartStopTimers(hwnd, TRUE);
 }
 
@@ -1612,23 +1667,15 @@ void OnRecStop(HWND hwnd)
         return;
     }
 
+    // play sound
+    PlaySound(MAKEINTRESOURCE(IDR_STARTREC), g_hInst, SND_ASYNC | SND_NODEFAULT | SND_RESOURCE);
+
     // build image file path
     TCHAR szPath[MAX_PATH];
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                    g_settings.m_nMovieID);
     PathAppend(szPath, g_settings.m_strImageFileName.c_str());
     LPCSTR image_name = ansi_from_wide(szPath);
-
-    // open writer
-    g_writer.release();
-    g_writer.open(image_name, 0, 0,
-                  cv::Size(g_settings.m_nWidth, g_settings.m_nHeight));
-    if (!g_writer.isOpened())
-    {
-        ErrorBoxDx(hwnd, TEXT("Unable to open image writer."));
-        CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
-        return;
-    }
 
     // close config windows
     DoClosePopups(hwnd);
@@ -1640,10 +1687,28 @@ void OnRecStop(HWND hwnd)
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                    g_settings.m_nMovieID);
     PathAppend(szPath, g_settings.m_strSoundTempFileName.c_str());
-    m_sound.SetSoundFile(szPath);
+    g_sound.SetSoundFile(szPath);
+
+    // update UI
+    EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
+    SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+
+    // close writer
+    s_writer.release();
+
+    // open writer
+    s_writer.open(image_name, 0, 0,
+                  cv::Size(g_settings.m_nWidth, g_settings.m_nHeight));
+    if (!s_writer.isOpened())
+    {
+        ErrorBoxDx(hwnd, TEXT("Unable to open image writer."));
+        CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
+        return;
+    }
+
     if (!g_settings.m_bNoSound)
     {
-        if (!m_sound.OpenSoundFile())
+        if (!g_sound.OpenSoundFile())
         {
             ErrorBoxDx(hwnd, TEXT("Unable to open sound file."));
             CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
@@ -1651,20 +1716,12 @@ void OnRecStop(HWND hwnd)
         }
     }
 
-    // update UI
-    EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
-    SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
-
     // OK, start recording
     s_nFrames = 0;
     s_nGotMovieID = g_settings.m_nMovieID;
     s_nFramesToWrite = 0;
     ++g_settings.m_nMovieID;
     s_bWriting = TRUE;
-    if (!g_settings.m_bNoSound)
-    {
-        m_sound.SetRecording(TRUE);
-    }
 }
 
 void OnResume(HWND hwnd)
@@ -1675,7 +1732,7 @@ void OnResume(HWND hwnd)
     s_bWriting = TRUE;
     if (!g_settings.m_bNoSound)
     {
-        m_sound.SetRecording(TRUE);
+        g_sound.SetRecording(TRUE);
     }
 }
 
@@ -1685,7 +1742,7 @@ void OnPause(HWND hwnd)
     s_bWriting = FALSE;
     if (!g_settings.m_bNoSound)
     {
-        m_sound.SetRecording(FALSE);
+        g_sound.SetRecording(FALSE);
     }
 }
 
@@ -1839,132 +1896,67 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 
 static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
 {
+    if (IsMinimized(hwnd))
+        return;
+
     // COLORONCOLOR is quick
     SetStretchBltMode(hdc, COLORONCOLOR);
 
-    EnterCriticalSection(&g_lockPicture);
+    BITMAP bm;
+    RECT rc;
 
     switch (g_settings.GetDisplayMode())
     {
     case DM_CAPFRAME:
+        s_image_lock.lock();
         if (s_frame.data)   // if frame data exists
         {
-            if (g_settings.m_nBrightness != 0 ||
-                g_settings.m_nContrast != 100)
-            {
-                // modify the brightness and contrast values
-                double alpha = g_settings.m_nContrast / 100.0;
-                double beta = g_settings.m_nBrightness;
-
-                cv::Mat image;
-                s_frame.convertTo(image, -1, alpha, beta);
-
-                if (!IsMinimized(hwnd))
-                {
-                    StretchDIBits(hdc, 0, 0, cx, cy,
-                                  0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
-                                  image.data, &g_bi, DIB_RGB_COLORS, SRCCOPY);
-                }
-                if (s_bWriting && g_writer.isOpened())
-                {
-                    // write a frame
-                    g_writer << image;
-                    ++s_nFrames;
-                }
-            }
-            else
-            {
-                // no modification
-                if (!IsMinimized(hwnd))
-                {
-                    StretchDIBits(hdc, 0, 0, cx, cy,
-                                  0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
-                                  s_frame.data, &g_bi, DIB_RGB_COLORS, SRCCOPY);
-                }
-                if (s_bWriting && g_writer.isOpened())
-                {
-                    // write a frame
-                    g_writer << s_frame;
-                    ++s_nFrames;
-                }
-            }
+            StretchDIBits(hdc, 0, 0, cx, cy,
+                          0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
+                          s_frame.data, &s_bi, DIB_RGB_COLORS, SRCCOPY);
         }
         else
         {
-            if (!IsMinimized(hwnd))
-            {
-                // black out if no image
-                PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
-            }
+            // black out if no image
+            PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
         }
+        s_image_lock.unlock();
         break;
     case DM_BITMAP:
-        if (HDC hdcMem = CreateCompatibleDC(NULL))
+        s_bitmap_lock.lock();
+        if (GetObject(s_hbmBitmap, sizeof(bm), &bm))
         {
-            BITMAP bm;
-            if (GetObject(g_hbm, sizeof(bm), &bm))
-            {
-                if (!IsMinimized(hwnd))
-                {
-                    if (g_hbm)
-                    {
-                        HGDIOBJ hbmOld = SelectObject(hdcMem, g_hbm);
-                        StretchBlt(hdc, 0, 0, cx, cy,
-                                   hdcMem, 0, 0, bm.bmWidth, bm.bmHeight,
-                                   SRCCOPY);
-                        SelectObject(hdcMem, hbmOld);
-                    }
-                    else
-                    {
-                        // black out if no image
-                        PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
-                    }
-                }
-                if (g_hbm && s_bWriting && g_writer.isOpened())
-                {
-                    // write a frame
-                    cv::Size size(bm.bmWidth, bm.bmHeight);
-                    cv::Mat mat(size, CV_8UC3, bm.bmBits, bm.bmWidthBytes);
-                    g_writer << mat;
-                    ++s_nFrames;
-                }
-            }
-            else
-            {
-                if (!IsMinimized(hwnd))
-                {
-                    // black out if no image
-                    PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
-                }
-            }
-
-            DeleteDC(hdcMem);
+            HGDIOBJ hbmOld = SelectObject(s_hdcMem, s_hbmBitmap);
+            StretchBlt(hdc, 0, 0, cx, cy,
+                       s_hdcMem, 0, 0, bm.bmWidth, bm.bmHeight,
+                       SRCCOPY);
+            SelectObject(s_hdcMem, hbmOld);
         }
+        else
+        {
+            // black out if no image
+            PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
+        }
+        s_bitmap_lock.unlock();
         break;
     case DM_TEXT:
-        if (!IsMinimized(hwnd))
-        {
-            // white background
-            RECT rc;
-            SetRect(&rc, 0, 0, cx, cy);
-            FillRect(hdc, &rc, GetStockBrush(WHITE_BRUSH));
+        // white background
+        SetRect(&rc, 0, 0, cx, cy);
+        FillRect(hdc, &rc, GetStockBrush(WHITE_BRUSH));
 
-            // show image
-            if (HFONT hFont = GetWindowFont(hwnd))
-            {
-                HGDIOBJ hFontOld = SelectObject(hdc, hFont);
-                UINT uFormat = DT_SINGLELINE | DT_CENTER | DT_VCENTER;
-                DrawText(hdc,
-                         g_settings.m_strStatusText.c_str(),
-                         INT(g_settings.m_strStatusText.size()),
-                         &rc, uFormat);
-                SelectObject(hdc, hFontOld);
-            }
+        // show image
+        if (HFONT hFont = GetWindowFont(hwnd))
+        {
+            HGDIOBJ hFontOld = SelectObject(hdc, hFont);
+            UINT uFormat = DT_SINGLELINE | DT_CENTER | DT_VCENTER;
+            DrawText(hdc,
+                     g_settings.m_strStatusText.c_str(),
+                     INT(g_settings.m_strStatusText.size()),
+                     &rc, uFormat);
+            SelectObject(hdc, hFontOld);
         }
         break;
     }
-
-    LeaveCriticalSection(&g_lockPicture);
 }
 
 static void OnPaint(HWND hwnd)
@@ -2117,7 +2109,7 @@ static void OnDestroy(HWND hwnd)
 {
     // stop watching and hearing
     DoStartStopTimers(hwnd, FALSE);
-    m_sound.StopHearing();
+    g_sound.StopHearing();
 
     // destroy hotkeys
     DoSetupHotkeys(hwnd, FALSE);
@@ -2131,8 +2123,6 @@ static void OnDestroy(HWND hwnd)
     // save application's settings
     g_settings.save(hwnd);
 
-    DeleteCriticalSection(&g_lockPicture);
-
     // delete bitmaps
     DeleteObject(s_hbmRec);
     DeleteObject(s_hbmPause);
@@ -2140,8 +2130,19 @@ static void OnDestroy(HWND hwnd)
     DeleteObject(s_hbmDots);
 
     // delete screen DC
-    DeleteDC(g_hdcScreen);
-    g_hdcScreen = NULL;
+    DeleteDC(s_hdcScreen);
+    s_hdcScreen = NULL;
+    DeleteDC(s_hdcMem);
+    s_hdcMem = NULL;
+
+    // quit picture output
+    SetEvent(s_hPictureQuitEvent);
+    WaitForSingleObject(s_hPictureConsumerThread, INFINITE);
+    CloseHandle(s_hPictureConsumerThread);
+
+    // close events
+    CloseHandle(s_hPictureReadyEvent);
+    CloseHandle(s_hPictureQuitEvent);
 
     // no use of the main window any more
     g_hMainWnd = NULL;
@@ -2174,27 +2175,24 @@ void DoScreenCap(HWND hwnd, BOOL bCursor)
         return;
     }
 
-    if (HDC hdcMem = CreateCompatibleDC(g_hdcScreen))
+    // screen capture!
+    s_bitmap_lock.lock();
+    if (s_hbmBitmap)
     {
-        EnterCriticalSection(&g_lockPicture);
-
-        // screen capture!
-        HGDIOBJ hbmOld = SelectObject(hdcMem, g_hbm);
-        BitBlt(hdcMem,
+        HGDIOBJ hbmOld = SelectObject(s_hdcMem, s_hbmBitmap);
+        BitBlt(s_hdcMem,
                0, 0,
                g_settings.m_cxCap, g_settings.m_cxCap,
-               g_hdcScreen,
+               s_hdcScreen,
                g_settings.m_xCap, g_settings.m_yCap,
                SRCCOPY | CAPTUREBLT);
         if (bCursor)
         {
-            DoDrawCursor(hdcMem, g_settings.m_xCap, g_settings.m_yCap);
+            DoDrawCursor(s_hdcMem, g_settings.m_xCap, g_settings.m_yCap);
         }
-        SelectObject(hdcMem, hbmOld);
-
-        LeaveCriticalSection(&g_lockPicture);
-        DeleteDC(hdcMem);
+        SelectObject(s_hdcMem, hbmOld);
     }
+    s_bitmap_lock.unlock();
 }
 
 static void OnTimer(HWND hwnd, UINT id)
@@ -2208,17 +2206,66 @@ static void OnTimer(HWND hwnd, UINT id)
         case PT_WHITE:
         case PT_FINALIZING:
             // no capture
-            break;
+            return;
         case PT_SCREENCAP:
             // take a screen capture
             DoScreenCap(hwnd, g_settings.m_bDrawCursor);
+            s_image_lock.lock();
+            s_bitmap_lock.lock();
+            {
+#define WIDTHBYTES(i) (((i) + 31) / 32 * 4)
+                cv::Size size(g_settings.m_cxCap, g_settings.m_cyCap);
+                LONG nWidthBytes = WIDTHBYTES(g_settings.m_cxCap * 24);
+                cv::Mat mat(size, CV_8UC3, s_pvBits, nWidthBytes);
+                mat.copyTo(s_frame);
+#undef WIDTHBYTES
+            }
+            s_bitmap_lock.unlock();
+            s_image_lock.unlock();
             break;
         case PT_VIDEOCAP:
-            // take a camera capture
-            EnterCriticalSection(&g_lockPicture);
-            g_camera >> s_frame;
-            LeaveCriticalSection(&g_lockPicture);
+            {
+                // take a camera capture
+                cv::Mat image;
+                s_camera >> image;
+
+                if (g_settings.m_nBrightness != 0 ||
+                    g_settings.m_nContrast != 100)
+                {
+                    // modify the brightness and contrast values
+                    double alpha = g_settings.m_nContrast / 100.0;
+                    double beta = g_settings.m_nBrightness;
+
+                    s_image_lock.lock();
+                    image.convertTo(s_frame, -1, alpha, beta);
+                    s_image_lock.unlock();
+                }
+                else
+                {
+                    s_image_lock.lock();
+                    image.copyTo(s_frame);
+                    s_image_lock.unlock();
+                }
+            }
             break;
+        }
+        if (s_bWriting)
+        {
+            // add to s_image_ring
+            s_image_lock.lock();
+            if (!s_image_ring.full())
+            {
+                s_image_ring.push_front(s_frame);
+            }
+            s_image_lock.unlock();
+
+            // notify to s_hPictureConsumerThread
+            SetEvent(s_hPictureReadyEvent);
+
+            if (!g_settings.m_bNoSound && !g_sound.m_bRecording)
+            {
+                g_sound.SetRecording(TRUE);
+            }
         }
         // trigger to redraw
         InvalidateRect(hwnd, NULL, TRUE);
@@ -2233,8 +2280,8 @@ static void OnTimer(HWND hwnd, UINT id)
         else
         {
             // show sound loudness
-            LONG nValue = m_sound.m_nValue;
-            LONG nMax = m_sound.m_nMax;
+            LONG nValue = g_sound.m_nValue;
+            LONG nMax = g_sound.m_nMax;
             SendDlgItemMessage(hwnd, scr1, PBM_SETRANGE32, 0, nMax);
             SendDlgItemMessage(hwnd, scr1, PBM_SETPOS, nValue, 0);
         }
@@ -2296,21 +2343,19 @@ static void OnHotKey(HWND hwnd, int idHotKey, UINT fuModifiers, UINT vk)
     switch (idHotKey)
     {
     case HOTKEY_0_ID:
-        SetForegroundWindow(hwnd);
         SendDlgItemMessage(hwnd, psh1, BM_CLICK, 0, 0);
+        SetWindowLong(hwnd, GWL_STYLE, GetWindowStyle(hwnd) | WS_MINIMIZE);
         break;
     case HOTKEY_1_ID:
-        SetForegroundWindow(hwnd);
         SendDlgItemMessage(hwnd, psh2, BM_CLICK, 0, 0);
+        SetWindowLong(hwnd, GWL_STYLE, GetWindowStyle(hwnd) | WS_MINIMIZE);
         break;
     case HOTKEY_2_ID:
-        SetForegroundWindow(hwnd);
         s_bPsh3ByHotKey = TRUE;
         SendDlgItemMessage(hwnd, psh3, BM_CLICK, 0, 0);
         s_bPsh3ByHotKey = FALSE;
         break;
     case HOTKEY_3_ID:
-        SetForegroundWindow(hwnd);
         SendDlgItemMessage(hwnd, psh4, BM_CLICK, 0, 0);
         break;
     case HOTKEY_4_ID:
@@ -2368,7 +2413,6 @@ void Settings::follow_display_change(HWND hwnd)
         }
     }
 
-    EnterCriticalSection(&g_lockPicture);
     g_settings.m_xCap = rc.left;
     g_settings.m_yCap = rc.top;
     g_settings.m_cxCap = rc.right - rc.left;
@@ -2376,12 +2420,16 @@ void Settings::follow_display_change(HWND hwnd)
     g_settings.m_nWidth = g_settings.m_cxCap;
     g_settings.m_nHeight = g_settings.m_cyCap;
     g_settings.recreate_bitmap(hwnd);
-    if (g_hdcScreen)
+    if (s_hdcScreen)
     {
-        DeleteDC(g_hdcScreen);
+        DeleteDC(s_hdcScreen);
     }
-    g_hdcScreen = CreateDC(L"DISPLAY", NULL, NULL, NULL);
-    LeaveCriticalSection(&g_lockPicture);
+    s_hdcScreen = CreateDC(L"DISPLAY", NULL, NULL, NULL);
+    if (s_hdcMem)
+    {
+        DeleteDC(s_hdcMem);
+    }
+    s_hdcMem = CreateCompatibleDC(s_hdcScreen);
 }
 
 static void OnDisplayChange(HWND hwnd, UINT bitsPerPixel, UINT cxScreen, UINT cyScreen)
