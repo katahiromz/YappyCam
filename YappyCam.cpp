@@ -60,16 +60,25 @@ static BITMAPINFO s_bi =
     }
 };
 
+static katahiromz::ring<cv::Mat, 4> s_image_ring;
+
 // picture writer
 static HANDLE s_hPictureConsumerThread = NULL;
-static HANDLE s_hPictureReadyEvent = NULL;
-static HANDLE s_hPictureQuitEvent = NULL;
-static katahiromz::ring<cv::Mat, 4> s_image_ring;
+static HANDLE s_hPicAddedEvent = NULL;
+static HANDLE s_hPicWriterQuitEvent = NULL;
 static mutex_debug s_image_lock("s_image_lock");
+
+// picture producer
+static HANDLE s_hPictureProducerThread = NULL;
+static HANDLE s_hRecordStartEvent = NULL;
+static HANDLE s_hPicProducerQuitEvent = NULL;
 
 DWORD WINAPI PictureConsumerThreadProc(LPVOID pContext)
 {
-    HANDLE hWaits[] = { s_hPictureReadyEvent, s_hPictureQuitEvent };
+    puts("PictureConsumerThreadProc started");
+    fflush(stdout);
+
+    HANDLE hWaits[] = { s_hPicAddedEvent, s_hPicWriterQuitEvent };
 
     for (;;)
     {
@@ -95,6 +104,170 @@ DWORD WINAPI PictureConsumerThreadProc(LPVOID pContext)
         s_image_ring.pop_back();
     }
 
+    puts("PictureConsumerThreadProc ended");
+    fflush(stdout);
+    return 0;
+}
+
+void DoDrawCursor(HDC hDC, INT dx, INT dy)
+{
+    INT x, y;
+    CURSORINFO ci;
+    ICONINFO ii;
+
+    ci.cbSize = sizeof(CURSORINFO);
+    ::GetCursorInfo(&ci);
+    if (!(ci.flags & CURSOR_SHOWING))
+        return;
+
+    ::GetIconInfo(ci.hCursor, &ii);
+
+    x = ci.ptScreenPos.x - ii.xHotspot - dx;
+    y = ci.ptScreenPos.y - ii.yHotspot - dy;
+    ::DrawIcon(hDC, x, y, ci.hCursor);
+}
+
+void DoScreenCap(HWND hwnd, BOOL bCursor)
+{
+    // screen capture!
+    if (s_hbmBitmap &&
+        g_settings.m_nWidth == g_settings.m_cxCap &&
+        g_settings.m_nHeight == g_settings.m_cyCap)
+    {
+        HGDIOBJ hbmOld = SelectObject(s_hdcMem, s_hbmBitmap);
+        BitBlt(s_hdcMem,
+               0, 0,
+               g_settings.m_cxCap, g_settings.m_cxCap,
+               s_hdcScreen,
+               g_settings.m_xCap, g_settings.m_yCap,
+               SRCCOPY | CAPTUREBLT);
+        if (bCursor)
+        {
+            DoDrawCursor(s_hdcMem, g_settings.m_xCap, g_settings.m_yCap);
+        }
+        SelectObject(s_hdcMem, hbmOld);
+    }
+}
+
+#define WIDTHBYTES(i) (((i) + 31) / 32 * 4)
+
+DWORD WINAPI PictureProducerThreadProc(LPVOID pContext)
+{
+    puts("PictureProducerThreadProc started");
+    fflush(stdout);
+
+    HANDLE hWaits[] = { s_hRecordStartEvent, s_hPicProducerQuitEvent };
+
+    using clock = std::chrono::high_resolution_clock;
+
+    clock::time_point point1, point2;
+
+    for (;;)
+    {
+        point1 = clock::now();
+
+        cv::Mat image;
+        switch (g_settings.GetPictureType())
+        {
+        case PT_BLACK:
+        case PT_WHITE:
+        case PT_FINALIZING:
+            s_bitmap_lock.lock(__LINE__);
+            if (s_hbmBitmap && s_pvBits)
+            {
+                cv::Size size(g_settings.m_nWidth, g_settings.m_nHeight);
+                LONG nWidthBytes = WIDTHBYTES(g_settings.m_nWidth * 24);
+                cv::Mat mat(size, CV_8UC3, s_pvBits, nWidthBytes);
+                image = mat;
+            }
+            s_bitmap_lock.unlock(__LINE__);
+            break;
+        case PT_SCREENCAP:
+            s_bitmap_lock.lock(__LINE__);
+            if (s_hbmBitmap && s_pvBits)
+            {
+                // take a screen capture
+                DoScreenCap(g_hMainWnd, g_settings.m_bDrawCursor);
+                {
+                    cv::Size size(g_settings.m_cxCap, g_settings.m_cyCap);
+                    LONG nWidthBytes = WIDTHBYTES(g_settings.m_cxCap * 24);
+                    cv::Mat mat(size, CV_8UC3, s_pvBits, nWidthBytes);
+                    image = mat;
+                }
+            }
+            s_bitmap_lock.unlock(__LINE__);
+            break;
+        case PT_VIDEOCAP:
+            {
+                // take a camera capture
+                cv::Mat image2;
+                s_camera >> image2;
+
+                if (g_settings.m_nBrightness != 0 ||
+                    g_settings.m_nContrast != 100)
+                {
+                    // modify the brightness and contrast values
+                    double alpha = g_settings.m_nContrast / 100.0;
+                    double beta = g_settings.m_nBrightness;
+                    image2.convertTo(image, -1, alpha, beta);
+                }
+                else
+                {
+                    image = image2;
+                }
+            }
+            break;
+        }
+
+        if (s_bWriting)
+        {
+            // add to s_image_ring
+            s_image_lock.lock(__LINE__);
+            if (!s_image_ring.full())
+            {
+                s_image_ring.push_front(image);
+                s_frame = image;
+            }
+            s_image_lock.unlock(__LINE__);
+
+            // notify to s_hPictureConsumerThread
+            SetEvent(s_hPicAddedEvent);
+
+            if (!g_settings.m_bNoSound && !g_sound.m_bRecording)
+            {
+                g_sound.SetRecording(TRUE);
+            }
+        }
+        else
+        {
+            s_image_lock.lock(__LINE__);
+            if (!s_image_ring.full())
+            {
+                s_frame = image;
+            }
+            s_image_lock.unlock(__LINE__);
+        }
+
+        InvalidateRect(g_hMainWnd, NULL, TRUE);
+
+        point2 = clock::now();
+
+        auto elapsed =
+            std::chrono::duration_cast<std::chrono::milliseconds>(point2 - point1).count();
+
+        DWORD dwMSEC = DWORD(1000 * 100 / g_settings.m_nFPSx100);
+        if (dwMSEC >= elapsed)
+            dwMSEC -= elapsed;
+
+        DWORD dwWait = WaitForMultipleObjects(ARRAYSIZE(hWaits), hWaits, FALSE, dwMSEC);
+        if (dwWait == WAIT_OBJECT_0)
+            continue;
+        if (dwWait == WAIT_OBJECT_0 + 1)
+            break;
+    }
+
+    puts("PictureProducerThreadProc ended");
+    fflush(stdout);
     return 0;
 }
 
@@ -378,8 +551,8 @@ void DoStartStopTimers(HWND hwnd, BOOL bStart)
         SetTimer(hwnd, SOUND_TIMER_ID, 300, NULL);
 
         DWORD dwMSEC = DWORD(1000 * 100 / g_settings.m_nFPSx100);
-        SetTimer(hwnd, CAP_TIMER_ID, dwMSEC, NULL);
-        OnTimer(hwnd, CAP_TIMER_ID);
+        //SetTimer(hwnd, CAP_TIMER_ID, dwMSEC, NULL);
+        //OnTimer(hwnd, CAP_TIMER_ID);
 
         s_bWatching = TRUE;
     }
@@ -387,7 +560,7 @@ void DoStartStopTimers(HWND hwnd, BOOL bStart)
     {
         s_bWatching = FALSE;
         KillTimer(hwnd, SOUND_TIMER_ID);
-        KillTimer(hwnd, CAP_TIMER_ID);
+        //KillTimer(hwnd, CAP_TIMER_ID);
     }
 }
 
@@ -619,13 +792,13 @@ void Settings::fix_size(HWND hwnd)
 
 void Settings::recreate_bitmap(HWND hwnd)
 {
-    s_bitmap_lock.lock();
+    s_bitmap_lock.lock(__LINE__);
     if (s_hbmBitmap)
     {
         DeleteObject(s_hbmBitmap);
         s_hbmBitmap = NULL;
     }
-    s_bitmap_lock.unlock();
+    s_bitmap_lock.unlock(__LINE__);
 
     HGDIOBJ hbmOld;
 
@@ -634,11 +807,11 @@ void Settings::recreate_bitmap(HWND hwnd)
     s_bi.bmiHeader.biBitCount = 24;
     s_bi.bmiHeader.biCompression = BI_RGB;
 
-    s_bitmap_lock.lock();
+    s_bitmap_lock.lock(__LINE__);
     s_hbmBitmap = CreateDIBSection(s_hdcMem, &s_bi, DIB_RGB_COLORS, &s_pvBits, NULL, 0);
-    s_bitmap_lock.unlock();
+    s_bitmap_lock.unlock(__LINE__);
 
-    s_bitmap_lock.lock();
+    s_bitmap_lock.lock(__LINE__);
     switch (m_nPictureType)
     {
     case PT_BLACK:
@@ -661,7 +834,7 @@ void Settings::recreate_bitmap(HWND hwnd)
         s_hbmBitmap = NULL;
         break;
     }
-    s_bitmap_lock.unlock();
+    s_bitmap_lock.unlock(__LINE__);
 }
 
 BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
@@ -796,11 +969,10 @@ HBITMAP DoLoadBitmap(HINSTANCE hInst, INT id)
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
-    s_hPictureReadyEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-    s_hPictureQuitEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-
-    DWORD tid = 0;
-    s_hPictureConsumerThread = ::CreateThread(NULL, 0, PictureConsumerThreadProc, NULL, 0, &tid);
+    s_hPicAddedEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+    s_hPicWriterQuitEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+    s_hRecordStartEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+    s_hPicProducerQuitEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
 
     // main window handle
     g_hMainWnd = hwnd;
@@ -877,6 +1049,10 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     g_settings.update(hwnd);
     g_sound.StartHearing();
     DoStartStopTimers(hwnd, TRUE);
+
+    DWORD tid = 0;
+    s_hPictureConsumerThread = ::CreateThread(NULL, 0, PictureConsumerThreadProc, NULL, 0, &tid);
+    s_hPictureProducerThread = ::CreateThread(NULL, 0, PictureProducerThreadProc, NULL, 0, &tid);
 
     return TRUE;
 }
@@ -1722,6 +1898,7 @@ void OnRecStop(HWND hwnd)
     s_nFramesToWrite = 0;
     ++g_settings.m_nMovieID;
     s_bWriting = TRUE;
+    SetEvent(s_hRecordStartEvent);
 }
 
 void OnResume(HWND hwnd)
@@ -1908,7 +2085,8 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
     switch (g_settings.GetDisplayMode())
     {
     case DM_CAPFRAME:
-        s_image_lock.lock();
+    case DM_BITMAP:
+        s_image_lock.lock(__LINE__);
         if (s_frame.data)   // if frame data exists
         {
             StretchDIBits(hdc, 0, 0, cx, cy,
@@ -1920,10 +2098,10 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             // black out if no image
             PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
         }
-        s_image_lock.unlock();
+        s_image_lock.unlock(__LINE__);
         break;
-    case DM_BITMAP:
-        s_bitmap_lock.lock();
+#if 0
+        s_bitmap_lock.lock(__LINE__);
         if (GetObject(s_hbmBitmap, sizeof(bm), &bm))
         {
             HGDIOBJ hbmOld = SelectObject(s_hdcMem, s_hbmBitmap);
@@ -1937,8 +2115,9 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             // black out if no image
             PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
         }
-        s_bitmap_lock.unlock();
+        s_bitmap_lock.unlock(__LINE__);
         break;
+#endif
     case DM_TEXT:
         // white background
         SetRect(&rc, 0, 0, cx, cy);
@@ -2135,64 +2314,24 @@ static void OnDestroy(HWND hwnd)
     DeleteDC(s_hdcMem);
     s_hdcMem = NULL;
 
-    // quit picture output
-    SetEvent(s_hPictureQuitEvent);
+    // quit picture producer
+    SetEvent(s_hPicProducerQuitEvent);
+    WaitForSingleObject(s_hPictureProducerThread, INFINITE);
+    CloseHandle(s_hPictureProducerThread);
+
+    // quit picture writer
+    SetEvent(s_hPicWriterQuitEvent);
     WaitForSingleObject(s_hPictureConsumerThread, INFINITE);
     CloseHandle(s_hPictureConsumerThread);
 
     // close events
-    CloseHandle(s_hPictureReadyEvent);
-    CloseHandle(s_hPictureQuitEvent);
+    CloseHandle(s_hPicAddedEvent);
+    CloseHandle(s_hPicWriterQuitEvent);
+    CloseHandle(s_hRecordStartEvent);
+    CloseHandle(s_hPicProducerQuitEvent);
 
     // no use of the main window any more
     g_hMainWnd = NULL;
-}
-
-void DoDrawCursor(HDC hDC, INT dx, INT dy)
-{
-    INT x, y;
-    CURSORINFO ci;
-    ICONINFO ii;
-
-    ci.cbSize = sizeof(CURSORINFO);
-    ::GetCursorInfo(&ci);
-    if (!(ci.flags & CURSOR_SHOWING))
-        return;
-
-    ::GetIconInfo(ci.hCursor, &ii);
-
-    x = ci.ptScreenPos.x - ii.xHotspot - dx;
-    y = ci.ptScreenPos.y - ii.yHotspot - dy;
-    ::DrawIcon(hDC, x, y, ci.hCursor);
-}
-
-void DoScreenCap(HWND hwnd, BOOL bCursor)
-{
-    // sanity check
-    if (g_settings.m_nWidth != g_settings.m_cxCap ||
-        g_settings.m_nHeight != g_settings.m_cyCap)
-    {
-        return;
-    }
-
-    // screen capture!
-    s_bitmap_lock.lock();
-    if (s_hbmBitmap)
-    {
-        HGDIOBJ hbmOld = SelectObject(s_hdcMem, s_hbmBitmap);
-        BitBlt(s_hdcMem,
-               0, 0,
-               g_settings.m_cxCap, g_settings.m_cxCap,
-               s_hdcScreen,
-               g_settings.m_xCap, g_settings.m_yCap,
-               SRCCOPY | CAPTUREBLT);
-        if (bCursor)
-        {
-            DoDrawCursor(s_hdcMem, g_settings.m_xCap, g_settings.m_yCap);
-        }
-        SelectObject(s_hdcMem, hbmOld);
-    }
-    s_bitmap_lock.unlock();
 }
 
 static void OnTimer(HWND hwnd, UINT id)
@@ -2200,73 +2339,6 @@ static void OnTimer(HWND hwnd, UINT id)
     switch (id)
     {
     case CAP_TIMER_ID:
-        switch (g_settings.GetPictureType())
-        {
-        case PT_BLACK:
-        case PT_WHITE:
-        case PT_FINALIZING:
-            // no capture
-            return;
-        case PT_SCREENCAP:
-            // take a screen capture
-            DoScreenCap(hwnd, g_settings.m_bDrawCursor);
-            s_image_lock.lock();
-            s_bitmap_lock.lock();
-            {
-#define WIDTHBYTES(i) (((i) + 31) / 32 * 4)
-                cv::Size size(g_settings.m_cxCap, g_settings.m_cyCap);
-                LONG nWidthBytes = WIDTHBYTES(g_settings.m_cxCap * 24);
-                cv::Mat mat(size, CV_8UC3, s_pvBits, nWidthBytes);
-                mat.copyTo(s_frame);
-#undef WIDTHBYTES
-            }
-            s_bitmap_lock.unlock();
-            s_image_lock.unlock();
-            break;
-        case PT_VIDEOCAP:
-            {
-                // take a camera capture
-                cv::Mat image;
-                s_camera >> image;
-
-                if (g_settings.m_nBrightness != 0 ||
-                    g_settings.m_nContrast != 100)
-                {
-                    // modify the brightness and contrast values
-                    double alpha = g_settings.m_nContrast / 100.0;
-                    double beta = g_settings.m_nBrightness;
-
-                    s_image_lock.lock();
-                    image.convertTo(s_frame, -1, alpha, beta);
-                    s_image_lock.unlock();
-                }
-                else
-                {
-                    s_image_lock.lock();
-                    image.copyTo(s_frame);
-                    s_image_lock.unlock();
-                }
-            }
-            break;
-        }
-        if (s_bWriting)
-        {
-            // add to s_image_ring
-            s_image_lock.lock();
-            if (!s_image_ring.full())
-            {
-                s_image_ring.push_front(s_frame);
-            }
-            s_image_lock.unlock();
-
-            // notify to s_hPictureConsumerThread
-            SetEvent(s_hPictureReadyEvent);
-
-            if (!g_settings.m_bNoSound && !g_sound.m_bRecording)
-            {
-                g_sound.SetRecording(TRUE);
-            }
-        }
         // trigger to redraw
         InvalidateRect(hwnd, NULL, TRUE);
         break;

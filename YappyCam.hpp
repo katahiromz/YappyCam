@@ -9,6 +9,7 @@
 #include <strsafe.h>
 #include <string>
 #include <mutex>
+#include <chrono>
 #include <unordered_map>
 #include <opencv2/opencv.hpp>
 #include "sound.hpp"
@@ -164,18 +165,16 @@ public:
         , m_name(name)
     {
     }
-    void lock()
+    void lock(int line)
     {
-        //printf("lock: ");
-        //puts(m_name);
-        //fflush(stdout);
+        printf("lock: %s, Line %d\n", m_name, line);
+        fflush(stdout);
         std::mutex::lock();
     }
-    void unlock()
+    void unlock(int line)
     {
-        //printf("unlock: ");
-        //puts(m_name);
-        //fflush(stdout);
+        printf("unlock: %s, Line %d\n", m_name, line);
+        fflush(stdout);
         std::mutex::unlock();
     }
 };
