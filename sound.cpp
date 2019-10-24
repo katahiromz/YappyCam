@@ -43,6 +43,7 @@ Sound::Sound()
     : m_nValue(0)
     , m_nMax(0)
     , m_bRecording(FALSE)
+    , m_fp(NULL)
     , m_hShutdownEvent(NULL)
     , m_hWakeUp(NULL)
     , m_hThread(NULL)
@@ -71,6 +72,11 @@ void Sound::SetInfo(WORD nChannels, DWORD nSamplesPerSec, WORD wBitsPerSample)
 
 Sound::~Sound()
 {
+    if (m_fp)
+    {
+        fclose(m_fp);
+        m_fp = NULL;
+    }
     if (m_hShutdownEvent)
     {
         ::CloseHandle(m_hShutdownEvent);
@@ -165,8 +171,6 @@ DWORD Sound::ThreadProc()
     hr = m_pAudioClient->GetDevicePeriod(&DevicePeriod, NULL);
     assert(SUCCEEDED(hr));
 
-    m_wave_data.clear();
-
     UINT32 nBlockAlign = m_wfx.nBlockAlign;
     WORD wBitsPerSample = m_wfx.wBitsPerSample;
     m_nFrames = 0;
@@ -241,15 +245,7 @@ DWORD Sound::ThreadProc()
             {
                 bRecorded = TRUE;
                 ::EnterCriticalSection(&m_lock);
-                const size_t max_size = 1 * 1024 * 1024; // 1 MB
-                if (m_wave_data.size() >= max_size)
-                {
-                    FlushData(FALSE);
-                }
-                else
-                {
-                    m_wave_data.insert(m_wave_data.end(), pbData, pbData + cbToWrite);
-                }
+                std::fwrite(pbData, cbToWrite, 1, m_fp);
                 ::LeaveCriticalSection(&m_lock);
             }
 

@@ -1625,7 +1625,7 @@ void OnRecStop(HWND hwnd)
                   cv::Size(g_settings.m_nWidth, g_settings.m_nHeight));
     if (!g_writer.isOpened())
     {
-        ErrorBoxDx(hwnd, TEXT("Unable to open image writer"));
+        ErrorBoxDx(hwnd, TEXT("Unable to open image writer."));
         CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
         return;
     }
@@ -1633,18 +1633,27 @@ void OnRecStop(HWND hwnd)
     // close config windows
     DoClosePopups(hwnd);
 
-    // update UI
-    EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
-    SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+    // create directories
+    g_settings.create_dirs();
 
     // set sound path
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                    g_settings.m_nMovieID);
     PathAppend(szPath, g_settings.m_strSoundTempFileName.c_str());
     m_sound.SetSoundFile(szPath);
+    if (!g_settings.m_bNoSound)
+    {
+        if (!m_sound.OpenSoundFile())
+        {
+            ErrorBoxDx(hwnd, TEXT("Unable to open sound file."));
+            CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
+            return;
+        }
+    }
 
-    // create directories
-    g_settings.create_dirs();
+    // update UI
+    EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
+    SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
 
     // OK, start recording
     s_nFrames = 0;

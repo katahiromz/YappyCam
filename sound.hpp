@@ -37,14 +37,14 @@ public:
     LONG m_nValue;
     LONG m_nMax;
     BOOL m_bRecording;
+    FILE *m_fp;
     CRITICAL_SECTION m_lock;
-    std::vector<BYTE> m_wave_data;
-    void SetInfo(WORD nChannels, DWORD nSamplesPerSec, WORD wBitsPerSample);
 
     Sound();
     ~Sound();
 
     void SetDevice(CComPtr<IMMDevice> pDevice);
+    void SetInfo(WORD nChannels, DWORD nSamplesPerSec, WORD wBitsPerSample);
 
     BOOL StartHearing();
     BOOL StopHearing();
@@ -56,6 +56,7 @@ public:
     DWORD ThreadProc();
 
     void SetSoundFile(const TCHAR *filename);
+    BOOL OpenSoundFile();
 
 protected:
     HANDLE m_hShutdownEvent;
@@ -128,25 +129,34 @@ inline void Sound::FlushData(BOOL bLock)
     {
         EnterCriticalSection(&m_lock);
     }
-    if (FILE *fp = _wfopen(m_szSoundFile, L"ab"))
-    {
-        bool ok = true;
-        if (ftell(fp) == 0)
-        {
-            ok = !!fwrite(&m_wfx, sizeof(m_wfx), 1, fp);
-        }
-        if (ok)
-            ok = !!fwrite(&m_wave_data[0], m_wave_data.size(), 1, fp);
-        fclose(fp);
-        if (ok)
-        {
-            m_wave_data.clear();
-        }
-    }
+
+    fclose(m_fp);
+    m_fp = NULL;
+
     if (bLock)
     {
         LeaveCriticalSection(&m_lock);
     }
+}
+
+static char s_sound_buf[40 * 1024];
+
+inline BOOL Sound::OpenSoundFile()
+{
+    assert(!m_fp);
+    m_fp = _wfopen(m_szSoundFile, L"wb");
+    if (m_fp)
+    {
+        setvbuf(m_fp, s_sound_buf, _IOFBF, sizeof(s_sound_buf));
+        if (fwrite(&m_wfx, sizeof(m_wfx), 1, m_fp))
+        {
+            return TRUE;
+        }
+        fclose(m_fp);
+        m_fp = NULL;
+        DeleteFile(m_szSoundFile);
+    }
+    return FALSE;
 }
 
 /////////////////////////////////////////////////////////////////////////////
