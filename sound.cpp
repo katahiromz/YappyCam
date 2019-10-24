@@ -39,6 +39,8 @@ bool get_wave_formats(std::vector<WAVE_FORMAT_INFO>& formats)
     return true;
 }
 
+/*static*/ char Sound::s_sound_buf[SOUND_BUFFER_SIZE];
+
 Sound::Sound()
     : m_nValue(0)
     , m_nMax(0)

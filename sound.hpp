@@ -30,6 +30,8 @@ bool get_wave_formats(std::vector<WAVE_FORMAT_INFO>& formats);
 /////////////////////////////////////////////////////////////////////////////
 // Sound class
 
+#define SOUND_BUFFER_SIZE (40 * 1024)
+
 class Sound
 {
 public:
@@ -39,6 +41,7 @@ public:
     BOOL m_bRecording;
     FILE *m_fp;
     CRITICAL_SECTION m_lock;
+    static char s_sound_buf[SOUND_BUFFER_SIZE];
 
     Sound();
     ~Sound();
@@ -138,8 +141,6 @@ inline void Sound::FlushData(BOOL bLock)
         LeaveCriticalSection(&m_lock);
     }
 }
-
-static char s_sound_buf[40 * 1024];
 
 inline BOOL Sound::OpenSoundFile()
 {
