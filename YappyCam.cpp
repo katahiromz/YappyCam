@@ -74,8 +74,7 @@ static HANDLE s_hPicProducerQuitEvent = NULL;
 
 DWORD WINAPI PictureConsumerThreadProc(LPVOID pContext)
 {
-    puts("PictureConsumerThreadProc started");
-    fflush(stdout);
+    DPRINT("PictureConsumerThreadProc started");
 
     HANDLE hWaits[] = { s_hPicAddedEvent, s_hPicWriterQuitEvent };
 
@@ -103,8 +102,7 @@ DWORD WINAPI PictureConsumerThreadProc(LPVOID pContext)
         s_image_ring.pop_back();
     }
 
-    puts("PictureConsumerThreadProc ended");
-    fflush(stdout);
+    DPRINT("PictureConsumerThreadProc ended");
     return 0;
 }
 
@@ -152,8 +150,7 @@ void DoScreenCap(HWND hwnd, BOOL bCursor)
 
 DWORD WINAPI PictureProducerThreadProc(LPVOID pContext)
 {
-    puts("PictureProducerThreadProc started");
-    fflush(stdout);
+    DPRINT("PictureProducerThreadProc started");
 
     HANDLE hWaits[] = { s_hRecordStartEvent, s_hPicProducerQuitEvent };
 
@@ -265,8 +262,7 @@ DWORD WINAPI PictureProducerThreadProc(LPVOID pContext)
             break;
     }
 
-    puts("PictureProducerThreadProc ended");
-    fflush(stdout);
+    DPRINT("PictureProducerThreadProc ended");
     return 0;
 }
 

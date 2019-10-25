@@ -156,6 +156,31 @@ BOOL DoSetupHotkeys(HWND hwnd, BOOL bSetup);
 typedef std::unordered_map<DWORD, DWORD> RESO_MAP;
 DWORD DoMultiResoDialogBox(HWND hwndParent, const RESO_MAP& map);
 
+
+inline void dprint(const char *fmt, ...)
+{
+    static char buf[1024];
+    va_list va;
+    va_start(va, fmt);
+    StringCbVPrintfA(buf, sizeof(buf), fmt, va);
+    StringCbCatA(buf, sizeof(buf), "\n");
+#ifdef __GNUC__
+    fputs(buf, stdout);
+    fflush(stdout);
+#else
+    OutputDebugStringA(buf);
+#endif
+    va_end(va);
+}
+
+#undef DPRINT
+
+#ifdef NDEBUG
+    #define DPRINT(...) /* empty */
+#else
+    #define DPRINT(...) dprint(__VA_ARGS__)
+#endif
+
 class mutex_debug : public std::mutex
 {
     const char *m_name;
@@ -167,14 +192,12 @@ public:
     }
     void lock(int line)
     {
-        printf("lock: %s, Line %d\n", m_name, line);
-        fflush(stdout);
+        DPRINT("lock: %s, Line %d", m_name, line);
         std::mutex::lock();
     }
     void unlock(int line)
     {
-        printf("unlock: %s, Line %d\n", m_name, line);
-        fflush(stdout);
+        DPRINT("unlock: %s, Line %d", m_name, line);
         std::mutex::unlock();
     }
 };
