@@ -123,9 +123,6 @@ inline BOOL Sound::StopHearing()
         m_hThread = NULL;
     }
 
-    ::PlaySound(MAKEINTRESOURCE(IDR_ENDREC), GetModuleHandle(NULL),
-                SND_ASYNC | SND_PURGE | SND_RESOURCE);
-
     return TRUE;
 }
 

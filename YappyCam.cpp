@@ -1820,6 +1820,11 @@ void DoClosePopups(HWND hwnd)
 
 void OnRecStop(HWND hwnd)
 {
+    if (g_settings.GetPictureType() == PT_FINALIZING)
+    {
+        return;
+    }
+
     if (!IsWindowEnabled(GetDlgItem(hwnd, psh1)))
     {
         return;
@@ -2404,11 +2409,9 @@ static void OnHotKey(HWND hwnd, int idHotKey, UINT fuModifiers, UINT vk)
     {
     case HOTKEY_0_ID:
         SendDlgItemMessage(hwnd, psh1, BM_CLICK, 0, 0);
-        SetWindowLong(hwnd, GWL_STYLE, GetWindowStyle(hwnd) | WS_MINIMIZE);
         break;
     case HOTKEY_1_ID:
         SendDlgItemMessage(hwnd, psh2, BM_CLICK, 0, 0);
-        SetWindowLong(hwnd, GWL_STYLE, GetWindowStyle(hwnd) | WS_MINIMIZE);
         break;
     case HOTKEY_2_ID:
         s_bPsh3ByHotKey = TRUE;

@@ -37,8 +37,7 @@ bool get_wave_formats(std::vector<WAVE_FORMAT_INFO>& formats)
     return true;
 }
 
-static BYTE s_sound_buffer[SOUND_BUFFER_SIZE];
-static size_t s_sound_index = 0;
+static char s_sound_buffer[SOUND_BUFFER_SIZE];
 
 Sound::Sound()
     : m_nValue(0)
@@ -193,11 +192,18 @@ DWORD Sound::ThreadProc()
                                     0, 0, &m_wfx, 0);
     if (SUCCEEDED(hr))
     {
-        TCHAR szPath[MAX_PATH];
-        GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
-        PathRemoveFileSpec(szPath);
-        PathAppend(szPath, L"silent.exe");
-        ShellExecute(NULL, NULL, szPath, NULL, NULL, SW_HIDE);
+        static BOOL s_bStarted = FALSE;
+        if (!s_bStarted)
+        {
+            TCHAR szPath[MAX_PATH];
+            GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
+            PathRemoveFileSpec(szPath);
+            PathAppend(szPath, L"silent.exe");
+            if ((INT_PTR)ShellExecute(NULL, NULL, szPath, NULL, NULL, SW_HIDE) > 32)
+            {
+                s_bStarted = TRUE;
+            }
+        }
     }
     else if (hr == AUDCLNT_E_WRONG_ENDPOINT_TYPE)
     {
@@ -249,13 +255,7 @@ DWORD Sound::ThreadProc()
                 bRecorded = TRUE;
                 assert(cbToWrite <= SOUND_INCREMENT);
                 ::EnterCriticalSection(&m_lock);
-                if (s_sound_index >= sizeof(s_sound_buffer) - SOUND_INCREMENT)
-                {
-                    std::fwrite(s_sound_buffer, s_sound_index, 1, m_fp);
-                    s_sound_index = 0;
-                }
-                memcpy(&s_sound_buffer[s_sound_index], pbData, cbToWrite);
-                s_sound_index += cbToWrite;
+                std::fwrite(pbData, cbToWrite, 1, m_fp);
                 ::LeaveCriticalSection(&m_lock);
             }
 
@@ -294,9 +294,14 @@ BOOL Sound::OpenSoundFile()
     m_fp = _wfopen(m_szSoundFile, L"wb");
     if (m_fp)
     {
-        memcpy(s_sound_buffer, (const BYTE *)&m_wfx, sizeof(m_wfx));
-        s_sound_index = sizeof(m_wfx);
-        return TRUE;
+        setvbuf(m_fp, s_sound_buffer, _IOFBF, sizeof(s_sound_buffer));
+        if (std::fwrite(&m_wfx, sizeof(m_wfx), 1, m_fp))
+        {
+            return TRUE;
+        }
+        fclose(m_fp);
+        m_fp = NULL;
+        DeleteFile(m_szSoundFile);
     }
     return FALSE;
 }
@@ -308,13 +313,11 @@ inline void Sound::FlushData(BOOL bLock)
         EnterCriticalSection(&m_lock);
     }
 
-    if (s_sound_index)
+    if (m_fp)
     {
-        std::fwrite(s_sound_buffer, s_sound_index, 1, m_fp);
-        s_sound_index = 0;
+        fclose(m_fp);
+        m_fp = NULL;
     }
-    fclose(m_fp);
-    m_fp = NULL;
 
     if (bLock)
     {
