@@ -166,6 +166,7 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
     using clock = std::chrono::high_resolution_clock;
 
     clock::time_point point1, point2;
+    BITMAP bm;
 
     for (;;)
     {
@@ -191,15 +192,15 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             break;
         case PT_SCREENCAP:
             s_bitmap_lock.lock(__LINE__);
-            if (s_hbmBitmap && s_pvBits)
+            if (GetObject(s_hbmBitmap, sizeof(bm), &bm))
             {
                 // take a screen capture
                 DoScreenCap(g_hMainWnd, g_settings.m_bDrawCursor);
                 {
-                    cv::Size size(g_settings.m_cxCap, g_settings.m_cyCap);
-                    LONG nWidthBytes = WIDTHBYTES(g_settings.m_cxCap * 24);
-                    cv::Mat mat(size, CV_8UC3, s_pvBits, nWidthBytes);
-                    image = mat;
+                    cv::Size size(bm.bmWidth, bm.bmHeight);
+                    cv::Mat mat(size, CV_8UC3, bm.bmBits);
+                    image = mat.clone();
+                    image.step = bm.bmWidthBytes;
                 }
             }
             s_bitmap_lock.unlock(__LINE__);
@@ -2112,7 +2113,6 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
     SetStretchBltMode(hdc, COLORONCOLOR);
 
     RECT rc;
-    BITMAP bm;
 
     switch (g_settings.GetDisplayMode())
     {
