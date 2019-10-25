@@ -196,6 +196,7 @@ STRINGTABLE
     IDS_VERSIONCAPTION, "About YappyCam"
     IDS_QUERYINIT, "Do you want to initialize this application settings?"
     IDS_SCANNING, "Scanning... - %u%%"
+    IDS_FRAMEDROP, "It's ready to create a movie file at the following location:\n\n%s\n\nHowever frame drop is happened.\nFinalize the movie?"
 }
 
 //////////////////////////////////////////////////////////////////////////////

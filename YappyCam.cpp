@@ -48,6 +48,7 @@ static HDC s_hdcMem = NULL;        // memory DC
 
 // frame info
 static cv::Mat s_frame;
+static BOOL s_bFrameDrop = FALSE;
 static INT s_nFrames = 0;
 static HBITMAP s_hbmBitmap = NULL;
 static LPVOID s_pvBits = NULL;
@@ -233,6 +234,10 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             {
                 s_image_ring.push_front(image);
                 s_frame = image;
+            }
+            else
+            {
+                s_bFrameDrop = TRUE;
             }
             s_image_lock.unlock(__LINE__);
 
@@ -1641,7 +1646,14 @@ void OnStop(HWND hwnd)
     }
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                    s_nGotMovieID);
-    StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEQUE), szPath);
+    if (s_bFrameDrop)
+    {
+        StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FRAMEDROP), szPath);
+    }
+    else
+    {
+        StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEQUE), szPath);
+    }
     INT nID = MessageBox(hwnd, szText, LoadStringDx(IDS_WANNAFINALIZE),
                          MB_ICONINFORMATION | MB_YESNOCANCEL);
     switch (nID)
@@ -1909,6 +1921,7 @@ void OnRecStop(HWND hwnd)
 
     // OK, start recording
     s_nFrames = 0;
+    s_bFrameDrop = FALSE;
     s_nGotMovieID = g_settings.m_nMovieID;
     s_nFramesToWrite = 0;
     ++g_settings.m_nMovieID;
