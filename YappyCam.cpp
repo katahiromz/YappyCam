@@ -1210,6 +1210,64 @@ void DoDeleteTempFiles(HWND hwnd)
     RemoveDirectory(strMovieDir.c_str());
 }
 
+DWORD DoGetSoundSize(const std::wstring& strSoundTempFile)
+{
+    WIN32_FIND_DATA find = { 0 };
+    HANDLE hFind = FindFirstFile(strSoundTempFile.c_str(), &find);
+    FindClose(hFind);
+    return find.nFileSizeLow;
+}
+
+BOOL DoShrinkSoundFile(const std::wstring& strSoundTempFile, DWORD dwBytes)
+{
+    HANDLE hFile = CreateFile(strSoundTempFile.c_str(),
+                              GENERIC_READ | GENERIC_WRITE,
+                              FILE_SHARE_READ,
+                              NULL, OPEN_EXISTING, 0, NULL);
+    if (hFile == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+
+    DWORD dwFileSize = GetFileSize(hFile, NULL);
+    DWORD dwDiff = dwFileSize - dwBytes;
+    if (dwFileSize >= 0x7FFFFFFF)
+    {
+        CloseHandle(hFile);
+        return FALSE;
+    }
+
+    std::vector<BYTE> bytes;
+    bytes.resize(dwFileSize);
+
+    BOOL ret = FALSE;
+    DWORD cbRead;
+    DWORD wfx_size = DWORD(sizeof(g_sound.m_wfx));
+    if (ReadFile(hFile, &bytes[0], dwFileSize, &cbRead, NULL) && cbRead == dwFileSize)
+    {
+        if (0)
+        {
+            auto dwInterest = (dwFileSize - wfx_size) - dwDiff;
+            MoveMemory(&bytes[wfx_size], &bytes[wfx_size + dwDiff / 2], dwInterest);
+
+            SetFilePointer(hFile, wfx_size, NULL, FILE_BEGIN);
+
+            if (WriteFile(hFile, &bytes[wfx_size], dwInterest, &cbRead, NULL))
+            {
+                ret = SetEndOfFile(hFile);
+                if (ret && 1)
+                {
+                    WCHAR sz[32];
+                    StringCbPrintf(sz, sizeof(sz), L"%ld bytes cut", dwDiff);
+                    ErrorBoxDx(NULL, sz);
+                }
+            }
+        }
+    }
+
+    CloseHandle(hFile);
+    return TRUE;
+}
+
 static unsigned __stdcall FinalizingThreadFunction(void *pContext)
 {
     DPRINT("FinalizingThreadFunction started");
@@ -1325,7 +1383,9 @@ static unsigned __stdcall FinalizingThreadFunction(void *pContext)
     std::unordered_map<DWORD, DWORD> resolutions;
     resolutions[MAKELONG(width, height)] = 1;
 
-    // for each frames...
+    INT nValidFrames = 0;
+
+    // scan each frames...
     for (INT i = nStartIndex; i <= nEndIndex; ++i)
     {
         if (s_bFinalizeCancelled)
@@ -1351,6 +1411,8 @@ static unsigned __stdcall FinalizingThreadFunction(void *pContext)
             continue;
         }
 
+        ++nValidFrames;
+
         width = frame.cols;
         height = frame.rows;
         resolutions[MAKELONG(width, height)]++;
@@ -1366,6 +1428,22 @@ static unsigned __stdcall FinalizingThreadFunction(void *pContext)
 
         // redraw window
         InvalidateRect(g_hMainWnd, NULL, TRUE);
+    }
+
+    auto& wfx = g_sound.m_wfx;
+    DWORD dwSoundSize = DoGetSoundSize(strSoundTempFile);
+    dwSoundSize -= sizeof(wfx);
+    double sound_seconds = dwSoundSize / double(wfx.nAvgBytesPerSec);
+    double movie_seconds = nValidFrames / fps;
+    DPRINT("sound_seconds:%f movie_seconds:%f", sound_seconds, movie_seconds);
+
+    if (sound_seconds > movie_seconds)
+    {
+        DWORD dwBytes = movie_seconds * wfx.nAvgBytesPerSec;
+        dwBytes /= wfx.nBlockAlign;
+        dwBytes *= wfx.nBlockAlign;
+        dwBytes += sizeof(wfx);
+        DoShrinkSoundFile(strSoundTempFile, dwBytes);
     }
 
     if (resolutions.size() > 1)
@@ -2466,9 +2544,6 @@ static void OnHotKey(HWND hwnd, int idHotKey, UINT fuModifiers, UINT vk)
 
 void Settings::follow_display_change(HWND hwnd)
 {
-    BOOL bRecording = g_sound.m_bRecording;
-    g_sound.SetRecording(FALSE);
-
     std::vector<MONITORINFO> monitors;
     MONITORINFO primary;
     DoGetMonitorsEx(monitors, primary);
@@ -2533,8 +2608,6 @@ void Settings::follow_display_change(HWND hwnd)
     }
     s_hdcMem = CreateCompatibleDC(s_hdcScreen);
     s_bitmap_lock.unlock(__LINE__);
-
-    g_sound.SetRecording(bRecording);
 }
 
 static void OnDisplayChange(HWND hwnd, UINT bitsPerPixel, UINT cxScreen, UINT cyScreen)
