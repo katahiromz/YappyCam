@@ -1196,6 +1196,7 @@ void DoDeleteTempFiles(HWND hwnd)
         StringCbPrintf(szPath, sizeof(szPath), image_name.c_str(), i);
         DeleteFile(szPath);
     }
+    DeleteFile(image_name.c_str());
 
     // delete sound file
     DeleteFile(sound_name.c_str());
