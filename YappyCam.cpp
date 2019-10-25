@@ -2112,13 +2112,12 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
     SetStretchBltMode(hdc, COLORONCOLOR);
 
     RECT rc;
+    BITMAP bm;
 
     switch (g_settings.GetDisplayMode())
     {
     case DM_CAPFRAME:
-    case DM_BITMAP:
         s_image_lock.lock(__LINE__);
-        s_bitmap_lock.lock(__LINE__);
         if (s_frame.data)   // if frame data exists
         {
             StretchDIBits(hdc, 0, 0, cx, cy,
@@ -2130,27 +2129,25 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             // black out if no image
             PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
         }
-        s_bitmap_lock.unlock(__LINE__);
         s_image_lock.unlock(__LINE__);
         break;
-#if 0
-        s_bitmap_lock.lock(__LINE__);
-        if (GetObject(s_hbmBitmap, sizeof(bm), &bm))
+    case DM_BITMAP:
+        s_image_lock.lock(__LINE__);
+        if (s_frame.data)   // if frame data exists
         {
-            HGDIOBJ hbmOld = SelectObject(s_hdcMem, s_hbmBitmap);
-            StretchBlt(hdc, 0, 0, cx, cy,
-                       s_hdcMem, 0, 0, bm.bmWidth, bm.bmHeight,
-                       SRCCOPY);
-            SelectObject(s_hdcMem, hbmOld);
+            s_bitmap_lock.lock(__LINE__);
+            StretchDIBits(hdc, 0, 0, cx, cy,
+                          0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
+                          s_frame.data, &s_bi, DIB_RGB_COLORS, SRCCOPY);
+            s_bitmap_lock.unlock(__LINE__);
         }
         else
         {
             // black out if no image
             PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
         }
-        s_bitmap_lock.unlock(__LINE__);
+        s_image_lock.unlock(__LINE__);
         break;
-#endif
     case DM_TEXT:
         // white background
         SetRect(&rc, 0, 0, cx, cy);
@@ -2589,6 +2586,12 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
+static LONG WINAPI TopLevelExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)
+{
+    PlaySound(MAKEINTRESOURCE(IDR_DOWN), g_hInst, SND_SYNC | SND_RESOURCE);
+    return 0;
+}
+
 int WINAPI
 WinMain(HINSTANCE   hInstance,
         HINSTANCE   hPrevInstance,
@@ -2605,6 +2608,8 @@ WinMain(HINSTANCE   hInstance,
         SetForegroundWindow(hwnd);
         return EXIT_SUCCESS;
     }
+
+    SetUnhandledExceptionFilter(TopLevelExceptionFilter);
 
     // initialize COM
     HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);

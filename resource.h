@@ -25,6 +25,7 @@
 #define IDR_SILENT_WAV                      1
 #define IDR_STARTREC                        2
 #define IDR_ENDREC                          3
+#define IDR_DOWN                            4
 #define IDR_MAINMENU                        1000
 
 #define IDS_FORMAT                          100
