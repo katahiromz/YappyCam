@@ -184,7 +184,7 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             if (GetObject(s_hbmBitmap, sizeof(bm), &bm))
             {
                 cv::Size size(bm.bmWidth, bm.bmHeight);
-                cv::Mat mat(size, CV_8UC3, s_pvBits);
+                cv::Mat mat(size, CV_8UC3, bm.bmBits);
                 image = mat.clone();
                 image.step = bm.bmWidthBytes;
             }
