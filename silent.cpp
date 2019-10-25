@@ -8,6 +8,8 @@ int main(void)
                 SND_ASYNC | SND_LOOP | SND_NODEFAULT |
                 SND_RESOURCE);
 
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
+
     while (HWND hwnd = FindWindow(L"#32770", L"YappyCam"))
     {
         Sleep(500);
