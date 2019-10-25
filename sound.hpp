@@ -3,6 +3,7 @@
 
 #include <windows.h>
 #include <mmsystem.h>
+#include <process.h>
 #ifdef DEFINE_GUIDS
 #include <initguid.h>
 #endif
@@ -75,7 +76,7 @@ protected:
     UINT32 m_nFrames;
     TCHAR m_szSoundFile[MAX_PATH];
 
-    static DWORD WINAPI ThreadFunction(LPVOID pContext);
+    static unsigned __stdcall ThreadFunction(void *pContext);
     void ScanBuffer(const BYTE *pb, DWORD cb, DWORD dwFlags);
 };
 
@@ -100,8 +101,8 @@ inline void Sound::SetSoundFile(const TCHAR *filename)
 
 inline BOOL Sound::StartHearing()
 {
-    DWORD tid = 0;
-    m_hThread = ::CreateThread(NULL, 0, Sound::ThreadFunction, this, 0, &tid);
+    unsigned tid = 0;
+    m_hThread = (HANDLE)_beginthreadex(NULL, 0, Sound::ThreadFunction, this, 0, &tid);
     return m_hThread != NULL;
 }
 

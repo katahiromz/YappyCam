@@ -72,7 +72,7 @@ static HANDLE s_hPictureProducerThread = NULL;
 static HANDLE s_hRecordStartEvent = NULL;
 static HANDLE s_hPicProducerQuitEvent = NULL;
 
-DWORD WINAPI PictureConsumerThreadProc(LPVOID pContext)
+unsigned __stdcall PictureConsumerThreadProc(void *pContext)
 {
     DPRINT("PictureConsumerThreadProc started");
 
@@ -110,6 +110,7 @@ DWORD WINAPI PictureConsumerThreadProc(LPVOID pContext)
     }
 
     DPRINT("PictureConsumerThreadProc ended");
+    _endthreadex(0);
     return 0;
 }
 
@@ -155,7 +156,7 @@ void DoScreenCap(HWND hwnd, BOOL bCursor)
 
 #define WIDTHBYTES(i) (((i) + 31) / 32 * 4)
 
-DWORD WINAPI PictureProducerThreadProc(LPVOID pContext)
+unsigned __stdcall PictureProducerThreadProc(void *pContext)
 {
     DPRINT("PictureProducerThreadProc started");
 
@@ -268,6 +269,7 @@ DWORD WINAPI PictureProducerThreadProc(LPVOID pContext)
     }
 
     DPRINT("PictureProducerThreadProc ended");
+    _endthreadex(0);
     return 0;
 }
 
@@ -1045,9 +1047,9 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     g_sound.StartHearing();
     DoStartStopTimers(hwnd, TRUE);
 
-    DWORD tid = 0;
-    s_hPictureConsumerThread = ::CreateThread(NULL, 0, PictureConsumerThreadProc, NULL, 0, &tid);
-    s_hPictureProducerThread = ::CreateThread(NULL, 0, PictureProducerThreadProc, NULL, 0, &tid);
+    unsigned tid = 0;
+    s_hPictureConsumerThread = (HANDLE)_beginthreadex(NULL, 0, PictureConsumerThreadProc, NULL, 0, &tid);
+    s_hPictureProducerThread = (HANDLE)_beginthreadex(NULL, 0, PictureProducerThreadProc, NULL, 0, &tid);
 
     return TRUE;
 }
@@ -1201,8 +1203,9 @@ void DoDeleteTempFiles(HWND hwnd)
     RemoveDirectory(strMovieDir.c_str());
 }
 
-static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
+static unsigned __stdcall FinalizingThreadFunction(void *pContext)
 {
+    DPRINT("FinalizingThreadFunction started");
     g_sound.StopHearing();
 
     // init progress bar
@@ -1484,6 +1487,9 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
 
         g_sound.StartHearing();
         PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZED, 0);
+
+        DPRINT("FinalizingThreadFunction ended");
+        _endthreadex(TRUE);
         return TRUE;
     }
     else
@@ -1497,6 +1503,9 @@ static DWORD WINAPI FinalizingThreadFunction(LPVOID pContext)
 
         g_sound.StartHearing();
         PostMessage(g_hMainWnd, WM_COMMAND, ID_FINALIZEFAIL, 0);
+
+        DPRINT("FinalizingThreadFunction ended");
+        _endthreadex(FALSE);
         return FALSE;
     }
 }
@@ -1511,9 +1520,9 @@ BOOL DoCreateFinalizingThread(HWND hwnd)
     }
 
     // start up a new thread for finalizing
-    DWORD tid = 0;
     s_bFinalizeCancelled = FALSE;
-    s_hFinalizingThread = ::CreateThread(NULL, 0, FinalizingThreadFunction, NULL, 0, &tid);
+    unsigned tid = 0;
+    s_hFinalizingThread = (HANDLE)_beginthreadex(NULL, 0, FinalizingThreadFunction, NULL, 0, &tid);
     return s_hFinalizingThread != NULL;
 }
 

@@ -96,7 +96,7 @@ Sound::~Sound()
     ::DeleteCriticalSection(&m_lock);
 }
 
-DWORD WINAPI Sound::ThreadFunction(LPVOID pContext)
+unsigned __stdcall Sound::ThreadFunction(void *pContext)
 {
     HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     if (FAILED(hr))
@@ -105,6 +105,7 @@ DWORD WINAPI Sound::ThreadFunction(LPVOID pContext)
     Sound *pRecording = reinterpret_cast<Sound *>(pContext);
     DWORD ret = pRecording->ThreadProc();
     CoUninitialize();
+    _endthreadex(ret);
     return ret;
 }
 
