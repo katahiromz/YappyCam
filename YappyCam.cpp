@@ -2086,6 +2086,7 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
     case DM_CAPFRAME:
     case DM_BITMAP:
         s_image_lock.lock(__LINE__);
+        s_bitmap_lock.lock(__LINE__);
         if (s_frame.data)   // if frame data exists
         {
             StretchDIBits(hdc, 0, 0, cx, cy,
@@ -2097,6 +2098,7 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             // black out if no image
             PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
         }
+        s_bitmap_lock.unlock(__LINE__);
         s_image_lock.unlock(__LINE__);
         break;
 #if 0
@@ -2488,6 +2490,8 @@ void Settings::follow_display_change(HWND hwnd)
     g_settings.m_nWidth = g_settings.m_cxCap;
     g_settings.m_nHeight = g_settings.m_cyCap;
     g_settings.recreate_bitmap(hwnd);
+
+    s_bitmap_lock.lock(__LINE__);
     if (s_hdcScreen)
     {
         DeleteDC(s_hdcScreen);
@@ -2498,6 +2502,7 @@ void Settings::follow_display_change(HWND hwnd)
         DeleteDC(s_hdcMem);
     }
     s_hdcMem = CreateCompatibleDC(s_hdcScreen);
+    s_bitmap_lock.unlock(__LINE__);
 
     g_sound.SetRecording(bRecording);
 }
