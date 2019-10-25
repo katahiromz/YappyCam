@@ -1517,6 +1517,9 @@ void OnStop(HWND hwnd)
     if (!IsWindowEnabled(GetDlgItem(hwnd, psh3)))
         return;
 
+    if (g_settings.GetPictureType() == PT_FINALIZING)
+        return;
+
     // stop
     DoStartStopTimers(hwnd, FALSE);
     g_sound.StopHearing();
