@@ -1721,6 +1721,7 @@ void OnStop(HWND hwnd)
     {
         ShowWindow(hwnd, SW_RESTORE);
     }
+
     StringCbPrintf(szPath, sizeof(szPath), g_settings.m_strMovieDir.c_str(),
                    s_nGotMovieID);
     if (s_bFrameDrop)
@@ -1731,6 +1732,8 @@ void OnStop(HWND hwnd)
     {
         StringCbPrintf(szText, sizeof(szText), LoadStringDx(IDS_FINALIZEQUE), szPath);
     }
+
+    SetForegroundWindow(hwnd);
     INT nID = MessageBox(hwnd, szText, LoadStringDx(IDS_WANNAFINALIZE),
                          MB_ICONINFORMATION | MB_YESNOCANCEL);
     switch (nID)
@@ -2015,6 +2018,11 @@ void OnResume(HWND hwnd)
     if (!IsWindowEnabled(GetDlgItem(hwnd, psh2)))
         return;
 
+    if (g_settings.GetPictureType() == PT_FINALIZING)
+    {
+        return;
+    }
+
     s_bWriting = TRUE;
     if (!g_settings.m_bNoSound)
     {
@@ -2024,6 +2032,11 @@ void OnResume(HWND hwnd)
 
 void OnPause(HWND hwnd)
 {
+    if (g_settings.GetPictureType() == PT_FINALIZING)
+    {
+        return;
+    }
+
     // disable recording
     s_bWriting = FALSE;
     if (!g_settings.m_bNoSound)
@@ -2034,6 +2047,11 @@ void OnPause(HWND hwnd)
 
 void OnPauseResume(HWND hwnd)
 {
+    if (g_settings.GetPictureType() == PT_FINALIZING)
+    {
+        return;
+    }
+
     if (IsDlgButtonChecked(hwnd, psh2) == BST_CHECKED)
         OnPause(hwnd);
     else
@@ -2659,7 +2677,7 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 static LONG WINAPI TopLevelExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)
 {
-    // end boosting the speed
+    // end boosting the timing
     timeEndPeriod(1);
 
     PlaySound(MAKEINTRESOURCE(IDR_DOWN), g_hInst, SND_SYNC | SND_RESOURCE);
@@ -2696,13 +2714,13 @@ WinMain(HINSTANCE   hInstance,
     // initialize comctl32
     InitCommonControls();
 
-    // start boosting the speed
+    // start boosting the timing
     timeBeginPeriod(1);
 
     // show the main window
     DialogBox(hInstance, MAKEINTRESOURCE(IDD_MAIN), NULL, DialogProc);
 
-    // end boosting the speed
+    // end boosting the timing
     timeEndPeriod(1);
 
     // uninitialize COM
