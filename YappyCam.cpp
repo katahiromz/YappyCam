@@ -6,7 +6,6 @@
 
 // timer IDs
 #define SOUND_TIMER_ID  999
-#define CAP_TIMER_ID    888
 
 // for layout of the main window
 static INT s_button_width = 0;
@@ -549,18 +548,12 @@ void DoStartStopTimers(HWND hwnd, BOOL bStart)
     if (bStart)
     {
         SetTimer(hwnd, SOUND_TIMER_ID, 300, NULL);
-
-        DWORD dwMSEC = DWORD(1000 * 100 / g_settings.m_nFPSx100);
-        //SetTimer(hwnd, CAP_TIMER_ID, dwMSEC, NULL);
-        //OnTimer(hwnd, CAP_TIMER_ID);
-
         s_bWatching = TRUE;
     }
     else
     {
         s_bWatching = FALSE;
         KillTimer(hwnd, SOUND_TIMER_ID);
-        //KillTimer(hwnd, CAP_TIMER_ID);
     }
 }
 
@@ -2338,10 +2331,6 @@ static void OnTimer(HWND hwnd, UINT id)
 {
     switch (id)
     {
-    case CAP_TIMER_ID:
-        // trigger to redraw
-        InvalidateRect(hwnd, NULL, TRUE);
-        break;
     case SOUND_TIMER_ID:
         if (g_settings.m_bNoSound)
         {
