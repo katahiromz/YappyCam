@@ -244,7 +244,8 @@ DWORD WINAPI PictureProducerThreadProc(LPVOID pContext)
             s_image_lock.unlock(__LINE__);
         }
 
-        InvalidateRect(g_hMainWnd, NULL, TRUE);
+        if (!IsMinimized(g_hMainWnd))
+            InvalidateRect(g_hMainWnd, NULL, TRUE);
 
         point2 = clock::now();
 
@@ -721,7 +722,8 @@ static BOOL OnSizing(HWND hwnd, DWORD fwSide, LPRECT prc)
     *prc = rc;
     prc->right += padding_right;
 
-    InvalidateRect(hwnd, &rc, TRUE);
+    if (!IsMinimized(hwnd))
+        InvalidateRect(hwnd, &rc, TRUE);
 
     return TRUE;
 }
