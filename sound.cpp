@@ -51,7 +51,6 @@ Sound::Sound()
     m_hShutdownEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
     m_hWakeUp = ::CreateEvent(NULL, FALSE, FALSE, NULL);
     m_nFrames = 0;
-    ::InitializeCriticalSection(&m_lock);
 
     ZeroMemory(&m_wfx, sizeof(m_wfx));
     m_wfx.wFormatTag = WAVE_FORMAT_PCM;
@@ -92,8 +91,6 @@ Sound::~Sound()
         ::CloseHandle(m_hThread);
         m_hThread = NULL;
     }
-
-    ::DeleteCriticalSection(&m_lock);
 }
 
 unsigned __stdcall Sound::ThreadFunction(void *pContext)
@@ -161,6 +158,8 @@ void Sound::ScanBuffer(const BYTE *pb, DWORD cb, DWORD dwFlags)
 DWORD Sound::ThreadProc()
 {
     HRESULT hr;
+
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 
     if (m_pAudioClient)
         m_pAudioClient.Detach();
@@ -255,9 +254,7 @@ DWORD Sound::ThreadProc()
             {
                 bRecorded = TRUE;
                 assert(cbToWrite <= SOUND_INCREMENT);
-                ::EnterCriticalSection(&m_lock);
                 std::fwrite(pbData, cbToWrite, 1, m_fp);
-                ::LeaveCriticalSection(&m_lock);
             }
 
             ScanBuffer(pbData, cbToWrite, dwFlags);
@@ -271,20 +268,15 @@ DWORD Sound::ThreadProc()
         switch (waitResult)
         {
         case WAIT_OBJECT_0:
+        default:
             bKeepRecording = false;
             break;
         case WAIT_OBJECT_0 + 1:
             break;
-        default:
-            bKeepRecording = false;
-            break;
         }
     }
 
-    if (bRecorded)
-    {
-        FlushData(TRUE);
-    }
+    FlushData();
 
     return 0;
 }
@@ -307,21 +299,11 @@ BOOL Sound::OpenSoundFile()
     return FALSE;
 }
 
-inline void Sound::FlushData(BOOL bLock)
+void Sound::FlushData()
 {
-    if (bLock)
-    {
-        EnterCriticalSection(&m_lock);
-    }
-
     if (m_fp)
     {
         fclose(m_fp);
         m_fp = NULL;
-    }
-
-    if (bLock)
-    {
-        LeaveCriticalSection(&m_lock);
     }
 }

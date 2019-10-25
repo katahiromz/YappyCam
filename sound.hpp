@@ -44,7 +44,6 @@ public:
     LONG m_nMax;
     BOOL m_bRecording;
     FILE *m_fp;
-    CRITICAL_SECTION m_lock;
 
     Sound();
     ~Sound();
@@ -57,7 +56,7 @@ public:
 
     BOOL SetRecording(BOOL bRecording);
 
-    void FlushData(BOOL bLock);
+    void FlushData();
 
     DWORD ThreadProc();
 
