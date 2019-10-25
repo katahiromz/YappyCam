@@ -181,12 +181,12 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
         case PT_WHITE:
         case PT_FINALIZING:
             s_bitmap_lock.lock(__LINE__);
-            if (s_hbmBitmap && s_pvBits)
+            if (GetObject(s_hbmBitmap, sizeof(bm), &bm))
             {
-                cv::Size size(g_settings.m_nWidth, g_settings.m_nHeight);
-                LONG nWidthBytes = WIDTHBYTES(g_settings.m_nWidth * 24);
-                cv::Mat mat(size, CV_8UC3, s_pvBits, nWidthBytes);
-                image = mat;
+                cv::Size size(bm.bmWidth, bm.bmHeight);
+                cv::Mat mat(size, CV_8UC3, s_pvBits);
+                image = mat.clone();
+                image.step = bm.bmWidthBytes;
             }
             s_bitmap_lock.unlock(__LINE__);
             break;
