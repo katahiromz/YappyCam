@@ -2435,6 +2435,9 @@ static void OnHotKey(HWND hwnd, int idHotKey, UINT fuModifiers, UINT vk)
 
 void Settings::follow_display_change(HWND hwnd)
 {
+    BOOL bRecording = g_sound.m_bRecording;
+    g_sound.SetRecording(FALSE);
+
     std::vector<MONITORINFO> monitors;
     MONITORINFO primary;
     DoGetMonitorsEx(monitors, primary);
@@ -2496,6 +2499,8 @@ void Settings::follow_display_change(HWND hwnd)
         DeleteDC(s_hdcMem);
     }
     s_hdcMem = CreateCompatibleDC(s_hdcScreen);
+
+    g_sound.SetRecording(bRecording);
 }
 
 static void OnDisplayChange(HWND hwnd, UINT bitsPerPixel, UINT cxScreen, UINT cyScreen)
