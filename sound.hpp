@@ -13,6 +13,7 @@
 #include "ccomptr.hpp"
 #include <vector>
 #include <cstdio>
+#include <shlwapi.h>
 #include <strsafe.h>
 #include "resource.h"
 
@@ -122,7 +123,7 @@ inline BOOL Sound::StopHearing()
         m_hThread = NULL;
     }
 
-    ::PlaySound(MAKEINTRESOURCE(IDR_SILENT_WAV), GetModuleHandle(NULL),
+    ::PlaySound(MAKEINTRESOURCE(IDR_ENDREC), GetModuleHandle(NULL),
                 SND_ASYNC | SND_PURGE | SND_RESOURCE);
 
     return TRUE;

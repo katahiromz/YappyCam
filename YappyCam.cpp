@@ -160,6 +160,8 @@ DWORD WINAPI PictureProducerThreadProc(LPVOID pContext)
 
     for (;;)
     {
+        DWORD dwMSEC = DWORD(1000 * 100 / g_settings.m_nFPSx100);
+
         point1 = clock::now();
 
         cv::Mat image;
@@ -228,11 +230,6 @@ DWORD WINAPI PictureProducerThreadProc(LPVOID pContext)
 
             // notify to s_hPictureConsumerThread
             SetEvent(s_hPicAddedEvent);
-
-            if (!g_settings.m_bNoSound && !g_sound.m_bRecording)
-            {
-                g_sound.SetRecording(TRUE);
-            }
         }
         else
         {
@@ -252,11 +249,11 @@ DWORD WINAPI PictureProducerThreadProc(LPVOID pContext)
         auto elapsed =
             std::chrono::duration_cast<std::chrono::milliseconds>(point2 - point1).count();
 
-        DWORD dwMSEC = DWORD(1000 * 100 / g_settings.m_nFPSx100);
         if (dwMSEC >= elapsed)
             dwMSEC -= elapsed;
 
         DWORD dwWait = WaitForMultipleObjects(ARRAYSIZE(hWaits), hWaits, FALSE, dwMSEC);
+
         if (dwWait == WAIT_OBJECT_0)
             continue;
         if (dwWait == WAIT_OBJECT_0 + 1)
@@ -1890,6 +1887,10 @@ void OnRecStop(HWND hwnd)
     ++g_settings.m_nMovieID;
     s_bWriting = TRUE;
     SetEvent(s_hRecordStartEvent);
+    if (!g_settings.m_bNoSound && !g_sound.m_bRecording)
+    {
+        g_sound.SetRecording(TRUE);
+    }
 }
 
 void OnResume(HWND hwnd)

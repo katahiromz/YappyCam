@@ -2,7 +2,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "sound.hpp"
 #include <cmath>
-#include <strsafe.h>
 
 static const WAVE_FORMAT_INFO s_wave_formats[] =
 {
@@ -194,9 +193,11 @@ DWORD Sound::ThreadProc()
                                     0, 0, &m_wfx, 0);
     if (SUCCEEDED(hr))
     {
-        ::PlaySound(MAKEINTRESOURCE(IDR_SILENT_WAV), GetModuleHandle(NULL),
-                    SND_ASYNC | SND_LOOP | SND_NODEFAULT |
-                    SND_RESOURCE);
+        TCHAR szPath[MAX_PATH];
+        GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
+        PathRemoveFileSpec(szPath);
+        PathAppend(szPath, L"silent.exe");
+        ShellExecute(NULL, NULL, szPath, NULL, NULL, SW_HIDE);
     }
     else if (hr == AUDCLNT_E_WRONG_ENDPOINT_TYPE)
     {
