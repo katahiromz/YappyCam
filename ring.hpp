@@ -620,6 +620,7 @@ public:
         }
     };
 
+#if __cplusplus >= 201103L
     static_assert(std::is_copy_constructible<iterator>::value);
     static_assert(std::is_copy_assignable<iterator>::value);
     static_assert(std::is_destructible<iterator>::value);
@@ -635,6 +636,7 @@ public:
     static_assert(std::is_copy_constructible<const_reverse_iterator>::value);
     static_assert(std::is_copy_assignable<const_reverse_iterator>::value);
     static_assert(std::is_destructible<const_reverse_iterator>::value);
+#endif
 
     iterator begin()
     {

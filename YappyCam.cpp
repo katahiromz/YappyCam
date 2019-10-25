@@ -249,8 +249,8 @@ DWORD WINAPI PictureProducerThreadProc(LPVOID pContext)
         auto elapsed =
             std::chrono::duration_cast<std::chrono::milliseconds>(point2 - point1).count();
 
-        if (dwMSEC >= elapsed)
-            dwMSEC -= elapsed;
+        if (dwMSEC >= (DWORD)elapsed)
+            dwMSEC -= (DWORD)elapsed;
 
         DWORD dwWait = WaitForMultipleObjects(ARRAYSIZE(hWaits), hWaits, FALSE, dwMSEC);
 
@@ -2079,7 +2079,6 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
     // COLORONCOLOR is quick
     SetStretchBltMode(hdc, COLORONCOLOR);
 
-    BITMAP bm;
     RECT rc;
 
     switch (g_settings.GetDisplayMode())
