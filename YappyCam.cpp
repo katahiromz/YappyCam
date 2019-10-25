@@ -80,12 +80,15 @@ DWORD WINAPI PictureConsumerThreadProc(LPVOID pContext)
 
     for (;;)
     {
-        while (s_writer.isOpened() && !s_image_ring.empty())
+        for (;;)
         {
             std::lock_guard<std::mutex> lock(s_image_lock);
+            if (!s_writer.isOpened() || s_image_ring.empty())
+                break;
+
             s_writer << s_image_ring.back();
-            ++s_nFrames;
             s_image_ring.pop_back();
+            ++s_nFrames;
         }
 
         DWORD dwWait = WaitForMultipleObjects(ARRAYSIZE(hWaits), hWaits, FALSE, INFINITE);
@@ -95,11 +98,15 @@ DWORD WINAPI PictureConsumerThreadProc(LPVOID pContext)
             break;
     }
 
-    while (!s_image_ring.empty() && s_writer.isOpened())
+    for (;;)
     {
         std::lock_guard<std::mutex> lock(s_image_lock);
+        if (!s_writer.isOpened() || s_image_ring.empty())
+            break;
+
         s_writer << s_image_ring.back();
         s_image_ring.pop_back();
+        ++s_nFrames;
     }
 
     DPRINT("PictureConsumerThreadProc ended");
@@ -1523,7 +1530,9 @@ void OnStop(HWND hwnd)
     // stop
     DoStartStopTimers(hwnd, FALSE);
     g_sound.StopHearing();
+    s_image_lock.lock(__LINE__);
     s_writer.release();
+    s_image_lock.unlock(__LINE__);
     s_bWriting = FALSE;
     g_sound.SetRecording(FALSE);
 
@@ -1865,18 +1874,19 @@ void OnRecStop(HWND hwnd)
     EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
     SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
 
-    // close writer
-    s_writer.release();
-
     // open writer
+    s_image_lock.lock(__LINE__);
+    s_writer.release();
     s_writer.open(image_name, 0, 0,
                   cv::Size(g_settings.m_nWidth, g_settings.m_nHeight));
     if (!s_writer.isOpened())
     {
+        s_image_lock.unlock(__LINE__);
         ErrorBoxDx(hwnd, TEXT("Unable to open image writer."));
         CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
         return;
     }
+    s_image_lock.unlock(__LINE__);
 
     if (!g_settings.m_bNoSound)
     {
