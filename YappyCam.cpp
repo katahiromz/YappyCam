@@ -1240,26 +1240,23 @@ BOOL DoShrinkSoundFile(const std::wstring& strSoundTempFile, DWORD dwBytes)
     bytes.resize(dwFileSize);
 
     BOOL ret = FALSE;
-    DWORD cbRead;
+    DWORD cb;
     DWORD wfx_size = DWORD(sizeof(g_sound.m_wfx));
-    if (ReadFile(hFile, &bytes[0], dwFileSize, &cbRead, NULL) && cbRead == dwFileSize)
+    if (ReadFile(hFile, &bytes[0], dwFileSize, &cb, NULL) && cb == dwFileSize)
     {
-        if (0)
+        auto dwInterest = (dwFileSize - wfx_size) - dwDiff;
+        MoveMemory(&bytes[wfx_size], &bytes[wfx_size + dwDiff / 2], dwInterest);
+
+        SetFilePointer(hFile, wfx_size, NULL, FILE_BEGIN);
+
+        if (WriteFile(hFile, &bytes[wfx_size], dwInterest, &cb, NULL))
         {
-            auto dwInterest = (dwFileSize - wfx_size) - dwDiff;
-            MoveMemory(&bytes[wfx_size], &bytes[wfx_size + dwDiff / 2], dwInterest);
-
-            SetFilePointer(hFile, wfx_size, NULL, FILE_BEGIN);
-
-            if (WriteFile(hFile, &bytes[wfx_size], dwInterest, &cbRead, NULL))
+            ret = SetEndOfFile(hFile);
+            if (ret && 0)
             {
-                ret = SetEndOfFile(hFile);
-                if (ret && 1)
-                {
-                    WCHAR sz[32];
-                    StringCbPrintf(sz, sizeof(sz), L"%ld bytes cut", dwDiff);
-                    ErrorBoxDx(NULL, sz);
-                }
+                WCHAR sz[32];
+                StringCbPrintf(sz, sizeof(sz), L"%ld bytes cut", dwDiff);
+                ErrorBoxDx(NULL, sz);
             }
         }
     }
