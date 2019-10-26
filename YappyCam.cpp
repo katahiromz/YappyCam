@@ -2667,10 +2667,6 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
             break;
         }
-        case WM_UPDATEUISTATE:
-        {
-
-        }
     }
     return 0;
 }

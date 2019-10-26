@@ -163,7 +163,13 @@ BOOL DoUniteAviAndWav(HWND hwnd, const WCHAR *new_avi,
         // there is sound data
         nAVIERR = AVIStreamOpenFromFile(&paviAudio, wav_file, streamtypeAUDIO, 0,
                                         OF_READ | OF_SHARE_DENY_NONE, NULL);
-        if (nAVIERR)
+        if (nAVIERR == 0x8004406D)  // AVIERR_FILEREAD
+        {
+            // ignore sound file
+            wav_file = NULL;
+            ret = CopyFile(old_avi, new_avi, FALSE);
+        }
+        else if (nAVIERR)
         {
             assert(0);
             AVIStreamRelease(paviVideo);
