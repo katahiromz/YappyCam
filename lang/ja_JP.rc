@@ -191,7 +191,7 @@ STRINGTABLE
     IDS_FINALIZEQUE, "次の場所で動画ファイルを作る準備ができました。\n\n%s\n\n最終処理をしますか?"
     IDS_FINALIZEPERCENTS, "最終処理中... %u%%"
     IDS_FINALIZEDONE, "動画ファイルが次の場所に完成しました：\n\n%s\n\n見ますか?"
-    IDS_FINALIZECANCELLED, "最終処理はキャンセルされました。"
+    IDS_FINALIZECANCELLED, "最終処理はキャンセルされました。不要なファイルは手動で削除して下さい。"
     IDS_SETLOCATION, "保存先のフォルダの場所を指定して下さい:"
     IDS_VERSIONTEXT, "YappyCam バージョン 0.9\n\nhttps://katahiromz.web.fc2.com/yappycam/ja\n\n片山博文MZ <katayama.hirofumi.mz@gmail.com>\n\nライセンス: フリーソフト"
     IDS_VERSIONCAPTION, "YappyCam のバージョン情報"
