@@ -46,6 +46,9 @@ static BOOL s_bWatching = FALSE;
 static HDC s_hdcScreen = NULL;     // screen DC
 static HDC s_hdcMem = NULL;        // memory DC
 
+// for pausing
+static BOOL s_bWritingOld = FALSE;
+
 // frame info
 static cv::Mat s_frame;
 static BOOL s_bFrameDrop = FALSE;
@@ -60,9 +63,8 @@ static BITMAPINFO s_bi =
     }
 };
 
-static katahiromz::ring<cv::Mat, 4> s_image_ring;
-
 // picture writer
+static katahiromz::ring<cv::Mat, 4> s_image_ring;
 static HANDLE s_hPictureConsumerThread = NULL;
 static HANDLE s_hPicAddedEvent = NULL;
 static HANDLE s_hPicWriterQuitEvent = NULL;
@@ -2014,8 +2016,6 @@ void OnRecStop(HWND hwnd)
         g_sound.SetRecording(TRUE);
     }
 }
-
-static BOOL s_bWritingOld = FALSE;
 
 void OnResume(HWND hwnd)
 {
