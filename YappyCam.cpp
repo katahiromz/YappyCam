@@ -1757,7 +1757,7 @@ void OnStop(HWND hwnd)
     case IDNO:
         // cancel
         DoDeleteTempFiles(hwnd);
-        PostMessage(hwnd, WM_COMMAND, ID_FINALIZECANCEL, 0);
+        PostMessage(hwnd, WM_COMMAND, ID_FINALIZECANCEL2, 0);
         break;
     case IDCANCEL:
         // cancel
@@ -1877,7 +1877,7 @@ static void OnFinalizeFail(HWND hwnd)
     DoStartStopTimers(hwnd, TRUE);
 }
 
-static void OnFinalizeCancel(HWND hwnd)
+static void OnFinalizeCancel(HWND hwnd, INT iType)
 {
     // close the thread handle
     if (s_hFinalizingThread)
@@ -1912,7 +1912,10 @@ static void OnFinalizeCancel(HWND hwnd)
     g_settings.SetPictureType(hwnd, s_nOldPictureType);
 
     // show a message of cancellation
-    MessageBox(hwnd, LoadStringDx(IDS_FINALIZECANCELLED), NULL, MB_ICONERROR);
+    if (iType == 1)
+        MessageBox(hwnd, LoadStringDx(IDS_FINALIZECANCELLED), NULL, MB_ICONERROR);
+    else
+        MessageBox(hwnd, LoadStringDx(IDS_FINALIZECANC2), NULL, MB_ICONERROR);
 
     // restart hearing and watching
     g_sound.StartHearing();
@@ -2179,7 +2182,10 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         OnFinalizeFail(hwnd);
         break;
     case ID_FINALIZECANCEL:
-        OnFinalizeCancel(hwnd);
+        OnFinalizeCancel(hwnd, 1);
+        break;
+    case ID_FINALIZECANCEL2:
+        OnFinalizeCancel(hwnd, 2);
         break;
     case ID_SAVETO:
         if (0)
