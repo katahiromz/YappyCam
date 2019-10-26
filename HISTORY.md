@@ -17,7 +17,7 @@
     - Apply `WS_EX_TOOLWINDOW` to configuration.
     - Improved UI.
 - 2019.XX.YY ver.0.9
-    - Fixed the timing gap between picture and sound by timeBeginPeriod(1).
+    - Fixed the timing gap by timeBeginPeriod(1).
     - Improved performance.
     - 6 FPS became default.
     - Add sounds to Record/Stop/Hung.
