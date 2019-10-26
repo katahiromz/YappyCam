@@ -69,12 +69,13 @@
 #define ID_INITSETTINGS                     110
 #define ID_OPENFOLDER                       111
 #define ID_FINALIZECANCEL2                  112
+#define ID_TAKEASHOT                        113
 
 #ifdef APSTUDIO_INVOKED
     #ifndef APSTUDIO_READONLY_SYMBOLS
         #define _APS_NO_MFC                 1
         #define _APS_NEXT_RESOURCE_VALUE    1001
-        #define _APS_NEXT_COMMAND_VALUE     113
+        #define _APS_NEXT_COMMAND_VALUE     114
         #define _APS_NEXT_CONTROL_VALUE     1000
         #define _APS_NEXT_SYMED_VALUE       300
     #endif

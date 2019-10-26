@@ -12,6 +12,8 @@ IDR_MAINMENU MENU
 {
     POPUP "Popup #0"
     {
+        MENUITEM "&Take a shot", ID_TAKEASHOT
+        MENUITEM SEPARATOR
         MENUITEM "&Picture Input...", ID_PICTUREINPUT
         MENUITEM "&Sound Input...", ID_SOUNDINPUT
         MENUITEM SEPARATOR

@@ -12,6 +12,8 @@ IDR_MAINMENU MENU
 {
     POPUP "ポップアップ #0"
     {
+        MENUITEM "写真を撮る(&T)", ID_TAKEASHOT
+        MENUITEM SEPARATOR
         MENUITEM "映像入力(&P)...", ID_PICTUREINPUT
         MENUITEM "音声入力(&S)...", ID_SOUNDINPUT
         MENUITEM SEPARATOR

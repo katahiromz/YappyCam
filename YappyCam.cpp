@@ -353,6 +353,7 @@ void Settings::init()
 
     m_strSoundFileName = TEXT("Sound.wav");
     m_strSoundTempFileName = TEXT("Sound.sound");
+    m_strShotFileName = TEXT("Shot-%04u-%02u-%02u-%02u-%02u-%02u.jpg");
 
     m_strStatusText = TEXT("No image");
 }
@@ -455,6 +456,10 @@ bool Settings::load(HWND hwnd)
     {
         m_strSoundTempFileName = szText;
     }
+    if (ERROR_SUCCESS == app_key.QuerySz(L"ShotFileName", szText, ARRAYSIZE(szText)))
+    {
+        m_strShotFileName = szText;
+    }
 
     if (type == PT_FINALIZING)
         type = PT_SCREENCAP;
@@ -548,6 +553,7 @@ bool Settings::save(HWND hwnd) const
     app_key.SetSz(L"MovieTempFileName", m_strMovieTempFileName.c_str());
     app_key.SetSz(L"SoundFileName", m_strSoundFileName.c_str());
     app_key.SetSz(L"SoundTempFileName", m_strSoundTempFileName.c_str());
+    app_key.SetSz(L"ShotFileName", m_strShotFileName.c_str());
 
     return true;
 }
@@ -2111,6 +2117,28 @@ static void OnOpenFolder(HWND hwnd)
     ShellExecute(hwnd, NULL, g_settings.m_strDir.c_str(), NULL, NULL, SW_SHOWNORMAL);
 }
 
+static void OnTakeAShot(HWND hwnd)
+{
+    SYSTEMTIME now;
+
+    GetLocalTime(&now);
+
+    char szFileName[MAX_PATH];
+    StringCbPrintfA(szFileName, sizeof(szFileName),
+                    ansi_from_wide(g_settings.m_strShotFileName.c_str()),
+                    now.wYear, now.wMonth, now.wDay,
+                    now.wHour, now.wMinute, now.wSecond);
+
+    char szPath[MAX_PATH];
+    StringCbCopyA(szPath, sizeof(szPath), ansi_from_wide(g_settings.m_strDir.c_str()));
+    PathAppendA(szPath, szFileName);
+
+    if (cv::imwrite(szPath, s_frame))
+    {
+        PlaySound(MAKEINTRESOURCE(IDR_SHUTTER), g_hInst, SND_ASYNC | SND_RESOURCE);
+    }
+}
+
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
@@ -2211,6 +2239,9 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         break;
     case ID_OPENFOLDER:
         OnOpenFolder(hwnd);
+        break;
+    case ID_TAKEASHOT:
+        OnTakeAShot(hwnd);
         break;
     }
 }
