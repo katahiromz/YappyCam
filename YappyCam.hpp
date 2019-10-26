@@ -22,6 +22,7 @@
 #define MIN_FPS 0.1
 #define MAX_FPS 12.0
 #define DEFAULT_FPS 6
+#define TIME_PERIOD 1
 
 enum DisplayMode
 {

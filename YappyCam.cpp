@@ -2678,7 +2678,7 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 static LONG WINAPI TopLevelExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)
 {
     // end boosting the timing
-    timeEndPeriod(1);
+    timeEndPeriod(TIME_PERIOD);
 
     PlaySound(MAKEINTRESOURCE(IDR_DOWN), g_hInst, SND_SYNC | SND_RESOURCE);
     return 0;
@@ -2715,13 +2715,13 @@ WinMain(HINSTANCE   hInstance,
     InitCommonControls();
 
     // start boosting the timing
-    timeBeginPeriod(1);
+    timeBeginPeriod(TIME_PERIOD);
 
     // show the main window
     DialogBox(hInstance, MAKEINTRESOURCE(IDD_MAIN), NULL, DialogProc);
 
     // end boosting the timing
-    timeEndPeriod(1);
+    timeEndPeriod(TIME_PERIOD);
 
     // uninitialize COM
     CoUninitialize();

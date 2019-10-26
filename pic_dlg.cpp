@@ -437,6 +437,8 @@ static void Page0_OnPsh3(HWND hwnd)
             SelectObject(hdc, hPen);
             SelectObject(hdc, GetStockObject(NULL_BRUSH));
 
+            timeEndPeriod(TIME_PERIOD);
+
             for (INT i = 0; i < 4; ++i)
             {
                 Rectangle(hdc,
@@ -446,6 +448,8 @@ static void Page0_OnPsh3(HWND hwnd)
                           g_settings.m_yCap + g_settings.m_cyCap);
                 Sleep(200);
             }
+
+            timeBeginPeriod(TIME_PERIOD);
 
             DeleteObject(hPen);
         }
