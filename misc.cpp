@@ -176,7 +176,10 @@ BOOL DoUniteAviAndWav(HWND hwnd, const WCHAR *new_avi,
             AVIFileExit();
             return FALSE;
         }
-        ret = DoSaveAviFile(hwnd, new_avi, paviVideo, paviAudio);
+        else
+        {
+            ret = DoSaveAviFile(hwnd, new_avi, paviVideo, paviAudio);
+        }
     }
     else
     {

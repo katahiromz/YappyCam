@@ -1436,7 +1436,7 @@ static unsigned __stdcall FinalizingThreadFunction(void *pContext)
 
     if (sound_seconds > movie_seconds)
     {
-        DWORD dwBytes = movie_seconds * wfx.nAvgBytesPerSec;
+        DWORD dwBytes = (DWORD)(movie_seconds * wfx.nAvgBytesPerSec);
         dwBytes /= wfx.nBlockAlign;
         dwBytes *= wfx.nBlockAlign;
         dwBytes += sizeof(wfx);
