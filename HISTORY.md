@@ -20,3 +20,4 @@
     - Fixed the timing gap between picture and sound by timeBeginPeriod(1).
     - Improved performance.
     - 6 FPS became default.
+    - Add sounds to Record/Stop/Hung.
