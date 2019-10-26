@@ -16,8 +16,8 @@
     - 4.5 FPS became default.
     - Apply `WS_EX_TOOLWINDOW` to configuration.
     - Improved UI.
-- 2019.XX.YY ver.0.9
-    - Fixed the timing gap by timeBeginPeriod(1).
+- 2019.10.26 ver.0.9
     - Improved performance.
     - 6 FPS became default.
-    - Add sounds to Record/Stop/Hung.
+    - Fixed the timing gap by timeBeginPeriod(1).
+    - Added sounds to Record/Stop/Hung.
