@@ -32,6 +32,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     ComboBox_AddString(hCmb3, TEXT("0x7634706d"));
     ComboBox_AddString(hCmb3, TEXT("0x3447504d"));
     ComboBox_AddString(hCmb3, TEXT("0x34363248"));
+    ComboBox_AddString(hCmb3, TEXT("0"));
 
     WCHAR szValue[64];
     StringCbPrintf(szValue, sizeof(szValue), L"0x%08lx", g_settings.m_dwFOURCC);

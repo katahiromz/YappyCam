@@ -53,6 +53,7 @@
 #define IDS_QUERYINIT                       122
 #define IDS_SCANNING                        123
 #define IDS_FRAMEDROP                       124
+#define IDS_FINALIZECANC2                   125
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101
