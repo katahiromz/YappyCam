@@ -13,6 +13,17 @@ static void DoSetHotKey(HWND hwnd, INT i)
     SendMessage(hwndHotKey, HKM_SETRULES, HKCOMB_NONE,
                 MAKELPARAM(HOTKEYF_ALT, 0));
     SendMessage(hwndHotKey, HKM_SETHOTKEY, nHotKey, 0);
+
+    if (nHotKey == 0)
+    {
+        EnableWindow(hwndHotKey, FALSE);
+        CheckDlgButton(hwnd, chx1 + i, BST_CHECKED);
+    }
+    else
+    {
+        EnableWindow(hwndHotKey, TRUE);
+        CheckDlgButton(hwnd, chx1 + i, BST_UNCHECKED);
+    }
 }
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
@@ -86,6 +97,75 @@ static void OnEdt7(HWND hwnd)
     OnEdt(hwnd, 6);
 }
 
+static void OnChx(HWND hwnd, INT nIndex)
+{
+    if (nIndex < 0 || 7 <= nIndex)
+        return;
+
+    HWND hwndHotKey = GetDlgItem(hwnd, edt1 + nIndex);
+
+    UINT nHotKey = 0;
+    if (IsDlgButtonChecked(hwnd, chx1 + nIndex) == BST_CHECKED)
+    {
+        SendMessage(hwndHotKey, HKM_SETHOTKEY, 0, 0);
+        EnableWindow(hwndHotKey, FALSE);
+    }
+    else
+    {
+        static const UINT default_hotkeys[] =
+        {
+            MAKEWORD('R', HOTKEYF_ALT),
+            MAKEWORD('P', HOTKEYF_ALT),
+            MAKEWORD('S', HOTKEYF_ALT),
+            MAKEWORD('C', HOTKEYF_ALT),
+            MAKEWORD('M', HOTKEYF_ALT),
+            MAKEWORD('X', HOTKEYF_ALT),
+            MAKEWORD('T', HOTKEYF_ALT),
+        };
+        nHotKey = default_hotkeys[nIndex];
+        EnableWindow(hwndHotKey, TRUE);
+    }
+
+    SendMessage(hwndHotKey, HKM_SETHOTKEY, nHotKey, 0);
+    g_settings.m_nHotKey[nIndex] = nHotKey;
+    DoSetupHotkeys(g_hMainWnd, TRUE);
+}
+
+static void OnChx1(HWND hwnd)
+{
+    OnChx(hwnd, 0);
+}
+
+static void OnChx2(HWND hwnd)
+{
+    OnChx(hwnd, 1);
+}
+
+static void OnChx3(HWND hwnd)
+{
+    OnChx(hwnd, 2);
+}
+
+static void OnChx4(HWND hwnd)
+{
+    OnChx(hwnd, 3);
+}
+
+static void OnChx5(HWND hwnd)
+{
+    OnChx(hwnd, 4);
+}
+
+static void OnChx6(HWND hwnd)
+{
+    OnChx(hwnd, 5);
+}
+
+static void OnChx7(HWND hwnd)
+{
+    OnChx(hwnd, 7);
+}
+
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
@@ -114,6 +194,27 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         break;
     case edt7:
         OnEdt7(hwnd);
+        break;
+    case chx1:
+        OnChx1(hwnd);
+        break;
+    case chx2:
+        OnChx2(hwnd);
+        break;
+    case chx3:
+        OnChx3(hwnd);
+        break;
+    case chx4:
+        OnChx4(hwnd);
+        break;
+    case chx5:
+        OnChx5(hwnd);
+        break;
+    case chx6:
+        OnChx6(hwnd);
+        break;
+    case chx7:
+        OnChx7(hwnd);
         break;
     }
 }

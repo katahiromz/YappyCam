@@ -24,4 +24,5 @@
 - 2019.XX.YY ver.1.0
     - Made the main window modeless.
     - Tweak and adjustment.
-    - Add Take-a-shot feature.
+    - Added Take-a-shot feature.
+    - Added invalidate-hot-key feature.
