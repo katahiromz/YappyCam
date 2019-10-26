@@ -2,6 +2,8 @@
 
 ## What's this?
 
+![logo](images/YappyCam-logo.png "logo")
+
 YappyCam is a Windows software to create movie files from screen capture or Web camera.
 
 ![Screenshot](images/screenshot.png "Screenshot")
