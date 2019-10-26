@@ -16,3 +16,7 @@
     - 4.5 FPS became default.
     - Apply `WS_EX_TOOLWINDOW` to configuration.
     - Improved UI.
+- 2019.XX.YY ver.0.9
+    - Fixed the timing gap between picture and sound by timeBeginPeriod(1).
+    - Improved performance.
+    - 6 FPS became default.

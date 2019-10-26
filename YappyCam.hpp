@@ -20,8 +20,8 @@
 #include "misc.hpp"
 
 #define MIN_FPS 0.1
-#define MAX_FPS 10.0
-#define DEFAULT_FPS 4.5
+#define MAX_FPS 12.0
+#define DEFAULT_FPS 6
 
 enum DisplayMode
 {
