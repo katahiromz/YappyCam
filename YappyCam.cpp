@@ -1974,6 +1974,8 @@ void OnRecStop(HWND hwnd)
     // update UI
     EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
     SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+    CheckDlgButton(hwnd, psh2, BST_UNCHECKED);
+    s_bWritingOld = FALSE;
 
     // open writer
     s_image_lock.lock(__LINE__);
@@ -2013,6 +2015,8 @@ void OnRecStop(HWND hwnd)
     }
 }
 
+static BOOL s_bWritingOld = FALSE;
+
 void OnResume(HWND hwnd)
 {
     if (!IsWindowEnabled(GetDlgItem(hwnd, psh2)))
@@ -2023,10 +2027,13 @@ void OnResume(HWND hwnd)
         return;
     }
 
-    s_bWriting = TRUE;
-    if (!g_settings.m_bNoSound)
+    if (s_bWritingOld)
     {
-        g_sound.SetRecording(TRUE);
+        s_bWriting = TRUE;
+        if (!g_settings.m_bNoSound)
+        {
+            g_sound.SetRecording(TRUE);
+        }
     }
 }
 
@@ -2038,10 +2045,14 @@ void OnPause(HWND hwnd)
     }
 
     // disable recording
-    s_bWriting = FALSE;
-    if (!g_settings.m_bNoSound)
+    s_bWritingOld = s_bWriting;
+    if (s_bWriting)
     {
-        g_sound.SetRecording(FALSE);
+        s_bWriting = FALSE;
+        if (!g_settings.m_bNoSound)
+        {
+            g_sound.SetRecording(FALSE);
+        }
     }
 }
 
