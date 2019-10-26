@@ -34,6 +34,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     DoSetHotKey(hwnd, 3);
     DoSetHotKey(hwnd, 4);
     DoSetHotKey(hwnd, 5);
+    DoSetHotKey(hwnd, 6);
 
     s_bInit = TRUE;
 
@@ -80,6 +81,11 @@ static void OnEdt6(HWND hwnd)
     OnEdt(hwnd, 5);
 }
 
+static void OnEdt7(HWND hwnd)
+{
+    OnEdt(hwnd, 6);
+}
+
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
@@ -105,6 +111,9 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         break;
     case edt6:
         OnEdt6(hwnd);
+        break;
+    case edt7:
+        OnEdt7(hwnd);
         break;
     }
 }

@@ -82,7 +82,7 @@ struct Settings
     INT m_nBrightness;
     INT m_nContrast;
     DWORD m_dwFOURCC;
-    UINT m_nHotKey[6];
+    UINT m_nHotKey[7];
     std::wstring m_strDir;
     std::wstring m_strMovieDir;
     std::wstring m_strImageFileName;
@@ -154,6 +154,7 @@ void DoStartStopTimers(HWND hwnd, BOOL bStart);
 #define HOTKEY_3_ID  0x1003
 #define HOTKEY_4_ID  0x1004
 #define HOTKEY_5_ID  0x1005
+#define HOTKEY_6_ID  0x1006
 BOOL DoSetupHotkeys(HWND hwnd, BOOL bSetup);
 
 typedef std::unordered_map<DWORD, DWORD> RESO_MAP;

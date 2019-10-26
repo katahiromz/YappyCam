@@ -329,6 +329,7 @@ void Settings::init()
     m_nHotKey[3] = MAKEWORD('C', HOTKEYF_ALT);
     m_nHotKey[4] = MAKEWORD('M', HOTKEYF_ALT);
     m_nHotKey[5] = MAKEWORD('X', HOTKEYF_ALT);
+    m_nHotKey[6] = MAKEWORD('T', HOTKEYF_ALT);
 
     TCHAR szPath[MAX_PATH];
 
@@ -425,6 +426,7 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"HotKey3", (DWORD&)m_nHotKey[3]);
     app_key.QueryDword(L"HotKey4", (DWORD&)m_nHotKey[4]);
     app_key.QueryDword(L"HotKey5", (DWORD&)m_nHotKey[5]);
+    app_key.QueryDword(L"HotKey6", (DWORD&)m_nHotKey[6]);
 
     WCHAR szText[MAX_PATH];
 
@@ -545,6 +547,7 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"HotKey3", m_nHotKey[3]);
     app_key.SetDword(L"HotKey4", m_nHotKey[4]);
     app_key.SetDword(L"HotKey5", m_nHotKey[5]);
+    app_key.SetDword(L"HotKey6", m_nHotKey[6]);
 
     app_key.SetSz(L"Dir", m_strDir.c_str());
     app_key.SetSz(L"MovieDir", m_strMovieDir.c_str());
@@ -2581,6 +2584,8 @@ BOOL DoSetupHotkeys(HWND hwnd, BOOL bSetup)
     assert(b);
     b = DoRegisterHotKey(hwnd, g_settings.m_nHotKey[5], HOTKEY_5_ID, bSetup);
     assert(b);
+    b = DoRegisterHotKey(hwnd, g_settings.m_nHotKey[6], HOTKEY_6_ID, bSetup);
+    assert(b);
     return TRUE;
 }
 
@@ -2608,6 +2613,9 @@ static void OnHotKey(HWND hwnd, int idHotKey, UINT fuModifiers, UINT vk)
         break;
     case HOTKEY_5_ID:
         OnExit(hwnd);
+        break;
+    case HOTKEY_6_ID:
+        OnTakeAShot(hwnd);
         break;
     }
 }
