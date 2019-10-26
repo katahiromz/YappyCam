@@ -77,6 +77,8 @@ IDR_ENDREC WAVE "res/Wave_3.wav"
 
 IDR_DOWN WAVE "res/Wave_4.wav"
 
+IDR_SHUTTER WAVE "res/Wave_5.wav"
+
 //////////////////////////////////////////////////////////////////////////////
 // Languages
 
