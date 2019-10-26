@@ -2083,7 +2083,7 @@ static void OnAbout(HWND hwnd)
 
 static void OnExit(HWND hwnd)
 {
-    EndDialog(hwnd, IDCANCEL);
+    DestroyWindow(hwnd);
 }
 
 static void OnInitSettings(HWND hwnd)
@@ -2114,7 +2114,7 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     {
     case IDOK:
     case IDCANCEL:
-        EndDialog(hwnd, id);
+        DestroyWindow(hwnd);
         break;
     case psh1:
         if (codeNotify == BN_CLICKED)
@@ -2421,6 +2421,11 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
 
 static void OnDestroy(HWND hwnd)
 {
+    if (s_bWriting)
+    {
+        PlaySound(MAKEINTRESOURCE(IDR_DOWN), g_hInst, SND_SYNC | SND_RESOURCE);
+    }
+
     // stop watching and hearing
     DoStartStopTimers(hwnd, FALSE);
     g_sound.StopHearing();
@@ -2467,6 +2472,8 @@ static void OnDestroy(HWND hwnd)
 
     // no use of the main window any more
     g_hMainWnd = NULL;
+
+    PostQuitMessage(0);
 }
 
 static void OnTimer(HWND hwnd, UINT id)
@@ -2725,7 +2732,27 @@ WinMain(HINSTANCE   hInstance,
     timeBeginPeriod(TIME_PERIOD);
 
     // show the main window
-    DialogBox(hInstance, MAKEINTRESOURCE(IDD_MAIN), NULL, DialogProc);
+    if (HWND hwnd = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAIN), NULL, DialogProc))
+    {
+        ShowWindow(hwnd, nCmdShow);
+        UpdateWindow(hwnd);
+
+        MSG msg;
+        while (GetMessage(&msg, NULL, 0, 0))
+        {
+            if (g_hwndSoundInput && IsDialogMessage(g_hwndSoundInput, &msg))
+                continue;
+            if (g_hwndPictureInput && IsDialogMessage(g_hwndPictureInput, &msg))
+                continue;
+            if (g_hwndSaveTo && IsDialogMessage(g_hwndSaveTo, &msg))
+                continue;
+            if (g_hwndHotKeys && IsDialogMessage(g_hwndHotKeys, &msg))
+                continue;
+
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+    }
 
     // end boosting the timing
     timeEndPeriod(TIME_PERIOD);

@@ -22,3 +22,4 @@
     - Fixed the timing gap by timeBeginPeriod(1).
     - Added sounds to Record/Stop/Hung.
 - 2019.XX.YY ver.1.0
+    - Made the main window modeless.
