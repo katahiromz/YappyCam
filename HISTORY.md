@@ -26,3 +26,4 @@
     - Tweak and adjustment.
     - Added Take-a-shot feature.
     - Added invalidate-hot-key feature.
+    - Supported image file input.
