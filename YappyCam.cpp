@@ -54,8 +54,6 @@ static cv::Mat s_frame;
 static BOOL s_bFrameDrop = FALSE;
 static INT s_nFrames = 0;
 static HBITMAP s_hbmBitmap = NULL;
-static LPVOID s_pvBits = NULL;
-static mutex_debug s_bitmap_lock("s_bitmap_lock");
 static BITMAPINFO s_bi =
 {
     {
@@ -63,11 +61,16 @@ static BITMAPINFO s_bi =
     }
 };
 
+// the lock for s_hbmBitmap, s_hdcScreen and s_hdcMem
+static mutex_debug s_bitmap_lock("s_bitmap_lock");
+
 // picture writer
 static katahiromz::ring<cv::Mat, 4> s_image_ring;
 static HANDLE s_hPictureConsumerThread = NULL;
 static HANDLE s_hPicAddedEvent = NULL;
 static HANDLE s_hPicWriterQuitEvent = NULL;
+
+// the lock for s_writer, s_image_ring and s_frame
 static mutex_debug s_image_lock("s_image_lock");
 
 // picture producer
@@ -845,6 +848,7 @@ void Settings::recreate_bitmap(HWND hwnd)
     s_bitmap_lock.unlock(__LINE__);
 
     HGDIOBJ hbmOld;
+    LPVOID pvBits;
 
     s_bi.bmiHeader.biWidth = m_nWidth;
     s_bi.bmiHeader.biHeight = -m_nHeight;
@@ -852,7 +856,7 @@ void Settings::recreate_bitmap(HWND hwnd)
     s_bi.bmiHeader.biCompression = BI_RGB;
 
     s_bitmap_lock.lock(__LINE__);
-    s_hbmBitmap = CreateDIBSection(s_hdcMem, &s_bi, DIB_RGB_COLORS, &s_pvBits, NULL, 0);
+    s_hbmBitmap = CreateDIBSection(s_hdcMem, &s_bi, DIB_RGB_COLORS, &pvBits, NULL, 0);
     s_bitmap_lock.unlock(__LINE__);
 
     s_bitmap_lock.lock(__LINE__);
@@ -1672,9 +1676,11 @@ void OnStop(HWND hwnd)
     // stop
     DoStartStopTimers(hwnd, FALSE);
     g_sound.StopHearing();
+
     s_image_lock.lock(__LINE__);
     s_writer.release();
     s_image_lock.unlock(__LINE__);
+
     s_bWriting = FALSE;
     g_sound.SetRecording(FALSE);
 
