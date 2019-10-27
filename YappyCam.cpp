@@ -77,6 +77,7 @@ static mutex_debug s_image_lock("s_image_lock");
 static HANDLE s_hPictureProducerThread = NULL;
 static HANDLE s_hRecordStartEvent = NULL;
 static HANDLE s_hPicProducerQuitEvent = NULL;
+static cv::Mat s_black_mat;
 
 unsigned __stdcall PictureConsumerThreadProc(void *pContext)
 {
@@ -92,7 +93,14 @@ unsigned __stdcall PictureConsumerThreadProc(void *pContext)
             if (!s_writer.isOpened() || s_image_ring.empty())
                 break;
 
-            s_writer << s_image_ring.back();
+            if (!s_image_ring.back().data)
+            {
+                s_writer << s_black_mat;
+            }
+            else
+            {
+                s_writer << s_image_ring.back();
+            }
             s_image_ring.pop_back();
             ++s_nFrames;
         }
@@ -934,6 +942,7 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
 
     m_nPictureType = type;
 
+    s_black_mat = cv::Mat::zeros(cv::Size(m_nWidth, m_nHeight), CV_8UC3);
     recreate_bitmap(hwnd);
 
     fix_size(hwnd);
@@ -2214,6 +2223,23 @@ static void OnLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFl
     }
 }
 
+static void OnMButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFlags)
+{
+    if (fDoubleClick)
+    {
+        BOOL bPicDlgOpen = IsWindow(g_hwndPictureInput);
+        if (bPicDlgOpen)
+            SendMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
+
+        DoStartStopTimers(hwnd, FALSE);
+        g_settings.SetPictureType(hwnd, PT_IMAGEFILE);
+        DoStartStopTimers(hwnd, TRUE);
+
+        if (bPicDlgOpen)
+            DoPictureInputDialogBox(hwnd);
+    }
+}
+
 static void OnRButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFlags)
 {
     if (fDoubleClick)
@@ -2864,9 +2890,11 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HANDLE_MSG(hwnd, WM_DISPLAYCHANGE, OnDisplayChange);
         HANDLE_MSG(hwnd, WM_DROPFILES, OnDropFiles);
         HANDLE_MSG(hwnd, WM_LBUTTONDOWN, OnLButtonDown);
-        HANDLE_MSG(hwnd, WM_RBUTTONDOWN, OnRButtonDown);
         HANDLE_MSG(hwnd, WM_LBUTTONDBLCLK, OnLButtonDown);
+        HANDLE_MSG(hwnd, WM_RBUTTONDOWN, OnRButtonDown);
         HANDLE_MSG(hwnd, WM_RBUTTONDBLCLK, OnRButtonDown);
+        HANDLE_MSG(hwnd, WM_MBUTTONDOWN, OnMButtonDown);
+        HANDLE_MSG(hwnd, WM_MBUTTONDBLCLK, OnMButtonDown);
         case WM_SIZING:
         {
             if (OnSizing(hwnd, (DWORD)wParam, (LPRECT)lParam))
