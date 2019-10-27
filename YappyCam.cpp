@@ -2244,16 +2244,24 @@ static void OnRButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFl
 {
     if (fDoubleClick)
     {
-        BOOL bPicDlgOpen = IsWindow(g_hwndPictureInput);
-        if (bPicDlgOpen)
-            SendMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
+        static INT s_nLock = 0;
+        if (!s_nLock)
+        {
+            ++s_nLock;
 
-        DoStartStopTimers(hwnd, FALSE);
-        g_settings.SetPictureType(hwnd, PT_VIDEOCAP);
-        DoStartStopTimers(hwnd, TRUE);
+            BOOL bPicDlgOpen = IsWindow(g_hwndPictureInput);
+            if (bPicDlgOpen)
+                SendMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
 
-        if (bPicDlgOpen)
-            DoPictureInputDialogBox(hwnd);
+            DoStartStopTimers(hwnd, FALSE);
+            g_settings.SetPictureType(hwnd, PT_VIDEOCAP);
+            DoStartStopTimers(hwnd, TRUE);
+
+            if (bPicDlgOpen)
+                DoPictureInputDialogBox(hwnd);
+
+            --s_nLock;
+        }
     }
 }
 
