@@ -1030,6 +1030,8 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
     DragAcceptFiles(hwnd, TRUE);
 
+    DestroyWindow(GetDlgItem(hwnd, stc1));
+
     s_hPicAddedEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
     s_hPicWriterQuitEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
     s_hRecordStartEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -2191,6 +2193,44 @@ static void OnTakeAShot(HWND hwnd)
     }
 }
 
+static void OnLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFlags)
+{
+    if (fDoubleClick)
+    {
+        BOOL bPicDlgOpen = IsWindow(g_hwndPictureInput);
+        if (bPicDlgOpen)
+            SendMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
+
+        DoStartStopTimers(hwnd, FALSE);
+        g_settings.m_xCap = 0;
+        g_settings.m_yCap = 0;
+        g_settings.m_cxCap = GetSystemMetrics(SM_CXSCREEN);
+        g_settings.m_cyCap = GetSystemMetrics(SM_CYSCREEN);
+        g_settings.SetPictureType(hwnd, PT_SCREENCAP);
+        DoStartStopTimers(hwnd, TRUE);
+
+        if (bPicDlgOpen)
+            DoPictureInputDialogBox(hwnd);
+    }
+}
+
+static void OnRButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFlags)
+{
+    if (fDoubleClick)
+    {
+        BOOL bPicDlgOpen = IsWindow(g_hwndPictureInput);
+        if (bPicDlgOpen)
+            SendMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
+
+        DoStartStopTimers(hwnd, FALSE);
+        g_settings.SetPictureType(hwnd, PT_VIDEOCAP);
+        DoStartStopTimers(hwnd, TRUE);
+
+        if (bPicDlgOpen)
+            DoPictureInputDialogBox(hwnd);
+    }
+}
+
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
@@ -2470,8 +2510,8 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
     cx = rc.right;
     cy = rc.bottom;
 
-    // move the STATIC control
-    MoveWindow(GetDlgItem(hwnd, stc1), 0, 0, cx, cy, TRUE);
+    //// move the STATIC control
+    //MoveWindow(GetDlgItem(hwnd, stc1), 0, 0, cx, cy, TRUE);
 
     INT x = cx;
     INT y = 0, cy2;
@@ -2823,6 +2863,10 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HANDLE_MSG(hwnd, WM_HOTKEY, OnHotKey);
         HANDLE_MSG(hwnd, WM_DISPLAYCHANGE, OnDisplayChange);
         HANDLE_MSG(hwnd, WM_DROPFILES, OnDropFiles);
+        HANDLE_MSG(hwnd, WM_LBUTTONDOWN, OnLButtonDown);
+        HANDLE_MSG(hwnd, WM_RBUTTONDOWN, OnRButtonDown);
+        HANDLE_MSG(hwnd, WM_LBUTTONDBLCLK, OnLButtonDown);
+        HANDLE_MSG(hwnd, WM_RBUTTONDBLCLK, OnRButtonDown);
         case WM_SIZING:
         {
             if (OnSizing(hwnd, (DWORD)wParam, (LPRECT)lParam))
