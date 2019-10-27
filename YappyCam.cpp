@@ -234,6 +234,11 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
                 {
                     image = cv::Mat::zeros(g_settings.m_nHeight, g_settings.m_nWidth, CV_8UC3);
                 }
+                else
+                {
+                    g_settings.m_nWidth = (int)image.cols;
+                    g_settings.m_nHeight = (int)image.rows;
+                }
             }
             break;
         }
@@ -474,7 +479,15 @@ bool Settings::load(HWND hwnd)
     }
     if (ERROR_SUCCESS == app_key.QuerySz(L"InputFileName", szText, ARRAYSIZE(szText)))
     {
-        m_strInputFileName = szText;
+        DWORD attrs = GetFileAttributes(szText);
+        if (attrs != 0xFFFFFFFF && !(attrs & FILE_ATTRIBUTE_DIRECTORY))
+        {
+            m_strInputFileName = szText;
+        }
+        else
+        {
+            m_strInputFileName.clear();
+        }
     }
 
     if (type == PT_FINALIZING)
