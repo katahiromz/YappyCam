@@ -2311,12 +2311,21 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
         s_image_lock.lock(__LINE__);
         if (s_frame.data)   // if frame data exists
         {
+            static std::vector<BYTE> data;
+            INT widthbytes = WIDTHBYTES(s_frame.cols * 24);
+            data.resize(widthbytes * s_frame.rows);
+            for (INT y = 0; y < s_frame.rows; ++y)
+            {
+                memcpy(&data[widthbytes * y],
+                       &LPBYTE(s_frame.data)[s_frame.step * y],
+                       s_frame.cols * 3);
+            }
             s_bi.bmiHeader.biWidth = s_frame.cols;
             s_bi.bmiHeader.biHeight = -s_frame.rows;
             s_bi.bmiHeader.biBitCount = 24;
             StretchDIBits(hdc, 0, 0, cx, cy,
                           0, 0, s_frame.cols, s_frame.rows,
-                          s_frame.data, &s_bi, DIB_RGB_COLORS, SRCCOPY);
+                          &data[0], &s_bi, DIB_RGB_COLORS, SRCCOPY);
         }
         else
         {
