@@ -546,6 +546,9 @@ static BOOL Page1_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     SendDlgItemMessage(hwnd, scr1, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_nBrightness, 0));
     SendDlgItemMessage(hwnd, scr2, UDM_SETPOS, 0, MAKELPARAM(g_settings.m_nContrast, 0));
 
+    SetDlgItemInt(hwnd, edt3, g_settings.m_nWidth, TRUE);
+    SetDlgItemInt(hwnd, edt4, g_settings.m_nHeight, TRUE);
+
     s_bPage1Init = TRUE;
     return TRUE;
 }
@@ -559,6 +562,9 @@ static void Page1_OnCmb1(HWND hwnd)
     g_settings.m_nCameraID = ComboBox_GetCurSel(hCmb1);
 
     g_settings.update(g_hMainWnd);
+
+    SetDlgItemInt(hwnd, edt3, g_settings.m_nWidth, TRUE);
+    SetDlgItemInt(hwnd, edt4, g_settings.m_nHeight, TRUE);
 }
 
 static void Page1_OnEdt1(HWND hwnd)
