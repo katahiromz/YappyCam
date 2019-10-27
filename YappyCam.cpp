@@ -818,6 +818,7 @@ void Settings::fix_size(HWND hwnd)
         cy = m_nWindow3CY;
         break;
     case PT_FINALIZING:
+        return;
     case PT_IMAGEFILE:
         fix_size0(hwnd);
         return;
@@ -1027,6 +1028,8 @@ HBITMAP DoLoadBitmap(HINSTANCE hInst, INT id)
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
+    DragAcceptFiles(hwnd, TRUE);
+
     s_hPicAddedEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
     s_hPicWriterQuitEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
     s_hRecordStartEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -2779,6 +2782,29 @@ static void OnDisplayChange(HWND hwnd, UINT bitsPerPixel, UINT cxScreen, UINT cy
     SendMessage(hwnd, DM_REPOSITION, 0, 0);
 }
 
+static void OnDropFiles(HWND hwnd, HDROP hdrop)
+{
+    BOOL bPicDlgOpen = IsWindow(g_hwndPictureInput);
+    if (bPicDlgOpen)
+        SendMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
+
+    TCHAR szPath[MAX_PATH];
+    DragQueryFile(hdrop, 0, szPath, ARRAYSIZE(szPath));
+    DragFinish(hdrop);
+
+    DWORD attrs = GetFileAttributes(szPath);
+    if (attrs != 0xFFFFFFFF && !(attrs & FILE_ATTRIBUTE_DIRECTORY))
+    {
+        g_settings.m_strInputFileName = szPath;
+        DoStartStopTimers(hwnd, FALSE);
+        g_settings.SetPictureType(hwnd, PT_IMAGEFILE);
+        DoStartStopTimers(hwnd, TRUE);
+    }
+
+    if (bPicDlgOpen)
+        DoPictureInputDialogBox(hwnd);
+}
+
 // the dialog procedure of the main window
 static INT_PTR CALLBACK
 DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -2796,6 +2822,7 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HANDLE_MSG(hwnd, WM_TIMER, OnTimer);
         HANDLE_MSG(hwnd, WM_HOTKEY, OnHotKey);
         HANDLE_MSG(hwnd, WM_DISPLAYCHANGE, OnDisplayChange);
+        HANDLE_MSG(hwnd, WM_DROPFILES, OnDropFiles);
         case WM_SIZING:
         {
             if (OnSizing(hwnd, (DWORD)wParam, (LPRECT)lParam))
