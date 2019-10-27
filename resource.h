@@ -19,6 +19,7 @@
 #define IDD_SAVETO                          106
 #define IDD_HOTKEYS                         107
 #define IDD_MULTIRESO                       108
+#define IDD_IMAGEFILE                       109
 
 #define IDI_MAIN                            100
 
@@ -55,6 +56,7 @@
 #define IDS_SCANNING                        123
 #define IDS_FRAMEDROP                       124
 #define IDS_FINALIZECANC2                   125
+#define IDS_IMAGEFILE                       126
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101

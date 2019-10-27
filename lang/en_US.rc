@@ -178,6 +178,17 @@ FONT 8, "Tahoma"
     PUSHBUTTON "Cancel", IDCANCEL, 145, 115, 60, 14
 }
 
+IDD_IMAGEFILE DIALOG 0, 0, 250, 85
+CAPTION "Image File"
+STYLE DS_CONTROL | WS_CHILD | NOT WS_CAPTION
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "Tahoma"
+{
+    LTEXT "&Input Image File:", IDC_STATIC, 5, 7, 75, 12
+    COMBOBOX cmb1, 5, 20, 240, 300, CBS_HASSTRINGS | CBS_AUTOHSCROLL | CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON "&Browse...", psh1, 185, 35, 60, 14
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // RT_STRING
 
@@ -209,6 +220,7 @@ STRINGTABLE
     IDS_SCANNING, "Scanning... - %u%%"
     IDS_FRAMEDROP, "It's ready to create a movie file at the following location:\n\n%s\n\nHowever frame drop is happened.\nFinalize the movie?"
     IDS_FINALIZECANC2, "Finalizing is cancelled."
+    IDS_IMAGEFILE, "Image File"
 }
 
 //////////////////////////////////////////////////////////////////////////////

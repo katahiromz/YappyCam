@@ -179,6 +179,17 @@ FONT 9, "MS UI Gothic"
     PUSHBUTTON "キャンセル", IDCANCEL, 145, 115, 60, 14
 }
 
+IDD_IMAGEFILE DIALOG 0, 0, 250, 85
+CAPTION "画像ファイル"
+STYLE DS_CONTROL | WS_CHILD | NOT WS_CAPTION
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 9, "MS UI Gothic"
+{
+    LTEXT "入力画像ファイル(&I):", IDC_STATIC, 5, 7, 75, 12
+    COMBOBOX cmb1, 5, 20, 240, 300, CBS_HASSTRINGS | CBS_AUTOHSCROLL | CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON "参照(&B)...", psh1, 185, 35, 60, 14
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // RT_STRING
 
@@ -210,6 +221,7 @@ STRINGTABLE
     IDS_SCANNING, "スキャンしています - %u%%"
     IDS_FRAMEDROP, "次の場所で動画ファイルを作る準備ができました。\n\n%s\n\nフレーム落ちが発生しています。\n最終処理をしますか?"
     IDS_FINALIZECANC2, "最終処理はキャンセルされました。"
+    IDS_IMAGEFILE, "画像ファイル"
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -227,6 +227,15 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
                 }
             }
             break;
+        case PT_IMAGEFILE:
+            {
+                image = cv::imread(ansi_from_wide(g_settings.m_strInputFileName.c_str()));
+                if (!image.data)
+                {
+                    image = cv::Mat::zeros(g_settings.m_nHeight, g_settings.m_nWidth, CV_8UC3);
+                }
+            }
+            break;
         }
 
         if (s_bWriting)
@@ -355,6 +364,7 @@ void Settings::init()
     m_strSoundFileName = TEXT("Sound.wav");
     m_strSoundTempFileName = TEXT("Sound.sound");
     m_strShotFileName = TEXT("Shot-%04u-%02u-%02u-%02u-%02u-%02u.jpg");
+    m_strInputFileName.clear();;
 
     m_strStatusText = TEXT("No image");
 }
@@ -462,6 +472,10 @@ bool Settings::load(HWND hwnd)
     {
         m_strShotFileName = szText;
     }
+    if (ERROR_SUCCESS == app_key.QuerySz(L"InputFileName", szText, ARRAYSIZE(szText)))
+    {
+        m_strInputFileName = szText;
+    }
 
     if (type == PT_FINALIZING)
         type = PT_SCREENCAP;
@@ -557,6 +571,7 @@ bool Settings::save(HWND hwnd) const
     app_key.SetSz(L"SoundFileName", m_strSoundFileName.c_str());
     app_key.SetSz(L"SoundTempFileName", m_strSoundTempFileName.c_str());
     app_key.SetSz(L"ShotFileName", m_strShotFileName.c_str());
+    app_key.SetSz(L"InputFileName", m_strInputFileName.c_str());
 
     return true;
 }
@@ -787,6 +802,8 @@ void Settings::fix_size(HWND hwnd)
         cy = m_nWindow3CY;
         break;
     case PT_FINALIZING:
+    case PT_IMAGEFILE:
+        fix_size0(hwnd);
         return;
     }
 
@@ -840,9 +857,7 @@ void Settings::recreate_bitmap(HWND hwnd)
         SelectObject(s_hdcMem, hbmOld);
         break;
     case PT_VIDEOCAP:
-        DeleteObject(s_hbmBitmap);
-        s_hbmBitmap = NULL;
-        break;
+    case PT_IMAGEFILE:
     case PT_FINALIZING:
         DeleteObject(s_hbmBitmap);
         s_hbmBitmap = NULL;
@@ -885,6 +900,18 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
     case PT_FINALIZING:
         SetDisplayMode(DM_TEXT);
         break;
+    case PT_IMAGEFILE:
+        {
+            SetDisplayMode(DM_IMAGEFILE);
+            cv::Mat image;
+            image = cv::imread(ansi_from_wide(g_settings.m_strInputFileName.c_str()));
+            if (image.data)
+            {
+                m_nWidth = (int)image.cols;
+                m_nHeight = (int)image.rows;
+            }
+            break;
+        }
     }
 
     m_nPictureType = type;
@@ -2261,6 +2288,24 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
 
     switch (g_settings.GetDisplayMode())
     {
+    case DM_IMAGEFILE:
+        s_image_lock.lock(__LINE__);
+        if (s_frame.data)   // if frame data exists
+        {
+            s_bi.bmiHeader.biWidth = s_frame.cols;
+            s_bi.bmiHeader.biHeight = -s_frame.rows;
+            s_bi.bmiHeader.biBitCount = 24;
+            StretchDIBits(hdc, 0, 0, cx, cy,
+                          0, 0, s_frame.cols, s_frame.rows,
+                          s_frame.data, &s_bi, DIB_RGB_COLORS, SRCCOPY);
+        }
+        else
+        {
+            // black out if no image
+            PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
+        }
+        s_image_lock.unlock(__LINE__);
+        break;
     case DM_CAPFRAME:
         s_image_lock.lock(__LINE__);
         if (s_frame.data)   // if frame data exists
@@ -2367,6 +2412,7 @@ static void OnMove(HWND hwnd, int x, int y)
     case PT_BLACK:
     case PT_WHITE:
     case PT_FINALIZING:
+    case PT_IMAGEFILE:
         g_settings.m_nWindow1X = rc.left;
         g_settings.m_nWindow1Y = rc.top;
         break;
@@ -2441,6 +2487,7 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
         case PT_BLACK:
         case PT_WHITE:
         case PT_FINALIZING:
+        case PT_IMAGEFILE:
             g_settings.m_nWindow1CX = cxWnd;
             g_settings.m_nWindow1CY = cyWnd;
             break;

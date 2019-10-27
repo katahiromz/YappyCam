@@ -664,11 +664,136 @@ Page1DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 ////////////////////////////////////////////////////////////////////////////
+// Page2DialogProc
+
+static BOOL s_bPage2Init = FALSE;
+
+static void Page2_DoUpdateInput(HWND hwnd)
+{
+    g_settings.update(g_hMainWnd);
+}
+
+static BOOL Page2_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
+{
+    DragAcceptFiles(hwnd, TRUE);
+    SetDlgItemText(hwnd, cmb1, g_settings.m_strInputFileName.c_str());
+
+    s_bPage2Init = TRUE;
+    return TRUE;
+}
+
+static void Page2_OnCmb1(HWND hwnd)
+{
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+
+    TCHAR szText[MAX_PATH];
+    INT i = ComboBox_GetCurSel(hCmb1);
+    if (i == CB_ERR)
+    {
+        ComboBox_GetText(hCmb1, szText, ARRAYSIZE(szText));
+    }
+    else
+    {
+        ComboBox_GetLBText(hCmb1, i, szText);
+    }
+
+    StrTrim(szText, TEXT(" \t"));
+
+    DWORD attrs = GetFileAttributes(szText);
+    if (attrs != 0xFFFFFFFF && !(attrs & FILE_ATTRIBUTE_DIRECTORY))
+    {
+        g_settings.m_strInputFileName = szText;
+        Page2_DoUpdateInput(hwnd);
+    }
+}
+
+static void Page2_OnPsh1(HWND hwnd)
+{
+    TCHAR szFile[MAX_PATH];
+    StringCbCopy(szFile, sizeof(szFile), g_settings.m_strInputFileName.c_str());
+
+    OPENFILENAME ofn = { OPENFILENAME_SIZE_VERSION_400 };
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFile = szFile;
+    ofn.nMaxFile = ARRAYSIZE(szFile);
+    ofn.lpstrTitle = L"Input Image File";
+    ofn.Flags = OFN_EXPLORER | OFN_ENABLESIZING |
+                OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
+    ofn.lpstrDefExt = L"jpg";
+    if (GetOpenFileName(&ofn))
+    {
+        g_settings.m_strInputFileName = szFile;
+        SetDlgItemText(hwnd, cmb1, szFile);
+        Page2_DoUpdateInput(hwnd);
+    }
+}
+
+static void Page2_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
+{
+    switch (id)
+    {
+    case psh1:
+        if (codeNotify == BN_CLICKED)
+        {
+            Page2_OnPsh1(hwnd);
+        }
+        break;
+    case cmb1:
+        switch (codeNotify)
+        {
+        case CBN_DROPDOWN:
+        case CBN_CLOSEUP:
+        case CBN_SETFOCUS:
+        case CBN_EDITUPDATE:
+        case CBN_SELENDCANCEL:
+            break;
+        default:
+            Page2_OnCmb1(hwnd);
+            break;
+        }
+        break;
+    }
+}
+
+static void Page2_OnDestroy(HWND hwnd)
+{
+    s_bPage2Init = FALSE;
+}
+
+static void Page2_OnDropFiles(HWND hwnd, HDROP hdrop)
+{
+    TCHAR szPath[MAX_PATH];
+    DragQueryFile(hdrop, 0, szPath, ARRAYSIZE(szPath));
+    DragFinish(hdrop);
+
+    DWORD attrs = GetFileAttributes(szPath);
+    if (attrs != 0xFFFFFFFF && !(attrs & FILE_ATTRIBUTE_DIRECTORY))
+    {
+        g_settings.m_strInputFileName = szPath;
+        SetDlgItemText(hwnd, cmb1, szPath);
+        Page2_DoUpdateInput(hwnd);
+    }
+}
+
+static INT_PTR CALLBACK
+Page2DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+        HANDLE_MSG(hwnd, WM_INITDIALOG, Page2_OnInitDialog);
+        HANDLE_MSG(hwnd, WM_COMMAND, Page2_OnCommand);
+        HANDLE_MSG(hwnd, WM_DESTROY, Page2_OnDestroy);
+        HANDLE_MSG(hwnd, WM_DROPFILES, Page2_OnDropFiles);
+    }
+    return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////
 // DoPictureInputDialogBox
 
 HWND g_hwndPictureInput = NULL;
 static BOOL s_bInit = FALSE;
-static HWND s_hPages[2] = { NULL };
+static HWND s_hPages[3] = { NULL };
 
 static void DoChoosePage(HWND hwnd, INT iPage)
 {
@@ -701,6 +826,7 @@ static void DoCreatePages(HWND hwnd)
     HINSTANCE hInst = GetModuleHandle(NULL);
     s_hPages[0] = CreateDialog(hInst, MAKEINTRESOURCE(IDD_SCREEN), hwnd, Page0DialogProc);
     s_hPages[1] = CreateDialog(hInst, MAKEINTRESOURCE(IDD_WEBCAMERA), hwnd, Page1DialogProc);
+    s_hPages[2] = CreateDialog(hInst, MAKEINTRESOURCE(IDD_IMAGEFILE), hwnd, Page2DialogProc);
 }
 
 static void DoDestroyPages(HWND hwnd)
@@ -741,6 +867,9 @@ static void OnCmb1(HWND hwnd)
         type = PT_VIDEOCAP;
         DoChoosePage(hwnd, 1);
         break;
+    case 4:
+        type = PT_IMAGEFILE;
+        DoChoosePage(hwnd, 2);
     }
 
     s_bInit = FALSE;
@@ -759,6 +888,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     ComboBox_AddString(hCmb1, LoadStringDx(IDS_WHITE));
     ComboBox_AddString(hCmb1, LoadStringDx(IDS_SCREEN));
     ComboBox_AddString(hCmb1, LoadStringDx(IDS_WEBCAMERA));
+    ComboBox_AddString(hCmb1, LoadStringDx(IDS_IMAGEFILE));
 
     switch (g_settings.GetPictureType())
     {
@@ -773,6 +903,9 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
         break;
     case PT_VIDEOCAP:
         ComboBox_SetCurSel(hCmb1, 3);
+        break;
+    case PT_IMAGEFILE:
+        ComboBox_SetCurSel(hCmb1, 4);
         break;
     default:
         EndDialog(hwnd, IDCLOSE);
@@ -817,6 +950,9 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
         break;
     case PT_VIDEOCAP:
         DoChoosePage(hwnd, 1);
+        break;
+    case PT_IMAGEFILE:
+        DoChoosePage(hwnd, 2);
         break;
     default:
         break;

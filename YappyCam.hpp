@@ -28,7 +28,8 @@ enum DisplayMode
 {
     DM_CAPFRAME,
     DM_BITMAP,
-    DM_TEXT
+    DM_TEXT,
+    DM_IMAGEFILE
 };
 
 enum PictureType
@@ -37,7 +38,8 @@ enum PictureType
     PT_WHITE,
     PT_SCREENCAP,
     PT_VIDEOCAP,
-    PT_FINALIZING
+    PT_FINALIZING,
+    PT_IMAGEFILE
 };
 
 struct Settings
@@ -91,6 +93,7 @@ struct Settings
     std::wstring m_strSoundFileName;
     std::wstring m_strSoundTempFileName;
     std::wstring m_strShotFileName;
+    std::wstring m_strInputFileName;
     std::wstring m_strStatusText;
 
     Settings()
