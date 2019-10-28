@@ -38,8 +38,8 @@ Plugin_Load(PLUGIN *pi, LPARAM lParam)
     }
 
     pi->plugin_version = 1;
-    StringCbCopy(pi->plugin_product_name, sizeof(pi->plugin_product_name), TEXT("Plugin #1"));
-    StringCbCopy(pi->plugin_filename, sizeof(pi->plugin_filename), TEXT("Plugin1.yap"));
+    StringCbCopy(pi->plugin_product_name, sizeof(pi->plugin_product_name), TEXT("Clock"));
+    StringCbCopy(pi->plugin_filename, sizeof(pi->plugin_filename), TEXT("Clock.yap"));
     StringCbCopy(pi->plugin_company, sizeof(pi->plugin_company), TEXT("Katayama Hirofumi MZ"));
     StringCbCopy(pi->plugin_copyright, sizeof(pi->plugin_copyright), TEXT("Copyright (C) 2019 Katayama Hirofumi MZ"));
     pi->plugin_instance = s_hinstDLL;
