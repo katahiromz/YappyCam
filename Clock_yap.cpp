@@ -77,12 +77,14 @@ void DoDrawText(cv::Mat& mat, int align, int valign,
     {
     case -1:
         pt.x = 0;
+        pt.x += thickness;
         break;
     case 0:
-        pt.x = (screen_size.width - text_size.width) / 2;
+        pt.x = (screen_size.width - text_size.width + thickness) / 2;
         break;
     case 1:
         pt.x = screen_size.width - text_size.width;
+        pt.x += thickness;
         break;
     default:
         assert(0);
@@ -94,17 +96,15 @@ void DoDrawText(cv::Mat& mat, int align, int valign,
         pt.y = 0;
         break;
     case 0:
-        pt.y = (screen_size.height - text_size.height) / 2;
+        pt.y = (screen_size.height - text_size.height - thickness) / 2;
         break;
     case 1:
-        pt.y = screen_size.height - text_size.height;
+        pt.y = screen_size.height - text_size.height - thickness / 2;
         break;
     default:
         assert(0);
     }
     pt.y += text_size.height - 1;
-
-    pt.x += thickness / 2;
 
     cv::putText(mat, text, pt, font, scale,
                 color, thickness, cv::LINE_AA, false);
@@ -118,7 +118,11 @@ static LRESULT Plugin_PicRead(PLUGIN *pi, WPARAM wParam, LPARAM lParam)
 
 static LRESULT Plugin_PicWrite(PLUGIN *pi, WPARAM wParam, LPARAM lParam)
 {
-    cv::Mat& mat = *(cv::Mat *)wParam;
+    cv::Mat *pmat = (cv::Mat *)wParam;
+    if (!pmat || !pmat->data)
+        return 0;
+
+    cv::Mat& mat = *pmat;
 
     SYSTEMTIME st;
     GetLocalTime(&st);
@@ -130,8 +134,8 @@ static LRESULT Plugin_PicWrite(PLUGIN *pi, WPARAM wParam, LPARAM lParam)
     cv::Scalar black(0, 0, 0);
     cv::Scalar white(255, 255, 255);
 
-    DoDrawText(mat, 0, 0, szText, 1, 5, black);
-    DoDrawText(mat, 0, 0, szText, 1, 2, white);
+    DoDrawText(mat, 1, 1, szText, 1, 4, black);
+    DoDrawText(mat, 1, 1, szText, 1, 2, white);
     return 0;
 }
 
