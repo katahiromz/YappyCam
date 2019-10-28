@@ -2,13 +2,104 @@
 // Copyright (C) 2019 Katayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>
 // This file is public domain software.
 #include "Plugin.h"
+#include <string>
 #include <cassert>
-#include <cstdio>
 #include <strsafe.h>
 
+enum ALIGN
+{
+    ALIGN_LEFT,
+    ALIGN_CENTER,
+    ALIGN_RIGHT
+};
+enum VALIGN
+{
+    VALIGN_TOP,
+    VALIGN_MIDDLE,
+    VALIGN_BOTTOM
+};
+
 static HINSTANCE s_hinstDLL;
+static INT s_nMargin;
+static INT s_nAlign;
+static INT s_nVAlign;
+static double s_eScale;
+static std::string s_strText;
+
+std::string DoGetText(const char *fmt, const SYSTEMTIME& st)
+{
+    std::string ret;
+
+    char buf[32];
+    for (const char *pch = fmt; *pch; ++pch)
+    {
+        if (*pch != '&')
+        {
+            ret += *pch;
+            continue;
+        }
+
+        ++pch;
+        switch (*pch)
+        {
+        case '&':
+            ret += '&';
+            break;
+        case 'y':
+            StringCbPrintfA(buf, sizeof(buf), "%04u", st.wYear);
+            ret += buf;
+            break;
+        case 'M':
+            StringCbPrintfA(buf, sizeof(buf), "%02u", st.wMonth);
+            ret += buf;
+            break;
+        case 'd':
+            StringCbPrintfA(buf, sizeof(buf), "%02u", st.wDay);
+            ret += buf;
+            break;
+        case 'h':
+            StringCbPrintfA(buf, sizeof(buf), "%02u", st.wHour);
+            ret += buf;
+            break;
+        case 'm':
+            StringCbPrintfA(buf, sizeof(buf), "%02u", st.wMinute);
+            ret += buf;
+            break;
+        case 's':
+            StringCbPrintfA(buf, sizeof(buf), "%02u", st.wSecond);
+            ret += buf;
+            break;
+        case 'f':
+            StringCbPrintfA(buf, sizeof(buf), "%03u", st.wMilliseconds);
+            ret += buf;
+            break;
+        default:
+            ret += '&';
+            ret += *pch;
+            break;
+        }
+    }
+
+    return ret;
+}
 
 extern "C" {
+
+static LRESULT Plugin_Init(PLUGIN *pi, WPARAM wParam, LPARAM lParam)
+{
+    s_nMargin = 3;
+    s_nAlign = ALIGN_RIGHT;
+    s_nVAlign = VALIGN_TOP;
+    s_eScale = 0.2;
+    s_strText = "&h:&m:&s.&f";
+
+    return 0;
+}
+
+static LRESULT Plugin_Uninit(PLUGIN *pi, WPARAM wParam, LPARAM lParam)
+{
+    return 0;
+}
 
 // API Name: Plugin_Load
 // Purpose: The framework want to load the plugin component.
@@ -58,48 +149,51 @@ Plugin_Unload(PLUGIN *pi, LPARAM lParam)
     return TRUE;
 }
 
-void DoDrawText(cv::Mat& mat, int align, int valign,
-                const char *text, double scale, int thickness,
+void DoDrawText(cv::Mat& mat, const char *text, double scale, int thickness,
                 cv::Scalar& color)
 {
     int font = cv::FONT_HERSHEY_SIMPLEX;
     cv::Size screen_size(mat.cols, mat.rows);
 
     scale *= screen_size.height * 0.01;
-    thickness = (thickness * screen_size.height / 100);
 
     int baseline;
     cv::Size text_size = cv::getTextSize(text, font, scale, thickness, &baseline);
 
     cv::Point pt;
 
-    switch (align)
+    switch (s_nAlign)
     {
-    case -1:
+    case ALIGN_LEFT:
         pt.x = 0;
-        pt.x += thickness;
+        pt.x += s_nMargin * screen_size.height / 100;
         break;
-    case 0:
+    case ALIGN_CENTER:
         pt.x = (screen_size.width - text_size.width + thickness) / 2;
         break;
-    case 1:
+    case ALIGN_RIGHT:
         pt.x = screen_size.width - text_size.width;
+        pt.x -= s_nMargin * screen_size.height / 100;
         pt.x += thickness;
         break;
     default:
         assert(0);
     }
 
-    switch (valign)
+    switch (s_nVAlign)
     {
-    case -1:
+    case VALIGN_TOP:
         pt.y = 0;
+        pt.y += s_nMargin * screen_size.height / 100;
         break;
-    case 0:
+    case VALIGN_MIDDLE:
         pt.y = (screen_size.height - text_size.height - thickness) / 2;
         break;
-    case 1:
+    case VALIGN_BOTTOM:
         pt.y = screen_size.height - text_size.height - thickness / 2;
+        pt.y -= s_nMargin * screen_size.height / 100;
+        pt.y -= baseline;
+        pt.y += thickness;
         break;
     default:
         assert(0);
@@ -127,15 +221,14 @@ static LRESULT Plugin_PicWrite(PLUGIN *pi, WPARAM wParam, LPARAM lParam)
     SYSTEMTIME st;
     GetLocalTime(&st);
 
-    char szText[MAX_PATH];
-    StringCbPrintfA(szText, sizeof(szText),
-        "%02u:%02u:%02u", st.wHour, st.wMinute, st.wSecond);
+    std::string strText = DoGetText(s_strText.c_str(), st);
+    puts(strText.c_str());
 
     cv::Scalar black(0, 0, 0);
     cv::Scalar white(255, 255, 255);
 
-    DoDrawText(mat, 1, 1, szText, 1, 4, black);
-    DoDrawText(mat, 1, 1, szText, 1, 2, white);
+    DoDrawText(mat, strText.c_str(), s_eScale, 6, black);
+    DoDrawText(mat, strText.c_str(), s_eScale, 2, white);
     return 0;
 }
 
@@ -148,7 +241,9 @@ Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lParam)
     switch (uAction)
     {
     case PLUGIN_ACTION_INIT:
+        return Plugin_Init(pi, wParam, lParam);
     case PLUGIN_ACTION_UNINIT:
+        return Plugin_Uninit(pi, wParam, lParam);
     case PLUGIN_ACTION_STARTREC:
     case PLUGIN_ACTION_PAUSE:
     case PLUGIN_ACTION_ENDREC:
