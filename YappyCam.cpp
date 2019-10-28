@@ -1060,6 +1060,18 @@ BOOL DoLoadPlugins(HWND hwnd)
     return PF_LoadAll(s_plugins, szPath);
 }
 
+BOOL DoInitPlugins(HWND hwnd)
+{
+    PF_ActAll(s_plugins, PLUGIN_ACTION_INIT, (WPARAM)hwnd, 0);
+    return TRUE;
+}
+
+BOOL DoUninitPlugins(HWND hwnd)
+{
+    PF_ActAll(s_plugins, PLUGIN_ACTION_UNINIT, (WPARAM)hwnd, 0);
+    return TRUE;
+}
+
 BOOL DoUnloadPlugins(HWND hwnd)
 {
     return PF_UnloadAll(s_plugins);
@@ -1068,6 +1080,7 @@ BOOL DoUnloadPlugins(HWND hwnd)
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
     DoLoadPlugins(hwnd);
+    DoInitPlugins(hwnd);
 
     DragAcceptFiles(hwnd, TRUE);
 
@@ -2645,6 +2658,7 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
 
 static void OnDestroy(HWND hwnd)
 {
+    DoUninitPlugins(hwnd);
     DoUnloadPlugins(hwnd);
 
     if (s_bWriting)
