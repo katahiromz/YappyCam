@@ -45,6 +45,7 @@ Plugin_Load(PLUGIN *pi, LPARAM lParam)
     pi->plugin_instance = s_hinstDLL;
     pi->plugin_window = NULL;
     pi->dwFlags = PLUGIN_FLAG_PICREADER | PLUGIN_FLAG_PICWRITER;
+    pi->bEnabled = TRUE;
     return TRUE;
 }
 
@@ -103,6 +104,8 @@ void DoDrawText(cv::Mat& mat, int align, int valign,
     }
     pt.y += text_size.height - 1;
 
+    pt.x += thickness / 2;
+
     cv::putText(mat, text, pt, font, scale,
                 color, thickness, cv::LINE_AA, false);
 }
@@ -150,6 +153,8 @@ Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lParam)
         return Plugin_PicRead(pi, wParam, lParam);
     case PLUGIN_ACTION_PICWRITE:
         return Plugin_PicWrite(pi, wParam, lParam);
+    case PLUGIN_ACTION_SETTINGS:
+        break;
     }
     return 0;
 }

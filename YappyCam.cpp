@@ -84,6 +84,7 @@ std::vector<PLUGIN> s_plugins;
 
 void DoReadFrame(const cv::Mat& image)
 {
+    PF_ActAll(s_plugins, PLUGIN_ACTION_PICREAD, (WPARAM)&image, 0);
 }
 
 void DoWriteFrame(cv::Mat& image)
@@ -272,6 +273,7 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             s_image_lock.lock(__LINE__);
             if (!s_image_ring.full())
             {
+                DoReadFrame(image);
                 DoWriteFrame(image);
                 s_image_ring.push_front(image);
                 s_frame = image;
@@ -290,6 +292,7 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             s_image_lock.lock(__LINE__);
             if (!s_image_ring.full())
             {
+                DoReadFrame(image);
                 DoWriteFrame(image);
                 s_frame = image;
             }
