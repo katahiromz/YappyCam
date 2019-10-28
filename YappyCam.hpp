@@ -18,6 +18,7 @@
 #include "mregkey.hpp"
 #include "ring.hpp"
 #include "misc.hpp"
+#include "PluginFramework.h"
 
 #define MIN_FPS 0.1
 #define MAX_FPS 12.0

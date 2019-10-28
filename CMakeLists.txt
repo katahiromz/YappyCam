@@ -61,6 +61,7 @@ add_definitions(-DUNICODE -D_UNICODE)
 # YappyCam.exe
 add_executable(YappyCam WIN32
     YappyCam.cpp
+    PluginFramework.cpp
     hotkeys_dlg.cpp
     misc.cpp
     multires_dlg.cpp
@@ -95,3 +96,11 @@ target_link_libraries(silent winmm)
 subdirs(tests)
 
 ##############################################################################
+
+# Plugin1.yap
+add_library(Plugin1 SHARED Plugin1.cpp Plugin1.def)
+target_compile_definitions(Plugin1 PRIVATE -DPLUGIN_BUILD)
+set_target_properties(Plugin1 PROPERTIES OUTPUT_NAME "Plugin1.yap")
+set_target_properties(Plugin1 PROPERTIES PREFIX "")
+set_target_properties(Plugin1 PROPERTIES SUFFIX "")
+target_link_libraries(Plugin1 ${OpenCV_LIBS})

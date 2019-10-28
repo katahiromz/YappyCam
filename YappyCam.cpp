@@ -79,6 +79,18 @@ static HANDLE s_hRecordStartEvent = NULL;
 static HANDLE s_hPicProducerQuitEvent = NULL;
 static cv::Mat s_black_mat;
 
+// plugins
+std::vector<PLUGIN> s_plugins;
+
+void DoReadFrame(const cv::Mat& image)
+{
+}
+
+void DoWriteFrame(cv::Mat& image)
+{
+    PF_ActAll(s_plugins, PLUGIN_ACTION_PICWRITE, (WPARAM)&image, 0);
+}
+
 unsigned __stdcall PictureConsumerThreadProc(void *pContext)
 {
     DPRINT("PictureConsumerThreadProc started");
@@ -260,6 +272,7 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             s_image_lock.lock(__LINE__);
             if (!s_image_ring.full())
             {
+                DoWriteFrame(image);
                 s_image_ring.push_front(image);
                 s_frame = image;
             }
@@ -277,6 +290,7 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             s_image_lock.lock(__LINE__);
             if (!s_image_ring.full())
             {
+                DoWriteFrame(image);
                 s_frame = image;
             }
             s_image_lock.unlock(__LINE__);
@@ -1035,8 +1049,23 @@ HBITMAP DoLoadBitmap(HINSTANCE hInst, INT id)
         LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
 }
 
+BOOL DoLoadPlugins(HWND hwnd)
+{
+    TCHAR szPath[MAX_PATH];
+    GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
+    PathRemoveFileSpec(szPath);
+    return PF_LoadAll(s_plugins, szPath);
+}
+
+BOOL DoUnloadPlugins(HWND hwnd)
+{
+    return PF_UnloadAll(s_plugins);
+}
+
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
+    DoLoadPlugins(hwnd);
+
     DragAcceptFiles(hwnd, TRUE);
 
     DestroyWindow(GetDlgItem(hwnd, stc1));
@@ -2613,6 +2642,8 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
 
 static void OnDestroy(HWND hwnd)
 {
+    DoUnloadPlugins(hwnd);
+
     if (s_bWriting)
     {
         PlaySound(MAKEINTRESOURCE(IDR_DOWN), g_hInst, SND_SYNC | SND_RESOURCE);
