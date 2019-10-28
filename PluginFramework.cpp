@@ -116,6 +116,11 @@ BOOL PF_IsLoaded(const PLUGIN *pi)
     return pi && !!pi->plugin_instance;
 }
 
+BOOL PF_IsEnabled(const PLUGIN *pi)
+{
+    return PF_IsLoaded(pi) && pi->bEnabled;
+}
+
 LRESULT PF_ActOne(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lParam)
 {
     if (!pi || !pi->framework_impl || !pi->framework_impl->act)
@@ -123,6 +128,9 @@ LRESULT PF_ActOne(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lParam)
         assert(0);
         return FALSE;
     }
+
+    if (!pi->bEnabled)
+        return FALSE;
 
     LRESULT ret = pi->framework_impl->act(pi, uAction, wParam, lParam);
     return ret;
@@ -133,7 +141,10 @@ LRESULT PF_ActAll(std::vector<PLUGIN>& pis, UINT uAction, WPARAM wParam, LPARAM 
     LRESULT ret = 0;
     for (size_t i = 0; i < pis.size(); ++i)
     {
-        ret = PF_ActOne(&pis[i], uAction, wParam, lParam);
+        if (pis[i].bEnabled)
+        {
+            ret = PF_ActOne(&pis[i], uAction, wParam, lParam);
+        }
     }
     return ret;
 }

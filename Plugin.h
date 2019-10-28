@@ -63,6 +63,7 @@ typedef struct PLUGIN
 #define PLUGIN_FLAG_PICREADER 0x00000001
 #define PLUGIN_FLAG_PICWRITER 0x00000002
     DWORD dwFlags;
+    BOOL bEnabled;
 } PLUGIN;
 
 #ifdef __cplusplus

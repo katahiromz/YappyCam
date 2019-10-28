@@ -64,6 +64,9 @@ void DoDrawText(cv::Mat& mat, int align, int valign,
     int font = cv::FONT_HERSHEY_SIMPLEX;
     cv::Size screen_size(mat.cols, mat.rows);
 
+    scale *= screen_size.height * 0.01;
+    thickness = (thickness * screen_size.height / 100);
+
     int baseline;
     cv::Size text_size = cv::getTextSize(text, font, scale, thickness, &baseline);
 
@@ -124,8 +127,8 @@ static LRESULT Plugin_PicWrite(PLUGIN *pi, WPARAM wParam, LPARAM lParam)
     cv::Scalar black(0, 0, 0);
     cv::Scalar white(255, 255, 255);
 
-    DoDrawText(mat, 0, 0, szText, 3, 10, black);
-    DoDrawText(mat, 0, 0, szText, 3, 5, white);
+    DoDrawText(mat, 0, 0, szText, 1, 5, black);
+    DoDrawText(mat, 0, 0, szText, 1, 2, white);
     return 0;
 }
 
