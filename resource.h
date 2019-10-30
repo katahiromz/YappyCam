@@ -20,6 +20,7 @@
 #define IDD_HOTKEYS                         107
 #define IDD_MULTIRESO                       108
 #define IDD_IMAGEFILE                       109
+#define IDD_PLUGINS                         110
 
 #define IDI_MAIN                            100
 

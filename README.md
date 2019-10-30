@@ -20,6 +20,7 @@ Download: https://katahiromz.web.fc2.com/yappycam/en
 - `Alt+C` --- Configuration.
 - `Alt+M` --- Minimize/Restore.
 - `Alt+X` --- Exit.
+- `Alt+T` --- Take a shot.
 
 ## Platforms
 

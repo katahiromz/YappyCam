@@ -194,6 +194,19 @@ FONT 9, "MS UI Gothic"
     PUSHBUTTON "参照(&B)...", psh1, 185, 35, 60, 14
 }
 
+IDD_PLUGINS DIALOG 0, 0, 245, 125
+CAPTION "プラグイン"
+STYLE DS_CENTER | DS_MODALFRAME | WS_POPUPWINDOW | WS_CAPTION
+EXSTYLE WS_EX_TOOLWINDOW
+FONT 9, "MS UI Gothic"
+{
+    LTEXT "プラグイン(&P):", IDC_STATIC, 5, 7, 80, 12
+    CONTROL "", IDC_STATIC, "SysListView32", LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_REPORT | WS_BORDER | WS_VSCROLL | WS_HSCROLL, 5, 20, 170, 100
+    PUSHBUTTON "↑(&U)", psh1, 180, 20, 60, 14
+    PUSHBUTTON "↓(&D)", psh2, 180, 40, 60, 14
+    PUSHBUTTON "設定(&C)", psh3, 180, 60, 60, 14
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // RT_STRING
 

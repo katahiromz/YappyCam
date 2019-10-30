@@ -14,6 +14,7 @@ It can also record sound from speaker or microphone.
 - Alt+C --- Configuration.
 - Alt+M --- Minimize/Restore.
 - Alt+X --- Exit.
+- Alt+T --- Take a shot.
 
 ## Platforms
 
