@@ -20,6 +20,7 @@ IDR_MAINMENU MENU
         MENUITEM "Save &Options...", ID_SAVETO
         MENUITEM "&Hotkeys...", ID_HOTKEYS
         MENUITEM "Open &folder", ID_OPENFOLDER
+        MENUITEM "Plu&g-in...", ID_PLUGINS
         MENUITEM SEPARATOR
         MENUITEM "&Initialize settings", ID_INITSETTINGS
         MENUITEM SEPARATOR

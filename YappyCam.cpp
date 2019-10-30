@@ -354,6 +354,7 @@ void Settings::init()
     m_nPicDlgX = m_nPicDlgY = CW_USEDEFAULT;
     m_nSaveToDlgX = m_nSaveToDlgY = CW_USEDEFAULT;
     m_nHotKeysDlgX = m_nHotKeysDlgY = CW_USEDEFAULT;
+    m_nPluginsDlgX = m_nPluginsDlgY = CW_USEDEFAULT;
 
     m_nFPSx100 = UINT(DEFAULT_FPS * 100);
     m_bDrawCursor = TRUE;
@@ -450,6 +451,8 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"SaveToDlgY", (DWORD&)m_nSaveToDlgY);
     app_key.QueryDword(L"HotKeysDlgX", (DWORD&)m_nHotKeysDlgX);
     app_key.QueryDword(L"HotKeysDlgX", (DWORD&)m_nHotKeysDlgY);
+    app_key.QueryDword(L"PluginsDlgX", (DWORD&)m_nPluginsDlgX);
+    app_key.QueryDword(L"PluginsDlgY", (DWORD&)m_nPluginsDlgY);
 
     app_key.QueryDword(L"FPSx100", (DWORD&)m_nFPSx100);
     app_key.QueryDword(L"DrawCursor", (DWORD&)m_bDrawCursor);
@@ -583,6 +586,8 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"SaveToDlgY", m_nSaveToDlgY);
     app_key.SetDword(L"HotKeysDlgX", m_nHotKeysDlgX);
     app_key.SetDword(L"HotKeysDlgX", m_nHotKeysDlgY);
+    app_key.SetDword(L"PluginsDlgX", m_nPluginsDlgX);
+    app_key.SetDword(L"PluginsDlgY", m_nPluginsDlgY);
 
     app_key.SetDword(L"FPSx100", m_nFPSx100);
     app_key.SetDword(L"DrawCursor", m_bDrawCursor);
@@ -1897,7 +1902,8 @@ static void OnFinalized(HWND hwnd)
     if (!IsWindow(g_hwndSoundInput) &&
         !IsWindow(g_hwndPictureInput) &&
         !IsWindow(g_hwndSaveTo) &&
-        !IsWindow(g_hwndHotKeys))
+        !IsWindow(g_hwndHotKeys) &&
+        !IsWindow(g_hwndPlugins))
     {
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
@@ -1966,7 +1972,8 @@ static void OnFinalizeFail(HWND hwnd)
     if (!IsWindow(g_hwndSoundInput) &&
         !IsWindow(g_hwndPictureInput) &&
         !IsWindow(g_hwndSaveTo) &&
-        !IsWindow(g_hwndHotKeys))
+        !IsWindow(g_hwndHotKeys) &&
+        !IsWindow(g_hwndPlugins))
     {
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
@@ -2008,7 +2015,8 @@ static void OnFinalizeCancel(HWND hwnd, INT iType)
     if (!IsWindow(g_hwndSoundInput) &&
         !IsWindow(g_hwndPictureInput) &&
         !IsWindow(g_hwndSaveTo) &&
-        !IsWindow(g_hwndHotKeys))
+        !IsWindow(g_hwndHotKeys) &&
+        !IsWindow(g_hwndPlugins))
     {
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
@@ -2048,6 +2056,8 @@ void DoClosePopups(HWND hwnd)
         PostMessage(g_hwndSaveTo, WM_CLOSE, 0, 0);
     if (IsWindow(g_hwndHotKeys))
         PostMessage(g_hwndHotKeys, WM_CLOSE, 0, 0);
+    if (IsWindow(g_hwndPlugins))
+        PostMessage(g_hwndPlugins, WM_CLOSE, 0, 0);
 }
 
 void OnRecStop(HWND hwnd)
@@ -2247,6 +2257,11 @@ static void OnTakeAShot(HWND hwnd)
     }
 }
 
+static void OnPlugins(HWND hwnd)
+{
+    DoPluginsDialogBox(hwnd);
+}
+
 static void OnLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFlags)
 {
     if (fDoubleClick)
@@ -2367,7 +2382,8 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
             if (!IsWindow(g_hwndSoundInput) &&
                 !IsWindow(g_hwndPictureInput) &&
                 !IsWindow(g_hwndSaveTo) &&
-                !IsWindow(g_hwndHotKeys))
+                !IsWindow(g_hwndHotKeys) &&
+                !IsWindow(g_hwndPlugins))
             {
                 SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
                 EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
@@ -2413,6 +2429,9 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         break;
     case ID_TAKEASHOT:
         OnTakeAShot(hwnd);
+        break;
+    case ID_PLUGINS:
+        OnPlugins(hwnd);
         break;
     }
 }
@@ -3022,6 +3041,8 @@ WinMain(HINSTANCE   hInstance,
             if (g_hwndSaveTo && IsDialogMessage(g_hwndSaveTo, &msg))
                 continue;
             if (g_hwndHotKeys && IsDialogMessage(g_hwndHotKeys, &msg))
+                continue;
+            if (g_hwndPlugins && IsDialogMessage(g_hwndPlugins, &msg))
                 continue;
 
             TranslateMessage(&msg);

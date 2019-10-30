@@ -68,6 +68,7 @@ add_executable(YappyCam WIN32
     sound.cpp
     sound_dlg.cpp
     pic_dlg.cpp
+    plugins_dlg.cpp
     save_to_dlg.cpp
     YappyCam_res.rc)
 target_link_libraries(YappyCam

@@ -76,6 +76,8 @@ struct Settings
     INT m_nSaveToDlgY;
     INT m_nHotKeysDlgX;
     INT m_nHotKeysDlgY;
+    INT m_nPluginsDlgX;
+    INT m_nPluginsDlgY;
     UINT m_nFPSx100;
     BOOL m_bDrawCursor;
     BOOL m_bNoSound;
@@ -139,6 +141,7 @@ extern HWND g_hwndSoundInput;
 extern HWND g_hwndPictureInput;
 extern HWND g_hwndSaveTo;
 extern HWND g_hwndHotKeys;
+extern HWND g_hwndPlugins;
 
 typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
 extern sound_devices_t g_sound_devices;
@@ -149,6 +152,7 @@ BOOL DoSoundInputDialogBox(HWND hwndParent);
 BOOL DoPictureInputDialogBox(HWND hwndParent);
 BOOL DoSaveToDialogBox(HWND hwndParent);
 BOOL DoHotKeysDialogBox(HWND hwndParent);
+BOOL DoPluginsDialogBox(HWND hwndParent);
 
 void DoStartStopTimers(HWND hwnd, BOOL bStart);
 
