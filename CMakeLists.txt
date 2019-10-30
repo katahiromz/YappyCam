@@ -54,9 +54,9 @@ endif()
 
 find_package(OpenCV REQUIRED)
 
-##############################################################################
-
 add_definitions(-DUNICODE -D_UNICODE)
+
+##############################################################################
 
 # YappyCam.exe
 add_executable(YappyCam WIN32
@@ -97,11 +97,3 @@ target_link_libraries(silent winmm)
 subdirs(tests)
 
 ##############################################################################
-
-# Clock.yap
-add_library(Clock SHARED Clock_yap.cpp Clock_yap.def)
-target_compile_definitions(Clock PRIVATE -DPLUGIN_BUILD)
-set_target_properties(Clock PROPERTIES OUTPUT_NAME "Clock.yap")
-set_target_properties(Clock PROPERTIES PREFIX "")
-set_target_properties(Clock PROPERTIES SUFFIX "")
-target_link_libraries(Clock ${OpenCV_LIBS})

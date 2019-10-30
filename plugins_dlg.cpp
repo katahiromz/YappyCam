@@ -30,15 +30,15 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     column.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
     column.fmt = LVCFMT_LEFT;
     column.cx = 150;
-    column.pszText = szText;
     StringCbCopy(szText, sizeof(szText), L"Name");
+    column.pszText = szText;
     ListView_InsertColumn(hLst1, 0, &column);
     column.iSubItem++;
 
     column.fmt = LVCFMT_LEFT;
     column.cx = 150;
-    column.pszText = szText;
     StringCbCopy(szText, sizeof(szText), L"Filename");
+    column.pszText = szText;
     ListView_InsertColumn(hLst1, 1, &column);
     column.iSubItem++;
 
