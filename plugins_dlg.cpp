@@ -4,6 +4,9 @@
 static BOOL s_bInit = FALSE;
 HWND g_hwndPlugins = NULL;
 
+// plugins
+extern std::vector<PLUGIN> s_plugins;
+
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
     g_hwndPlugins = hwnd;
@@ -15,6 +18,44 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
         SetWindowPos(hwnd, NULL, x, y, 0, 0,
                      SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER);
         SendMessage(hwnd, DM_REPOSITION, 0, 0);
+    }
+
+    HWND hLst1 = GetDlgItem(hwnd, lst1);
+    ListView_SetExtendedListViewStyle(hLst1, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);
+
+    LV_COLUMN column;
+    TCHAR szText[64];
+
+    ZeroMemory(&column, sizeof(column));
+    column.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
+    column.fmt = LVCFMT_LEFT;
+    column.cx = 150;
+    column.pszText = szText;
+    StringCbCopy(szText, sizeof(szText), L"Name");
+    ListView_InsertColumn(hLst1, 0, &column);
+    column.iSubItem++;
+
+    column.fmt = LVCFMT_LEFT;
+    column.cx = 150;
+    column.pszText = szText;
+    StringCbCopy(szText, sizeof(szText), L"Filename");
+    ListView_InsertColumn(hLst1, 1, &column);
+    column.iSubItem++;
+
+    LV_ITEM item = { LVIF_TEXT };
+    for (auto& plugin : s_plugins)
+    {
+        item.iSubItem = 0;
+        item.pszText = plugin.plugin_product_name;
+        ListView_InsertItem(hLst1, &item);
+
+        item.iSubItem = 1;
+        item.pszText = plugin.plugin_filename;
+        ListView_SetItem(hLst1, &item);
+
+        ListView_SetCheckState(hLst1, item.iItem, plugin.bEnabled);
+
+        ++item.iItem;
     }
 
     s_bInit = TRUE;
