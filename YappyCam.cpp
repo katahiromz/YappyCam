@@ -84,12 +84,32 @@ std::vector<PLUGIN> s_plugins;
 
 void DoReadFrame(const cv::Mat& image)
 {
-    PF_ActAll(s_plugins, PLUGIN_ACTION_PICREAD, (WPARAM)&image, 0);
+    for (auto& plugin : s_plugins)
+    {
+        if (plugin.bEnabled && (plugin.dwFlags & PLUGIN_FLAG_PICREADER))
+        {
+            PF_ActOne(&plugin, PLUGIN_ACTION_PICREAD, (WPARAM)&image, 0);
+        }
+    }
 }
 
 void DoWriteFrame(cv::Mat& image)
 {
-    PF_ActAll(s_plugins, PLUGIN_ACTION_PICWRITE, (WPARAM)&image, 0);
+    for (auto& plugin : s_plugins)
+    {
+        if (plugin.bEnabled && (plugin.dwFlags & PLUGIN_FLAG_PICWRITER))
+        {
+            PF_ActOne(&plugin, PLUGIN_ACTION_PICWRITE, (WPARAM)&image, 0);
+        }
+    }
+}
+
+void DoRefreshPlugins(BOOL bReset)
+{
+    for (auto& plugin : s_plugins)
+    {
+        PF_ActOne(&plugin, PLUGIN_ACTION_REFRESH, bReset, 0);
+    }
 }
 
 unsigned __stdcall PictureConsumerThreadProc(void *pContext)
@@ -2256,7 +2276,7 @@ static void OnInitSettings(HWND hwnd)
         g_settings.save(hwnd);
         g_settings.update(hwnd);
 
-        PF_ActAll(s_plugins, PLUGIN_ACTION_REFRESH, TRUE, 0);
+        DoRefreshPlugins(TRUE);
 
         DoSetupHotkeys(hwnd, TRUE);
     }
