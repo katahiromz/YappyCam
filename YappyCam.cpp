@@ -2255,6 +2255,9 @@ static void OnInitSettings(HWND hwnd)
         g_settings.init();
         g_settings.save(hwnd);
         g_settings.update(hwnd);
+
+        PF_ActAll(s_plugins, PLUGIN_ACTION_REFRESH, TRUE, 0);
+
         DoSetupHotkeys(hwnd, TRUE);
     }
 }

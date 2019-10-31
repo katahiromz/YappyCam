@@ -135,6 +135,14 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 //      Return value: zero;
 #define PLUGIN_ACTION_SHOWDIALOG 6
 
+// Action: PLUGIN_ACTION_REFRESH (7)
+//      Meaning: Refresh/Reset the plugin.
+//      Parameters:
+//         wParam: BOOL bResetSettings;
+//         lParam: zero;
+//      Return value: zero;
+#define PLUGIN_ACTION_REFRESH 7
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
