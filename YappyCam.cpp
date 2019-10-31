@@ -109,6 +109,10 @@ void DoRefreshPlugins(BOOL bReset)
 {
     for (auto& plugin : s_plugins)
     {
+        if (bReset)
+        {
+            plugin.bEnabled = FALSE;
+        }
         PF_ActOne(&plugin, PLUGIN_ACTION_REFRESH, bReset, 0);
     }
 }
