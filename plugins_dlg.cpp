@@ -88,6 +88,10 @@ static void OnPsh1(HWND hwnd)
 
     s_bInit = FALSE;
     OnRefreshListView(hwnd, iItem - 1);
+
+    PF_ActOne(&s_plugins[iItem - 1], PLUGIN_ACTION_REFRESH, FALSE, 0);
+    PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_REFRESH, FALSE, 0);
+
     s_bInit = TRUE;
 }
 
@@ -102,6 +106,10 @@ static void OnPsh2(HWND hwnd)
 
     s_bInit = FALSE;
     OnRefreshListView(hwnd, iItem + 1);
+
+    PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_REFRESH, FALSE, 0);
+    PF_ActOne(&s_plugins[iItem + 1], PLUGIN_ACTION_REFRESH, FALSE, 0);
+
     s_bInit = TRUE;
 }
 
