@@ -311,16 +311,18 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
 
         INT cols = image.cols;
         INT rows = image.rows;
+
+        DoReadFrame(image);
+        DoWriteFrame(image);
+
         if (s_bWriting)
         {
             // add to s_image_ring
             s_image_lock.lock(__LINE__);
             if (!s_image_ring.full())
             {
-                DoReadFrame(image);
-                DoWriteFrame(image);
                 s_image_ring.push_front(image);
-                s_frame = image.clone();
+                s_frame = image;
             }
             else
             {
@@ -336,9 +338,7 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             s_image_lock.lock(__LINE__);
             if (!s_image_ring.full())
             {
-                DoReadFrame(image);
-                DoWriteFrame(image);
-                s_frame = image.clone();
+                s_frame = image;
             }
             s_image_lock.unlock(__LINE__);
         }
