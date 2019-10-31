@@ -21,7 +21,7 @@
 #include "PluginFramework.h"
 
 #define MIN_FPS 0.1
-#define MAX_FPS 12.0
+#define MAX_FPS 14.0
 #define DEFAULT_FPS 6
 #define TIME_PERIOD 1
 
