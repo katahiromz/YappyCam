@@ -1543,8 +1543,8 @@ static unsigned __stdcall FinalizingThreadFunction(void *pContext)
     if (sound_seconds > movie_seconds)
     {
         DWORD dwBytes = (DWORD)(movie_seconds * wfx.nAvgBytesPerSec);
-        dwBytes /= wfx.nBlockAlign;
-        dwBytes *= wfx.nBlockAlign;
+        dwBytes /= wfx.nBlockAlign * 2;
+        dwBytes *= wfx.nBlockAlign * 2;
         dwBytes += sizeof(wfx);
         DoShrinkSoundFile(strSoundTempFile, dwBytes);
     }
