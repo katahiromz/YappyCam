@@ -2056,22 +2056,28 @@ BOOL IsAnyPopupsOpen(HWND hwnd)
     {
         return TRUE;
     }
-    for (auto& plugin : s_plugins)
+    if (s_plugins.size())
     {
-        HWND hPlugin = plugin.pi->plugin_window;
-        if (IsWindow(hPlugin))
-            return TRUE;
+        for (auto& plugin : s_plugins)
+        {
+            HWND hPlugin = plugin.plugin_window;
+            if (IsWindow(hPlugin))
+                return TRUE;
+        }
     }
     return FALSE;
 }
 
 inline BOOL IsPluginDialogMessage(HWND hwnd, LPMSG lpMsg)
 {
-    for (auto& plugin : s_plugins)
+    if (s_plugins.size())
     {
-        HWND hPlugin = plugin.pi->plugin_window;
-        if (hPlugin && IsDialogMessage(lpMsg))
-            return TRUE;
+        for (auto& plugin : s_plugins)
+        {
+            HWND hPlugin = plugin.plugin_window;
+            if (hPlugin && IsDialogMessage(hPlugin, lpMsg))
+                return TRUE;
+        }
     }
     return FALSE;
 }
@@ -2090,7 +2096,7 @@ void DoClosePopups(HWND hwnd)
         PostMessage(g_hwndPlugins, WM_CLOSE, 0, 0);
     for (auto& plugin : s_plugins)
     {
-        HWND hPlugin = plugin.pi->plugin_window;
+        HWND hPlugin = plugin.plugin_window;
         if (IsWindow(hPlugin))
             PostMessage(hPlugin, WM_CLOSE, 0, 0);
     }
