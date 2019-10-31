@@ -239,6 +239,8 @@ STRINGTABLE
     IDS_FRAMEDROP, "It's ready to create a movie file at the following location:\n\n%s\n\nHowever frame drop is happened.\nFinalize the movie?"
     IDS_FINALIZECANC2, "Finalizing is cancelled."
     IDS_IMAGEFILE, "Image File"
+    IDS_NAME, "Name"
+    IDS_FILENAME, "Filename"
 }
 
 //////////////////////////////////////////////////////////////////////////////

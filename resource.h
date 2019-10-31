@@ -58,6 +58,8 @@
 #define IDS_FRAMEDROP                       124
 #define IDS_FINALIZECANC2                   125
 #define IDS_IMAGEFILE                       126
+#define IDS_NAME                            127
+#define IDS_FILENAME                        128
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101
