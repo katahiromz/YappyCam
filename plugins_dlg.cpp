@@ -63,6 +63,16 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     return TRUE;
 }
 
+static void OnPsh3(HWND hwnd)
+{
+    HWND hLst1 = GetDlgItem(hwnd, lst1);
+    INT iItem = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
+    if (iItem < 0 || iItem >= INT(s_plugins.size()))
+        return;
+
+    PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_SHOWDIALOG, (WPARAM)g_hMainWnd, TRUE);
+}
+
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
@@ -70,6 +80,9 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     case IDOK:
     case IDCANCEL:
         DestroyWindow(hwnd);
+        break;
+    case psh3:
+        OnPsh3(hwnd);
         break;
     }
 }
