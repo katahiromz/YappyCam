@@ -54,6 +54,7 @@ static cv::Mat s_frame;
 static BOOL s_bFrameDrop = FALSE;
 static INT s_nFrames = 0;
 static HBITMAP s_hbmBitmap = NULL;
+static std::vector<BYTE> s_data;
 static BITMAPINFO s_bi =
 {
     {
@@ -203,6 +204,34 @@ void DoScreenCap(HWND hwnd, BOOL bCursor)
 
 #define WIDTHBYTES(i) (((i) + 31) / 32 * 4)
 
+void DoCopyImage(cv::Mat& image, BITMAP& bm)
+{
+    cv::Size size(bm.bmWidth, bm.bmHeight);
+    cv::Mat mat(size, CV_8UC3);
+    printf("step:%d\n", mat.step1());
+
+    INT widthbytes = bm.bmWidthBytes;
+    INT step = mat.step1();
+    if (step == widthbytes)
+    {
+        memcpy(mat.data, bm.bmBits, step * bm.bmHeight);
+    }
+    else
+    {
+        for (INT y = 0; y < bm.bmHeight; ++y)
+        {
+            memcpy(&LPBYTE(mat.data)[step * y],
+                   &LPBYTE(bm.bmBits)[widthbytes * y],
+                   bm.bmWidth * 3);
+        }
+    }
+    s_bi.bmiHeader.biWidth = bm.bmWidth;
+    s_bi.bmiHeader.biHeight = -bm.bmHeight;
+    s_bi.bmiHeader.biBitCount = 24;
+
+    image = mat;
+}
+
 unsigned __stdcall PictureProducerThreadProc(void *pContext)
 {
     DPRINT("PictureProducerThreadProc started");
@@ -229,10 +258,7 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             s_bitmap_lock.lock(__LINE__);
             if (GetObject(s_hbmBitmap, sizeof(bm), &bm))
             {
-                cv::Size size(bm.bmWidth, bm.bmHeight);
-                cv::Mat mat(size, CV_8UC3, bm.bmBits);
-                image = mat.clone();
-                image.step = bm.bmWidthBytes;
+                DoCopyImage(image, bm);
             }
             s_bitmap_lock.unlock(__LINE__);
             break;
@@ -242,12 +268,8 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             {
                 // take a screen capture
                 DoScreenCap(g_hMainWnd, g_settings.m_bDrawCursor);
-                {
-                    cv::Size size(bm.bmWidth, bm.bmHeight);
-                    cv::Mat mat(size, CV_8UC3, bm.bmBits);
-                    image = mat.clone();
-                    image.step = bm.bmWidthBytes;
-                }
+
+                DoCopyImage(image, bm);
             }
             s_bitmap_lock.unlock(__LINE__);
             break;
@@ -287,6 +309,8 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             break;
         }
 
+        INT cols = image.cols;
+        INT rows = image.rows;
         if (s_bWriting)
         {
             // add to s_image_ring
@@ -296,7 +320,7 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
                 DoReadFrame(image);
                 DoWriteFrame(image);
                 s_image_ring.push_front(image);
-                s_frame = image;
+                s_frame = image.clone();
             }
             else
             {
@@ -314,10 +338,13 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             {
                 DoReadFrame(image);
                 DoWriteFrame(image);
-                s_frame = image;
+                s_frame = image.clone();
             }
             s_image_lock.unlock(__LINE__);
         }
+
+        g_settings.m_nWidth = image.cols;
+        g_settings.m_nHeight = image.rows;
 
         if (!IsMinimized(g_hMainWnd))
             InvalidateRect(g_hMainWnd, NULL, TRUE);
@@ -2497,10 +2524,12 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
     switch (g_settings.GetDisplayMode())
     {
     case DM_IMAGEFILE:
+    case DM_CAPFRAME:
+    case DM_BITMAP:
+    default:
         s_image_lock.lock(__LINE__);
         if (s_frame.data)   // if frame data exists
         {
-            static std::vector<BYTE> s_data;
             INT widthbytes = WIDTHBYTES(s_frame.cols * 24);
             s_data.resize(widthbytes * s_frame.rows);
             for (INT y = 0; y < s_frame.rows; ++y)
@@ -2515,38 +2544,6 @@ static void OnDraw(HWND hwnd, HDC hdc, INT cx, INT cy)
             StretchDIBits(hdc, 0, 0, cx, cy,
                           0, 0, s_frame.cols, s_frame.rows,
                           &s_data[0], &s_bi, DIB_RGB_COLORS, SRCCOPY);
-        }
-        else
-        {
-            // black out if no image
-            PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
-        }
-        s_image_lock.unlock(__LINE__);
-        break;
-    case DM_CAPFRAME:
-        s_image_lock.lock(__LINE__);
-        if (s_frame.data)   // if frame data exists
-        {
-            StretchDIBits(hdc, 0, 0, cx, cy,
-                          0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
-                          s_frame.data, &s_bi, DIB_RGB_COLORS, SRCCOPY);
-        }
-        else
-        {
-            // black out if no image
-            PatBlt(hdc, 0, 0, cx, cy, BLACKNESS);
-        }
-        s_image_lock.unlock(__LINE__);
-        break;
-    case DM_BITMAP:
-        s_image_lock.lock(__LINE__);
-        if (s_frame.data)   // if frame data exists
-        {
-            s_bitmap_lock.lock(__LINE__);
-            StretchDIBits(hdc, 0, 0, cx, cy,
-                          0, 0, g_settings.m_nWidth, g_settings.m_nHeight,
-                          s_frame.data, &s_bi, DIB_RGB_COLORS, SRCCOPY);
-            s_bitmap_lock.unlock(__LINE__);
         }
         else
         {
