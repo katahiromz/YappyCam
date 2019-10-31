@@ -58,6 +58,8 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
         ++item.iItem;
     }
 
+    ListView_SetItemState(hLst1, 0, LVIS_SELECTED, LVIS_SELECTED);
+
     s_bInit = TRUE;
 
     return TRUE;
@@ -106,6 +108,44 @@ static void OnMove(HWND hwnd, int x, int y)
     g_settings.m_nPluginsDlgY = rc.top;
 }
 
+static LRESULT OnNotify(HWND hwnd, int idFrom, LPNMHDR pnmhdr)
+{
+    switch (pnmhdr->code)
+    {
+    case LVN_ITEMCHANGED:
+        {
+            HWND hLst1 = GetDlgItem(hwnd, lst1);
+            INT iItem = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
+            if (iItem < 0 || iItem >= INT(s_plugins.size()))
+            {
+                EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
+                EnableWindow(GetDlgItem(hwnd, psh2), FALSE);
+                EnableWindow(GetDlgItem(hwnd, psh3), FALSE);
+            }
+            else
+            {
+                if (iItem == 0)
+                    EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
+                else
+                    EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
+
+                INT cItems = ListView_GetItemCount(hLst1);
+                if (iItem < cItems - 1)
+                    EnableWindow(GetDlgItem(hwnd, psh2), TRUE);
+                else
+                    EnableWindow(GetDlgItem(hwnd, psh2), FALSE);
+
+                EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
+            }
+        }
+        break;
+    case NM_DBLCLK:
+        OnPsh3(hwnd);
+        break;
+    }
+    return 0;
+}
+
 static INT_PTR CALLBACK
 DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -113,6 +153,7 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         HANDLE_MSG(hwnd, WM_INITDIALOG, OnInitDialog);
         HANDLE_MSG(hwnd, WM_COMMAND, OnCommand);
+        HANDLE_MSG(hwnd, WM_NOTIFY, OnNotify);
         HANDLE_MSG(hwnd, WM_DESTROY, OnDestroy);
         HANDLE_MSG(hwnd, WM_MOVE, OnMove);
     }
