@@ -22,9 +22,10 @@
     - Fixed the timing gap by timeBeginPeriod(1).
     - Added sounds to Record/Stop/Hung.
 - 2019.XX.YY ver.1.0
+    - Implemented plug-ins.
+    - Added Take-a-shot feature.
     - Made the main window modeless.
     - Tweak and adjustment.
-    - Added Take-a-shot feature.
     - Added invalidate-hot-key feature.
     - Supported image file input.
     - Made camera resolution visible.
