@@ -30,3 +30,4 @@
     - Supported image file input.
     - Made camera resolution visible.
     - Implemented Left/Middle/Right double click.
+    - Made MAX_FPS 20.0.
