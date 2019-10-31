@@ -91,61 +91,49 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 // Actions
 //
 
-// Action: PLUGIN_ACTION_INIT (1)
-//      Meaning: Initialize.
-//      Parameters: zero;
-//      Return value: zero;
-#define PLUGIN_ACTION_INIT 1
-
-// Action: PLUGIN_ACTION_UNINIT (2)
-//      Meaning: Uninitialize.
-//      Parameters: zero;
-//      Return value: zero;
-#define PLUGIN_ACTION_UNINIT 2
-
-// Action: PLUGIN_ACTION_STARTREC (3)
+// Action: PLUGIN_ACTION_STARTREC (1)
 //      Meaning: Recording started.
 //      Parameters: zero;
 //      Return value: zero;
-#define PLUGIN_ACTION_STARTREC 3
+#define PLUGIN_ACTION_STARTREC 1
 
-// Action: PLUGIN_ACTION_PAUSE (4)
+// Action: PLUGIN_ACTION_PAUSE (2)
 //      Meaning: Paused or resumed.
 //      Parameters:
 //         wParam: TRUE for paused, FALSE for resumed;
 //         lParam: zero;
 //      Return value: zero;
-#define PLUGIN_ACTION_PAUSE 4
+#define PLUGIN_ACTION_PAUSE 2
 
-// Action: PLUGIN_ACTION_ENDREC (5)
+// Action: PLUGIN_ACTION_ENDREC (3)
 //      Meaning: Recording ended.
 //      Parameters: zero;
 //      Return value: zero;
-#define PLUGIN_ACTION_ENDREC 5
+#define PLUGIN_ACTION_ENDREC 3
 
-// Action: PLUGIN_ACTION_PICREAD (6)
+// Action: PLUGIN_ACTION_PICREAD (4)
 //      Meaning: Read from a picture.
 //      Parameters:
 //         wParam: const cv::Mat* pmat;
 //         lParam: zero;
 //      Return value: zero;
-#define PLUGIN_ACTION_PICREAD 6
+#define PLUGIN_ACTION_PICREAD 4
 
-// Action: PLUGIN_ACTION_PICWRITE (7)
+// Action: PLUGIN_ACTION_PICWRITE (5)
 //      Meaning: Write on a picture.
 //      Parameters:
 //         wParam: cv::Mat* pmat;
 //         lParam: zero;
 //      Return value: zero;
-#define PLUGIN_ACTION_PICWRITE 7
+#define PLUGIN_ACTION_PICWRITE 5
 
-// Action: PLUGIN_ACTION_SETTINGS (8)
+// Action: PLUGIN_ACTION_SHOWDIALOG (6)
 //      Meaning: Show/Hide a modeless dialog for plugin settings
 //      Parameters:
 //         wParam: HWND hwndMainWnd; /* main window */
 //         lParam: BOOL bShowOrHide; /* TRUE for show, FALSE for hide */
 //      Return value: zero;
-#define PLUGIN_ACTION_SETTINGS 8
+#define PLUGIN_ACTION_SHOWDIALOG 6
 
 #ifdef __cplusplus
 } // extern "C"
