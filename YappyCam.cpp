@@ -2046,6 +2046,36 @@ static void OnFinalizeCancel(HWND hwnd, INT iType)
 
 ////////////////////////////////////////////////////////////////////////////
 
+BOOL IsAnyPopupsOpen(HWND hwnd)
+{
+    if (IsWindow(g_hwndSoundInput) ||
+        IsWindow(g_hwndPictureInput) ||
+        IsWindow(g_hwndSaveTo) ||
+        IsWindow(g_hwndHotKeys) ||
+        IsWindow(g_hwndPlugins))
+    {
+        return TRUE;
+    }
+    for (auto& plugin : s_plugins)
+    {
+        HWND hPlugin = plugin.pi->plugin_window;
+        if (IsWindow(hPlugin))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+inline BOOL IsPluginDialogMessage(HWND hwnd, LPMSG lpMsg)
+{
+    for (auto& plugin : s_plugins)
+    {
+        HWND hPlugin = plugin.pi->plugin_window;
+        if (hPlugin && IsDialogMessage(lpMsg))
+            return TRUE;
+    }
+    return FALSE;
+}
+
 void DoClosePopups(HWND hwnd)
 {
     if (IsWindow(g_hwndSoundInput))
@@ -2058,6 +2088,12 @@ void DoClosePopups(HWND hwnd)
         PostMessage(g_hwndHotKeys, WM_CLOSE, 0, 0);
     if (IsWindow(g_hwndPlugins))
         PostMessage(g_hwndPlugins, WM_CLOSE, 0, 0);
+    for (auto& plugin : s_plugins)
+    {
+        HWND hPlugin = plugin.pi->plugin_window;
+        if (IsWindow(hPlugin))
+            PostMessage(hPlugin, WM_CLOSE, 0, 0);
+    }
 }
 
 void OnRecStop(HWND hwnd)
@@ -2379,11 +2415,7 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     case ID_CONFIGCLOSED:
         if (0)
         {
-            if (!IsWindow(g_hwndSoundInput) &&
-                !IsWindow(g_hwndPictureInput) &&
-                !IsWindow(g_hwndSaveTo) &&
-                !IsWindow(g_hwndHotKeys) &&
-                !IsWindow(g_hwndPlugins))
+            if (IsAnyPopupsOpen(hwnd))
             {
                 SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
                 EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
@@ -3043,6 +3075,8 @@ WinMain(HINSTANCE   hInstance,
             if (g_hwndHotKeys && IsDialogMessage(g_hwndHotKeys, &msg))
                 continue;
             if (g_hwndPlugins && IsDialogMessage(g_hwndPlugins, &msg))
+                continue;
+            if (IsPluginDialogMessage(g_hMainWnd, &msg))
                 continue;
 
             TranslateMessage(&msg);
