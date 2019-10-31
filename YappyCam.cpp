@@ -753,6 +753,15 @@ void DoReorderPlugins(HWND hwnd)
         }
     }
 
+    for (auto& plugin : s_plugins)
+    {
+        INT ret = PF_FindFileName(new_plugins, plugin.plugin_filename);
+        if (ret == -1)
+        {
+            new_plugins.push_back(plugin);
+        }
+    }
+
     s_plugins = new_plugins;
 
     INT i = 0;
