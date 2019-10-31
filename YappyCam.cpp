@@ -208,7 +208,6 @@ void DoCopyImage(cv::Mat& image, BITMAP& bm)
 {
     cv::Size size(bm.bmWidth, bm.bmHeight);
     cv::Mat mat(size, CV_8UC3);
-    printf("step:%d\n", mat.step1());
 
     INT widthbytes = bm.bmWidthBytes;
     INT step = mat.step1();
