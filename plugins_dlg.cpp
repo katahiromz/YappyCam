@@ -7,6 +7,34 @@ HWND g_hwndPlugins = NULL;
 // plugins
 extern std::vector<PLUGIN> s_plugins;
 
+static void OnRefreshListView(HWND hwnd, INT iItem = -1)
+{
+    HWND hLst1 = GetDlgItem(hwnd, lst1);
+
+    if (iItem == -1)
+        iItem = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
+
+    ListView_DeleteAllItems(hLst1);
+
+    LV_ITEM item = { LVIF_TEXT };
+    for (auto& plugin : s_plugins)
+    {
+        item.iSubItem = 0;
+        item.pszText = plugin.plugin_product_name;
+        ListView_InsertItem(hLst1, &item);
+
+        item.iSubItem = 1;
+        item.pszText = plugin.plugin_filename;
+        ListView_SetItem(hLst1, &item);
+
+        ListView_SetCheckState(hLst1, item.iItem, plugin.bEnabled);
+
+        ++item.iItem;
+    }
+
+    ListView_SetItemState(hLst1, iItem, LVIS_SELECTED, LVIS_SELECTED);
+}
+
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
     g_hwndPlugins = hwnd;
@@ -42,27 +70,39 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     ListView_InsertColumn(hLst1, 1, &column);
     column.iSubItem++;
 
-    LV_ITEM item = { LVIF_TEXT };
-    for (auto& plugin : s_plugins)
-    {
-        item.iSubItem = 0;
-        item.pszText = plugin.plugin_product_name;
-        ListView_InsertItem(hLst1, &item);
-
-        item.iSubItem = 1;
-        item.pszText = plugin.plugin_filename;
-        ListView_SetItem(hLst1, &item);
-
-        ListView_SetCheckState(hLst1, item.iItem, plugin.bEnabled);
-
-        ++item.iItem;
-    }
-
-    ListView_SetItemState(hLst1, 0, LVIS_SELECTED, LVIS_SELECTED);
+    OnRefreshListView(hwnd, 0);
 
     s_bInit = TRUE;
 
     return TRUE;
+}
+
+static void OnPsh1(HWND hwnd)
+{
+    HWND hLst1 = GetDlgItem(hwnd, lst1);
+    INT iItem = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
+    if (iItem <= 0 || iItem >= INT(s_plugins.size()))
+        return;
+
+    std::swap(s_plugins[iItem - 1], s_plugins[iItem]);
+
+    s_bInit = FALSE;
+    OnRefreshListView(hwnd, iItem - 1);
+    s_bInit = TRUE;
+}
+
+static void OnPsh2(HWND hwnd)
+{
+    HWND hLst1 = GetDlgItem(hwnd, lst1);
+    INT iItem = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
+    if (iItem < 0 || iItem + 1 >= INT(s_plugins.size()))
+        return;
+
+    std::swap(s_plugins[iItem], s_plugins[iItem + 1]);
+
+    s_bInit = FALSE;
+    OnRefreshListView(hwnd, iItem + 1);
+    s_bInit = TRUE;
 }
 
 static void OnPsh3(HWND hwnd)
@@ -82,6 +122,12 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     case IDOK:
     case IDCANCEL:
         DestroyWindow(hwnd);
+        break;
+    case psh1:
+        OnPsh1(hwnd);
+        break;
+    case psh2:
+        OnPsh2(hwnd);
         break;
     case psh3:
         OnPsh3(hwnd);
@@ -108,36 +154,59 @@ static void OnMove(HWND hwnd, int x, int y)
     g_settings.m_nPluginsDlgY = rc.top;
 }
 
+static void OnListViewClick(HWND hwnd)
+{
+    HWND hLst1 = GetDlgItem(hwnd, lst1);
+
+    POINT pt;
+    GetCursorPos(&pt);
+    ScreenToClient(hLst1, &pt);
+
+    LV_HITTESTINFO ht = { pt };
+    ListView_HitTest(hLst1, &ht);
+
+    INT iItem = ht.iItem;
+    if (0 <= iItem && iItem < INT(s_plugins.size()))
+    {
+        BOOL bEnabled = ListView_GetCheckState(hLst1, iItem);
+        s_plugins[iItem].bEnabled = bEnabled;
+    }
+}
+
 static LRESULT OnNotify(HWND hwnd, int idFrom, LPNMHDR pnmhdr)
 {
+    INT iItem;
+    HWND hLst1 = GetDlgItem(hwnd, lst1);
+
     switch (pnmhdr->code)
     {
     case LVN_ITEMCHANGED:
+        iItem = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
+        if (iItem < 0 || iItem >= INT(s_plugins.size()))
         {
-            HWND hLst1 = GetDlgItem(hwnd, lst1);
-            INT iItem = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
-            if (iItem < 0 || iItem >= INT(s_plugins.size()))
-            {
-                EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
-                EnableWindow(GetDlgItem(hwnd, psh2), FALSE);
-                EnableWindow(GetDlgItem(hwnd, psh3), FALSE);
-            }
-            else
-            {
-                if (iItem == 0)
-                    EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
-                else
-                    EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
-
-                INT cItems = ListView_GetItemCount(hLst1);
-                if (iItem < cItems - 1)
-                    EnableWindow(GetDlgItem(hwnd, psh2), TRUE);
-                else
-                    EnableWindow(GetDlgItem(hwnd, psh2), FALSE);
-
-                EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
-            }
+            EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
+            EnableWindow(GetDlgItem(hwnd, psh2), FALSE);
+            EnableWindow(GetDlgItem(hwnd, psh3), FALSE);
         }
+        else
+        {
+            if (iItem == 0)
+                EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
+            else
+                EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
+
+            INT cItems = ListView_GetItemCount(hLst1);
+            if (iItem < cItems - 1)
+                EnableWindow(GetDlgItem(hwnd, psh2), TRUE);
+            else
+                EnableWindow(GetDlgItem(hwnd, psh2), FALSE);
+
+            EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
+        }
+        OnListViewClick(hwnd);
+        break;
+    case NM_CLICK:
+        OnListViewClick(hwnd);
         break;
     case NM_DBLCLK:
         OnPsh3(hwnd);

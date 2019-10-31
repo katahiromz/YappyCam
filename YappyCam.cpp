@@ -448,6 +448,9 @@ void Settings::init()
     m_strInputFileName.clear();;
 
     m_strStatusText = TEXT("No image");
+
+    m_strvecPluginNames.clear();
+    m_bvecPluginEnabled.clear();
 }
 
 bool Settings::load(HWND hwnd)
@@ -568,16 +571,42 @@ bool Settings::load(HWND hwnd)
         }
     }
 
+    DWORD cPlugins = 0;
+    app_key.QueryDword(L"PluginCount", (DWORD&)cPlugins);
+
+    m_strvecPluginNames.resize(cPlugins);
+    m_bvecPluginEnabled.resize(cPlugins);
+
+    TCHAR szName[64];
+    for (DWORD i = 0; i < cPlugins; ++i)
+    {
+        StringCbPrintf(szName, sizeof(szName), L"Plugin-%lu", i);
+        if (ERROR_SUCCESS == app_key.QuerySz(szName, szText, ARRAYSIZE(szText)))
+        {
+            std::wstring strName = szText;
+            BOOL bEnabled = FALSE;
+            StringCbPrintf(szName, sizeof(szName), L"Plugin-Enabled-%lu", i);
+            if (ERROR_SUCCESS == app_key.QueryDword(szName, (DWORD&)bEnabled))
+            {
+                m_strvecPluginNames[i] = strName;
+                m_bvecPluginEnabled[i] = !!bEnabled;
+                continue;
+            }
+        }
+        m_strvecPluginNames.resize(i);
+        m_bvecPluginEnabled.resize(i);
+        break;
+    }
+
     if (type == PT_FINALIZING)
         type = PT_SCREENCAP;
 
     SetPictureType(hwnd, type);
 
-    TCHAR szPath[MAX_PATH];
     for (INT i = m_nMovieID; i <= 999; ++i)
     {
-        StringCbPrintf(szPath, sizeof(szPath), m_strMovieDir.c_str(), i);
-        if (!PathIsDirectory(szPath))
+        StringCbPrintf(szText, sizeof(szText), m_strMovieDir.c_str(), i);
+        if (!PathIsDirectory(szText))
         {
             m_nMovieID = i;
             break;
@@ -666,7 +695,71 @@ bool Settings::save(HWND hwnd) const
     app_key.SetSz(L"ShotFileName", m_strShotFileName.c_str());
     app_key.SetSz(L"InputFileName", m_strInputFileName.c_str());
 
+    DWORD cPlugins = DWORD(m_strvecPluginNames.size());
+    app_key.SetDword(L"PluginCount", cPlugins);
+
+    TCHAR szName[64];
+    for (DWORD i = 0; i < cPlugins; ++i)
+    {
+        StringCbPrintf(szName, sizeof(szName), L"Plugin-%lu", i);
+        std::wstring strName = m_strvecPluginNames[i];
+        app_key.SetSz(szName, strName.c_str());
+
+        StringCbPrintf(szName, sizeof(szName), L"Plugin-Enabled-%lu", i);
+        app_key.SetDword(szName, m_bvecPluginEnabled[i]);
+    }
+
     return true;
+}
+
+void DoRememberPlugins(HWND hwnd)
+{
+    g_settings.m_strvecPluginNames.clear();
+    g_settings.m_bvecPluginEnabled.clear();
+
+    for (auto& plugin : s_plugins)
+    {
+        g_settings.m_strvecPluginNames.push_back(plugin.plugin_filename);
+        g_settings.m_bvecPluginEnabled.push_back(plugin.bEnabled);
+    }
+}
+
+void DoReorderPlugins(HWND hwnd)
+{
+    std::vector<PLUGIN> new_plugins;
+
+    for (auto& name : g_settings.m_strvecPluginNames)
+    {
+        INT ret = PF_FindFileName(s_plugins, name.c_str());
+        if (ret != -1)
+        {
+            new_plugins.push_back(s_plugins[ret]);
+        }
+    }
+
+    for (auto& name : g_settings.m_strvecPluginNames)
+    {
+        INT ret = PF_FindFileName(new_plugins, name.c_str());
+        if (ret == -1)
+        {
+            ret = PF_FindFileName(s_plugins, name.c_str());
+            if (ret != -1)
+            {
+                new_plugins.push_back(s_plugins[ret]);
+            }
+        }
+    }
+
+    s_plugins = new_plugins;
+
+    INT i = 0;
+    for (auto& plugin : s_plugins)
+    {
+        plugin.bEnabled = g_settings.m_bvecPluginEnabled[i];
+        ++i;
+    }
+
+    PF_ActAll(s_plugins, PLUGIN_ACTION_REFRESH, FALSE, 0);
 }
 
 static void OnTimer(HWND hwnd, UINT id);
@@ -1182,6 +1275,9 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     // load settings
     g_settings.load(hwnd);
+
+    if (g_settings.m_strvecPluginNames.size())
+        DoReorderPlugins(hwnd);
 
     // setup sound device
     auto& format = m_wave_formats[g_settings.m_iWaveFormat];
@@ -2722,6 +2818,7 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
 
 static void OnDestroy(HWND hwnd)
 {
+    DoRememberPlugins(hwnd);
     DoUnloadPlugins(hwnd);
 
     if (s_bWriting)

@@ -129,9 +129,6 @@ LRESULT PF_ActOne(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lParam)
         return FALSE;
     }
 
-    if (!pi->bEnabled)
-        return FALSE;
-
     LRESULT ret = pi->framework_impl->act(pi, uAction, wParam, lParam);
     return ret;
 }
@@ -280,4 +277,18 @@ INT PF_LoadAll(std::vector<PLUGIN>& pis, const TCHAR *dir)
     }
 
     return INT(pis.size());
+}
+
+INT PF_FindFileName(const std::vector<PLUGIN>& pis, const WCHAR *filename)
+{
+    INT i = 0;
+    for (auto& plugin : pis)
+    {
+        if (lstrcmpi(plugin.plugin_filename, filename) == 0)
+            return i;
+
+        ++i;
+    }
+
+    return -1;
 }

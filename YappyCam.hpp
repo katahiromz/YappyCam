@@ -98,6 +98,8 @@ struct Settings
     std::wstring m_strShotFileName;
     std::wstring m_strInputFileName;
     std::wstring m_strStatusText;
+    std::vector<std::wstring> m_strvecPluginNames;
+    std::vector<BOOL> m_bvecPluginEnabled;
 
     Settings()
     {
