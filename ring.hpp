@@ -3,7 +3,7 @@
 // License: MIT
 
 #ifndef RING_BUFFER_HPP_
-#define RING_BUFFER_HPP_    12   // Version 12
+#define RING_BUFFER_HPP_    13   // Version 13
 
 #include <algorithm>
 #include <type_traits>
@@ -621,21 +621,21 @@ public:
     };
 
 #if __cplusplus >= 201103L
-    static_assert(std::is_copy_constructible<iterator>::value);
-    static_assert(std::is_copy_assignable<iterator>::value);
-    static_assert(std::is_destructible<iterator>::value);
+    static_assert(std::is_copy_constructible<iterator>::value, "");
+    static_assert(std::is_copy_assignable<iterator>::value, "");
+    static_assert(std::is_destructible<iterator>::value, "");
 
-    static_assert(std::is_copy_constructible<reverse_iterator>::value);
-    static_assert(std::is_copy_assignable<reverse_iterator>::value);
-    static_assert(std::is_destructible<reverse_iterator>::value);
+    static_assert(std::is_copy_constructible<reverse_iterator>::value, "");
+    static_assert(std::is_copy_assignable<reverse_iterator>::value, "");
+    static_assert(std::is_destructible<reverse_iterator>::value, "");
 
-    static_assert(std::is_copy_constructible<const_iterator>::value);
-    static_assert(std::is_copy_assignable<const_iterator>::value);
-    static_assert(std::is_destructible<const_iterator>::value);
+    static_assert(std::is_copy_constructible<const_iterator>::value, "");
+    static_assert(std::is_copy_assignable<const_iterator>::value, "");
+    static_assert(std::is_destructible<const_iterator>::value, "");
 
-    static_assert(std::is_copy_constructible<const_reverse_iterator>::value);
-    static_assert(std::is_copy_assignable<const_reverse_iterator>::value);
-    static_assert(std::is_destructible<const_reverse_iterator>::value);
+    static_assert(std::is_copy_constructible<const_reverse_iterator>::value, "");
+    static_assert(std::is_copy_assignable<const_reverse_iterator>::value, "");
+    static_assert(std::is_destructible<const_reverse_iterator>::value, "");
 #endif
 
     iterator begin()
