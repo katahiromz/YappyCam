@@ -235,6 +235,31 @@ static void OnMove(HWND hwnd, int x, int y)
     g_settings.m_nPluginsDlgY = rc.top;
 }
 
+static void OnListViewItemChanges(HWND hwnd, BOOL bState, INT iItem = -1)
+{
+    HWND hLst1 = GetDlgItem(hwnd, lst1);
+
+    if (iItem == -1)
+    {
+        iItem = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
+    }
+
+    if (0 <= iItem && iItem < INT(s_plugins.size()))
+    {
+        BOOL bEnabled = ListView_GetCheckState(hLst1, iItem);
+        s_plugins[iItem].bEnabled = bEnabled;
+
+        INT iSelected = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
+        if (bState && iItem != iSelected)
+        {
+            s_bInit = FALSE;
+            ListView_SetItemState(hLst1, iSelected, 0, LVIS_SELECTED | LVIS_FOCUSED);
+            ListView_SetItemState(hLst1, iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+            s_bInit = TRUE;
+        }
+    }
+}
+
 static void OnListViewClick(HWND hwnd)
 {
     if (!s_bInit)
@@ -250,20 +275,7 @@ static void OnListViewClick(HWND hwnd)
     ListView_HitTest(hLst1, &ht);
 
     INT iItem = ht.iItem;
-    if (0 <= iItem && iItem < INT(s_plugins.size()))
-    {
-        BOOL bEnabled = ListView_GetCheckState(hLst1, iItem);
-        s_plugins[iItem].bEnabled = bEnabled;
-
-        INT iSelected = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
-        if (iItem != iSelected)
-        {
-            s_bInit = FALSE;
-            ListView_SetItemState(hLst1, iSelected, 0, LVIS_SELECTED | LVIS_FOCUSED);
-            ListView_SetItemState(hLst1, iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-            s_bInit = TRUE;
-        }
-    }
+    OnListViewItemChanges(hwnd, FALSE, iItem);
 }
 
 static LRESULT OnNotify(HWND hwnd, int idFrom, LPNMHDR pnmhdr)
@@ -322,8 +334,7 @@ static LRESULT OnNotify(HWND hwnd, int idFrom, LPNMHDR pnmhdr)
             EnableWindow(GetDlgItem(hwnd, psh5), TRUE);
         }
 
-        if (pListView->uNewState & LVIS_SELECTED)
-            OnListViewClick(hwnd);
+        OnListViewItemChanges(hwnd, TRUE, iItem);
         break;
     case NM_CLICK:
         OnListViewClick(hwnd);
