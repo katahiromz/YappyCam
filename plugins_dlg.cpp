@@ -27,6 +27,23 @@ static void OnRefreshListView(HWND hwnd, INT iItem = -1)
         item.pszText = plugin.plugin_filename;
         ListView_SetItem(hLst1, &item);
 
+        item.iSubItem = 2;
+        switch (plugin.dwFlags & PLUGIN_FLAG_PASS1AND2)
+        {
+        case 0:
+            break;
+        case PLUGIN_FLAG_PASS1:
+            item.pszText = LoadStringDx(IDS_PASS1);
+            break;
+        case PLUGIN_FLAG_PASS2:
+            item.pszText = LoadStringDx(IDS_PASS2);
+            break;
+        case PLUGIN_FLAG_PASS1AND2:
+            item.pszText = LoadStringDx(IDS_PASS1AND2);
+            break;
+        }
+        ListView_SetItem(hLst1, &item);
+
         ListView_SetCheckState(hLst1, item.iItem, plugin.bEnabled);
 
         ++item.iItem;
@@ -57,7 +74,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     ZeroMemory(&column, sizeof(column));
     column.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
     column.fmt = LVCFMT_LEFT;
-    column.cx = 120;
+    column.cx = 110;
     StringCbCopy(szText, sizeof(szText), LoadStringDx(IDS_NAME));
     column.pszText = szText;
     ListView_InsertColumn(hLst1, 0, &column);
@@ -66,6 +83,13 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     column.fmt = LVCFMT_LEFT;
     column.cx = 150;
     StringCbCopy(szText, sizeof(szText), LoadStringDx(IDS_FILENAME));
+    column.pszText = szText;
+    ListView_InsertColumn(hLst1, 1, &column);
+    column.iSubItem++;
+
+    column.fmt = LVCFMT_LEFT;
+    column.cx = 120;
+    StringCbCopy(szText, sizeof(szText), LoadStringDx(IDS_PASS));
     column.pszText = szText;
     ListView_InsertColumn(hLst1, 1, &column);
     column.iSubItem++;
@@ -123,6 +147,36 @@ static void OnPsh3(HWND hwnd)
     PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_SHOWDIALOG, (WPARAM)g_hMainWnd, TRUE);
 }
 
+static void OnPsh4(HWND hwnd)
+{
+    HWND hLst1 = GetDlgItem(hwnd, lst1);
+    INT iItem = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
+    if (iItem < 0 || iItem >= INT(s_plugins.size()))
+        return;
+
+    s_plugins[iItem].dwFlags &= ~PLUGIN_FLAG_PASS1AND2;
+    s_plugins[iItem].dwFlags |= PLUGIN_FLAG_PASS1;
+
+    s_bInit = FALSE;
+    OnRefreshListView(hwnd, iItem);
+    s_bInit = TRUE;
+}
+
+static void OnPsh5(HWND hwnd)
+{
+    HWND hLst1 = GetDlgItem(hwnd, lst1);
+    INT iItem = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
+    if (iItem < 0 || iItem >= INT(s_plugins.size()))
+        return;
+
+    s_plugins[iItem].dwFlags &= ~PLUGIN_FLAG_PASS1AND2;
+    s_plugins[iItem].dwFlags |= PLUGIN_FLAG_PASS2;
+
+    s_bInit = FALSE;
+    OnRefreshListView(hwnd, iItem);
+    s_bInit = TRUE;
+}
+
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
@@ -139,6 +193,12 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         break;
     case psh3:
         OnPsh3(hwnd);
+        break;
+    case psh4:
+        OnPsh4(hwnd);
+        break;
+    case psh5:
+        OnPsh5(hwnd);
         break;
     }
 }

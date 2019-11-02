@@ -60,6 +60,10 @@
 #define IDS_IMAGEFILE                       126
 #define IDS_NAME                            127
 #define IDS_FILENAME                        128
+#define IDS_PASS                            129
+#define IDS_PASS1                           130
+#define IDS_PASS2                           131
+#define IDS_PASS1AND2                       132
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101

@@ -60,8 +60,9 @@ typedef struct PLUGIN
     LPARAM l_user_data;
 
     // TODO: Add more members and version up...
-#define PLUGIN_FLAG_PICREADER 0x00000001
-#define PLUGIN_FLAG_PICWRITER 0x00000002
+#define PLUGIN_FLAG_PASS1 0x00000001
+#define PLUGIN_FLAG_PASS2 0x00000002
+#define PLUGIN_FLAG_PASS1AND2 0x00000003
     DWORD dwFlags;
     BOOL bEnabled;
 } PLUGIN;
@@ -111,21 +112,21 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 //      Return value: zero;
 #define PLUGIN_ACTION_ENDREC 3
 
-// Action: PLUGIN_ACTION_PICREAD (4)
-//      Meaning: Read from a picture.
-//      Parameters:
-//         wParam: const cv::Mat* pmat;
-//         lParam: zero;
-//      Return value: zero;
-#define PLUGIN_ACTION_PICREAD 4
-
-// Action: PLUGIN_ACTION_PICWRITE (5)
-//      Meaning: Write on a picture.
+// Action: PLUGIN_ACTION_PASS1 (4)
+//      Meaning: Do process Pass 1.
 //      Parameters:
 //         wParam: cv::Mat* pmat;
 //         lParam: zero;
 //      Return value: zero;
-#define PLUGIN_ACTION_PICWRITE 5
+#define PLUGIN_ACTION_PASS1 4
+
+// Action: PLUGIN_ACTION_PASS2 (5)
+//      Meaning: Do process Pass 2.
+//      Parameters:
+//         wParam: cv::Mat* pmat;
+//         lParam: zero;
+//      Return value: zero;
+#define PLUGIN_ACTION_PASS2 5
 
 // Action: PLUGIN_ACTION_SHOWDIALOG (6)
 //      Meaning: Show/Hide a modeless dialog for plugin settings

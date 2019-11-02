@@ -83,24 +83,24 @@ static cv::Mat s_black_mat;
 // plugins
 std::vector<PLUGIN> s_plugins;
 
-void DoReadFrame(const cv::Mat& image)
+void DoPass1Frame(const cv::Mat& image)
 {
     for (auto& plugin : s_plugins)
     {
-        if (plugin.bEnabled && (plugin.dwFlags & PLUGIN_FLAG_PICREADER))
+        if (plugin.bEnabled && (plugin.dwFlags & PLUGIN_FLAG_PASS1))
         {
-            PF_ActOne(&plugin, PLUGIN_ACTION_PICREAD, (WPARAM)&image, 0);
+            PF_ActOne(&plugin, PLUGIN_ACTION_PASS1, (WPARAM)&image, 0);
         }
     }
 }
 
-void DoWriteFrame(cv::Mat& image)
+void DoPass2Frame(cv::Mat& image)
 {
     for (auto& plugin : s_plugins)
     {
-        if (plugin.bEnabled && (plugin.dwFlags & PLUGIN_FLAG_PICWRITER))
+        if (plugin.bEnabled && (plugin.dwFlags & PLUGIN_FLAG_PASS2))
         {
-            PF_ActOne(&plugin, PLUGIN_ACTION_PICWRITE, (WPARAM)&image, 0);
+            PF_ActOne(&plugin, PLUGIN_ACTION_PASS2, (WPARAM)&image, 0);
         }
     }
 }
@@ -315,8 +315,8 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
         INT cols = image.cols;
         INT rows = image.rows;
 
-        DoReadFrame(image);
-        DoWriteFrame(image);
+        DoPass1Frame(image);
+        DoPass2Frame(image);
 
         if (s_bWriting)
         {

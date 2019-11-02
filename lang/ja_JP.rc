@@ -195,17 +195,19 @@ FONT 9, "MS UI Gothic"
     PUSHBUTTON "参照(&B)...", psh1, 185, 35, 60, 14
 }
 
-IDD_PLUGINS DIALOG 0, 0, 245, 125
+IDD_PLUGINS DIALOG 0, 0, 285, 125
 CAPTION "プラグイン"
 STYLE DS_CENTER | DS_MODALFRAME | WS_POPUPWINDOW | WS_CAPTION
 EXSTYLE WS_EX_TOOLWINDOW
 FONT 9, "MS UI Gothic"
 {
     LTEXT "プラグイン(&P):", IDC_STATIC, 5, 7, 80, 12
-    CONTROL "", lst1, "SysListView32", LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_REPORT | WS_BORDER | WS_VSCROLL | WS_HSCROLL, 5, 20, 170, 100
-    PUSHBUTTON "↑(&U)", psh1, 180, 20, 60, 14
-    PUSHBUTTON "↓(&D)", psh2, 180, 40, 60, 14
-    PUSHBUTTON "設定(&C)", psh3, 180, 60, 60, 14
+    CONTROL "", lst1, "SysListView32", LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_REPORT | WS_BORDER | WS_VSCROLL | WS_HSCROLL, 5, 20, 210, 100
+    PUSHBUTTON "↑(&U)", psh1, 220, 20, 60, 14
+    PUSHBUTTON "↓(&D)", psh2, 220, 40, 60, 14
+    PUSHBUTTON "設定(&C)", psh3, 220, 60, 60, 14
+    PUSHBUTTON "第一段階(&1)", psh4, 220, 80, 60, 14
+    PUSHBUTTON "第二段階(&2)", psh5, 220, 100, 60, 14
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -242,6 +244,10 @@ STRINGTABLE
     IDS_IMAGEFILE, "画像ファイル"
     IDS_NAME, "名前"
     IDS_FILENAME, "ファイル名"
+    IDS_PASS, "段階"
+    IDS_PASS1, "第一段階"
+    IDS_PASS2, "第二段階"
+    IDS_PASS1AND2, "第一&第二段階"
 }
 
 //////////////////////////////////////////////////////////////////////////////
