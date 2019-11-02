@@ -146,6 +146,9 @@ static void OnPsh3(HWND hwnd)
     if (iItem < 0 || iItem >= INT(s_plugins.size()))
         return;
 
+    if (s_plugins[iItem].dwFlags & PLUGIN_FLAG_NOCONFIG)
+        return;
+
     PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_SHOWDIALOG, (WPARAM)g_hMainWnd, TRUE);
 }
 
@@ -154,6 +157,9 @@ static void OnPsh4(HWND hwnd)
     HWND hLst1 = GetDlgItem(hwnd, lst1);
     INT iItem = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
     if (iItem < 0 || iItem >= INT(s_plugins.size()))
+        return;
+
+    if (s_plugins[iItem].dwFlags & PLUGIN_FLAG_PASSUNCHANGEABLE)
         return;
 
     PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_SETFLAGS,
@@ -169,6 +175,9 @@ static void OnPsh5(HWND hwnd)
     HWND hLst1 = GetDlgItem(hwnd, lst1);
     INT iItem = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
     if (iItem < 0 || iItem >= INT(s_plugins.size()))
+        return;
+
+    if (s_plugins[iItem].dwFlags & PLUGIN_FLAG_PASSUNCHANGEABLE)
         return;
 
     PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_SETFLAGS,
@@ -271,6 +280,8 @@ static LRESULT OnNotify(HWND hwnd, int idFrom, LPNMHDR pnmhdr)
             EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
             EnableWindow(GetDlgItem(hwnd, psh2), FALSE);
             EnableWindow(GetDlgItem(hwnd, psh3), FALSE);
+            EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
+            EnableWindow(GetDlgItem(hwnd, psh5), FALSE);
         }
         else
         {
@@ -285,7 +296,25 @@ static LRESULT OnNotify(HWND hwnd, int idFrom, LPNMHDR pnmhdr)
             else
                 EnableWindow(GetDlgItem(hwnd, psh2), FALSE);
 
-            EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
+            if (s_plugins[iItem].dwFlags & PLUGIN_FLAG_NOCONFIG)
+            {
+                EnableWindow(GetDlgItem(hwnd, psh3), FALSE);
+            }
+            else
+            {
+                EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
+            }
+
+            if (s_plugins[iItem].dwFlags & PLUGIN_FLAG_PASSUNCHANGEABLE)
+            {
+                EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
+                EnableWindow(GetDlgItem(hwnd, psh5), FALSE);
+            }
+            else
+            {
+                EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
+                EnableWindow(GetDlgItem(hwnd, psh5), TRUE);
+            }
         }
         OnListViewClick(hwnd);
         break;

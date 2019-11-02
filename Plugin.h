@@ -60,9 +60,11 @@ typedef struct PLUGIN
     LPARAM l_user_data;
 
     // TODO: Add more members and version up...
-#define PLUGIN_FLAG_PASS1 0x00000001
-#define PLUGIN_FLAG_PASS2 0x00000002
-#define PLUGIN_FLAG_PASS1AND2 0x00000003
+#define PLUGIN_FLAG_PASS1 0x1
+#define PLUGIN_FLAG_PASS2 0x2
+#define PLUGIN_FLAG_PASS1AND2 0x3
+#define PLUGIN_FLAG_NOCONFIG 0x4
+#define PLUGIN_FLAG_PASSUNCHANGEABLE 0x8
     DWORD dwFlags;
     BOOL bEnabled;
 } PLUGIN;
