@@ -110,11 +110,19 @@ void DoRefreshPlugins(BOOL bReset)
 {
     for (auto& plugin : s_plugins)
     {
-        if (bReset)
-        {
-            plugin.bEnabled = FALSE;
-        }
         PF_ActOne(&plugin, PLUGIN_ACTION_REFRESH, bReset, 0);
+    }
+
+    std::sort(s_plugins.begin(), s_plugins.end(),
+        [](const PLUGIN& p1, const PLUGIN& p2)
+        {
+            return lstrcmpiW(p1.plugin_filename, p2.plugin_filename) < 0;
+        }
+    );
+
+    for (auto& plugin : s_plugins)
+    {
+        PF_ActOne(&plugin, PLUGIN_ACTION_REFRESH, FALSE, 0);
     }
 }
 
