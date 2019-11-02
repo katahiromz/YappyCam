@@ -91,7 +91,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     column.cx = 120;
     StringCbCopy(szText, sizeof(szText), LoadStringDx(IDS_PASS));
     column.pszText = szText;
-    ListView_InsertColumn(hLst1, 1, &column);
+    ListView_InsertColumn(hLst1, 2, &column);
     column.iSubItem++;
 
     OnRefreshListView(hwnd, 0);
