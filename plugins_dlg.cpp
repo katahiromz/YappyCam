@@ -239,17 +239,24 @@ static void OnListViewClick(HWND hwnd)
     INT iItem = ht.iItem;
     if (0 <= iItem && iItem < INT(s_plugins.size()))
     {
-        s_bInit = FALSE;
-        ListView_SetItemState(hLst1, iItem, LVIS_SELECTED, LVIS_SELECTED);
-        s_bInit = TRUE;
-
         BOOL bEnabled = ListView_GetCheckState(hLst1, iItem);
         s_plugins[iItem].bEnabled = bEnabled;
+
+        INT iSelected = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
+        if (iItem != iSelected)
+        {
+            s_bInit = FALSE;
+            ListView_SetItemState(hLst1, iItem, LVIS_SELECTED, LVIS_SELECTED);
+            s_bInit = TRUE;
+        }
     }
 }
 
 static LRESULT OnNotify(HWND hwnd, int idFrom, LPNMHDR pnmhdr)
 {
+    if (!s_bInit)
+        return 0;
+
     INT iItem;
     HWND hLst1 = GetDlgItem(hwnd, lst1);
 
