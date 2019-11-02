@@ -108,21 +108,22 @@ void DoPass2Frame(cv::Mat& image)
 
 void DoRefreshPlugins(BOOL bReset)
 {
-    for (auto& plugin : s_plugins)
-    {
-        PF_ActOne(&plugin, PLUGIN_ACTION_REFRESH, bReset, 0);
-    }
+    std::vector<PLUGIN> new_plugins;
 
-    std::sort(s_plugins.begin(), s_plugins.end(),
+    new_plugins = s_plugins;
+
+    std::sort(new_plugins.begin(), new_plugins.end(),
         [](const PLUGIN& p1, const PLUGIN& p2)
         {
             return lstrcmpiW(p1.plugin_filename, p2.plugin_filename) < 0;
         }
     );
 
+    s_plugins = std::move(new_plugins);
+
     for (auto& plugin : s_plugins)
     {
-        PF_ActOne(&plugin, PLUGIN_ACTION_REFRESH, FALSE, 0);
+        PF_ActOne(&plugin, PLUGIN_ACTION_REFRESH, bReset, 0);
     }
 }
 
