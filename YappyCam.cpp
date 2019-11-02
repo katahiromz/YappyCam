@@ -731,12 +731,14 @@ void DoReorderPlugins(HWND hwnd)
 {
     std::vector<PLUGIN> new_plugins;
 
+    INT nCount = 0;
     for (auto& name : g_settings.m_strvecPluginNames)
     {
         INT ret = PF_FindFileName(s_plugins, name.c_str());
         if (ret != -1)
         {
             new_plugins.push_back(s_plugins[ret]);
+            ++nCount;
         }
     }
 
@@ -767,6 +769,8 @@ void DoReorderPlugins(HWND hwnd)
     INT i = 0;
     for (auto& plugin : s_plugins)
     {
+        if (i == nCount)
+            break;
         plugin.bEnabled = g_settings.m_bvecPluginEnabled[i];
         ++i;
     }
