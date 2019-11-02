@@ -271,13 +271,16 @@ static LRESULT OnNotify(HWND hwnd, int idFrom, LPNMHDR pnmhdr)
     if (!s_bInit)
         return 0;
 
-    INT iItem;
+    INT iItem, cItems;
     HWND hLst1 = GetDlgItem(hwnd, lst1);
+    NM_LISTVIEW *pListView;
 
     switch (pnmhdr->code)
     {
     case LVN_ITEMCHANGED:
-        iItem = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
+        pListView = (NM_LISTVIEW *)pnmhdr;
+        iItem = pListView->iItem;
+
         if (iItem < 0 || iItem >= INT(s_plugins.size()))
         {
             EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
@@ -285,41 +288,42 @@ static LRESULT OnNotify(HWND hwnd, int idFrom, LPNMHDR pnmhdr)
             EnableWindow(GetDlgItem(hwnd, psh3), FALSE);
             EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
             EnableWindow(GetDlgItem(hwnd, psh5), FALSE);
+            return 0;
+        }
+
+        if (iItem == 0)
+            EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
+        else
+            EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
+
+        cItems = ListView_GetItemCount(hLst1);
+        if (iItem < cItems - 1)
+            EnableWindow(GetDlgItem(hwnd, psh2), TRUE);
+        else
+            EnableWindow(GetDlgItem(hwnd, psh2), FALSE);
+
+        if (s_plugins[iItem].dwFlags & PLUGIN_FLAG_NOCONFIG)
+        {
+            EnableWindow(GetDlgItem(hwnd, psh3), FALSE);
         }
         else
         {
-            if (iItem == 0)
-                EnableWindow(GetDlgItem(hwnd, psh1), FALSE);
-            else
-                EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
-
-            INT cItems = ListView_GetItemCount(hLst1);
-            if (iItem < cItems - 1)
-                EnableWindow(GetDlgItem(hwnd, psh2), TRUE);
-            else
-                EnableWindow(GetDlgItem(hwnd, psh2), FALSE);
-
-            if (s_plugins[iItem].dwFlags & PLUGIN_FLAG_NOCONFIG)
-            {
-                EnableWindow(GetDlgItem(hwnd, psh3), FALSE);
-            }
-            else
-            {
-                EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
-            }
-
-            if (s_plugins[iItem].dwFlags & PLUGIN_FLAG_PASSUNCHANGEABLE)
-            {
-                EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
-                EnableWindow(GetDlgItem(hwnd, psh5), FALSE);
-            }
-            else
-            {
-                EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
-                EnableWindow(GetDlgItem(hwnd, psh5), TRUE);
-            }
+            EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
         }
-        OnListViewClick(hwnd);
+
+        if (s_plugins[iItem].dwFlags & PLUGIN_FLAG_PASSUNCHANGEABLE)
+        {
+            EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
+            EnableWindow(GetDlgItem(hwnd, psh5), FALSE);
+        }
+        else
+        {
+            EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
+            EnableWindow(GetDlgItem(hwnd, psh5), TRUE);
+        }
+
+        if (pListView->uNewState & LVIS_SELECTED)
+            OnListViewClick(hwnd);
         break;
     case NM_CLICK:
         OnListViewClick(hwnd);
