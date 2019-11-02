@@ -144,6 +144,14 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 //      Return value: zero;
 #define PLUGIN_ACTION_REFRESH 7
 
+// Action: PLUGIN_ACTION_SETFLAGS (8)
+//      Meaning: Set the flags of the plugin.
+//      Parameters:
+//         wParam: DWORD dwFlags;
+//         lParam: DWORD dwFlagsMask;
+//      Return value: TRUE if successful;
+#define PLUGIN_ACTION_SETFLAGS 8
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

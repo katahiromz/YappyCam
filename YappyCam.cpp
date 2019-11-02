@@ -455,6 +455,7 @@ void Settings::init()
 
     m_strvecPluginNames.clear();
     m_bvecPluginEnabled.clear();
+    m_dwvecPluginFlags.clear();
 }
 
 bool Settings::load(HWND hwnd)
@@ -580,6 +581,7 @@ bool Settings::load(HWND hwnd)
 
     m_strvecPluginNames.resize(cPlugins);
     m_bvecPluginEnabled.resize(cPlugins);
+    m_dwvecPluginFlags.resize(cPlugins);
 
     TCHAR szName[64];
     for (DWORD i = 0; i < cPlugins; ++i)
@@ -592,13 +594,23 @@ bool Settings::load(HWND hwnd)
             StringCbPrintf(szName, sizeof(szName), L"Plugin-Enabled-%lu", i);
             if (ERROR_SUCCESS == app_key.QueryDword(szName, (DWORD&)bEnabled))
             {
-                m_strvecPluginNames[i] = strName;
-                m_bvecPluginEnabled[i] = !!bEnabled;
+                DWORD dwFlags = 0;
+                StringCbPrintf(szName, sizeof(szName), L"Plugin-Flags-%lu", i);
+                if (ERROR_SUCCESS == app_key.QueryDword(szName, (DWORD&)dwFlags))
+                {
+                    if (!dwFlags)
+                        dwFlags = PLUGIN_FLAG_PASS1;
+
+                    m_strvecPluginNames[i] = strName;
+                    m_bvecPluginEnabled[i] = !!bEnabled;
+                    m_dwvecPluginFlags[i] = dwFlags;
+                }
                 continue;
             }
         }
         m_strvecPluginNames.resize(i);
         m_bvecPluginEnabled.resize(i);
+        m_dwvecPluginFlags.resize(i);
         break;
     }
 
@@ -711,6 +723,9 @@ bool Settings::save(HWND hwnd) const
 
         StringCbPrintf(szName, sizeof(szName), L"Plugin-Enabled-%lu", i);
         app_key.SetDword(szName, m_bvecPluginEnabled[i]);
+
+        StringCbPrintf(szName, sizeof(szName), L"Plugin-Flags-%lu", i);
+        app_key.SetDword(szName, m_dwvecPluginFlags[i]);
     }
 
     return true;
@@ -720,11 +735,13 @@ void DoRememberPlugins(HWND hwnd)
 {
     g_settings.m_strvecPluginNames.clear();
     g_settings.m_bvecPluginEnabled.clear();
+    g_settings.m_dwvecPluginFlags.clear();
 
     for (auto& plugin : s_plugins)
     {
         g_settings.m_strvecPluginNames.push_back(plugin.plugin_filename);
         g_settings.m_bvecPluginEnabled.push_back(plugin.bEnabled);
+        g_settings.m_dwvecPluginFlags.push_back(plugin.dwFlags);
     }
 }
 
@@ -773,6 +790,7 @@ void DoReorderPlugins(HWND hwnd)
         if (i == nCount)
             break;
         plugin.bEnabled = g_settings.m_bvecPluginEnabled[i];
+        plugin.dwFlags = g_settings.m_dwvecPluginFlags[i];
         ++i;
     }
 

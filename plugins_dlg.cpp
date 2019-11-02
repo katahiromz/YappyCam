@@ -28,9 +28,11 @@ static void OnRefreshListView(HWND hwnd, INT iItem = -1)
         ListView_SetItem(hLst1, &item);
 
         item.iSubItem = 2;
+        WCHAR szEmpty[] = L"???";
         switch (plugin.dwFlags & PLUGIN_FLAG_PASS1AND2)
         {
         case 0:
+            item.pszText = szEmpty;
             break;
         case PLUGIN_FLAG_PASS1:
             item.pszText = LoadStringDx(IDS_PASS1);
@@ -154,8 +156,8 @@ static void OnPsh4(HWND hwnd)
     if (iItem < 0 || iItem >= INT(s_plugins.size()))
         return;
 
-    s_plugins[iItem].dwFlags &= ~PLUGIN_FLAG_PASS1AND2;
-    s_plugins[iItem].dwFlags |= PLUGIN_FLAG_PASS1;
+    PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_SETFLAGS,
+              PLUGIN_FLAG_PASS1, PLUGIN_FLAG_PASS1AND2);
 
     s_bInit = FALSE;
     OnRefreshListView(hwnd, iItem);
@@ -169,8 +171,8 @@ static void OnPsh5(HWND hwnd)
     if (iItem < 0 || iItem >= INT(s_plugins.size()))
         return;
 
-    s_plugins[iItem].dwFlags &= ~PLUGIN_FLAG_PASS1AND2;
-    s_plugins[iItem].dwFlags |= PLUGIN_FLAG_PASS2;
+    PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_SETFLAGS,
+              PLUGIN_FLAG_PASS2, PLUGIN_FLAG_PASS1AND2);
 
     s_bInit = FALSE;
     OnRefreshListView(hwnd, iItem);

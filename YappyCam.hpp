@@ -100,6 +100,7 @@ struct Settings
     std::wstring m_strStatusText;
     std::vector<std::wstring> m_strvecPluginNames;
     std::vector<BOOL> m_bvecPluginEnabled;
+    std::vector<DWORD> m_dwvecPluginFlags;
 
     Settings()
     {
