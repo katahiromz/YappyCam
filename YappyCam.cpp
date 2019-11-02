@@ -3,6 +3,7 @@
 // License: MIT
 #define _CRT_SECURE_NO_WARNINGS
 #include "YappyCam.hpp"
+#include <excpt.h>
 
 // timer IDs
 #define SOUND_TIMER_ID  999
@@ -1517,12 +1518,6 @@ BOOL DoShrinkSoundFile(const std::wstring& strSoundTempFile, DWORD dwBytes)
         if (WriteFile(hFile, &bytes[wfx_size], dwInterest, &cb, NULL))
         {
             ret = SetEndOfFile(hFile);
-            if (ret && 0)
-            {
-                WCHAR sz[32];
-                StringCbPrintf(sz, sizeof(sz), L"%ld bytes cut", dwDiff);
-                ErrorBoxDx(NULL, sz);
-            }
         }
     }
 
@@ -3137,16 +3132,44 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         }
     }
+
     return 0;
 }
 
-static LONG WINAPI TopLevelExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)
+static LONG WINAPI
+TopLevelExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)
 {
     // end boosting the timing
     timeEndPeriod(TIME_PERIOD);
 
     PlaySound(MAKEINTRESOURCE(IDR_DOWN), g_hInst, SND_SYNC | SND_RESOURCE);
+
+    puts("Ouch!");
+    fflush(stdout);
+
     return 0;
+}
+
+static void terminate_handler(void)
+{
+    // end boosting the timing
+    timeEndPeriod(TIME_PERIOD);
+
+    PlaySound(MAKEINTRESOURCE(IDR_DOWN), g_hInst, SND_SYNC | SND_RESOURCE);
+
+    try
+    {
+        throw;
+    }
+    catch (std::exception& e)
+    {
+        puts(e.what());
+    }
+    catch (...)
+    {
+        puts("I'm dying... Ug...");
+    }
+    fflush(stdout);
 }
 
 int WINAPI
@@ -3167,6 +3190,7 @@ WinMain(HINSTANCE   hInstance,
     }
 
     SetUnhandledExceptionFilter(TopLevelExceptionFilter);
+    std::set_terminate(terminate_handler);
 
     // initialize COM
     HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -3182,30 +3206,34 @@ WinMain(HINSTANCE   hInstance,
     // start boosting the timing
     timeBeginPeriod(TIME_PERIOD);
 
-    // show the main window
-    if (HWND hwnd = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAIN), NULL, DialogProc))
+    //try
     {
-        ShowWindow(hwnd, nCmdShow);
-        UpdateWindow(hwnd);
-
-        MSG msg;
-        while (GetMessage(&msg, NULL, 0, 0))
+        // show the main window
+        if (HWND hwnd = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAIN), NULL, DialogProc))
         {
-            if (g_hwndSoundInput && IsDialogMessage(g_hwndSoundInput, &msg))
-                continue;
-            if (g_hwndPictureInput && IsDialogMessage(g_hwndPictureInput, &msg))
-                continue;
-            if (g_hwndSaveTo && IsDialogMessage(g_hwndSaveTo, &msg))
-                continue;
-            if (g_hwndHotKeys && IsDialogMessage(g_hwndHotKeys, &msg))
-                continue;
-            if (g_hwndPlugins && IsDialogMessage(g_hwndPlugins, &msg))
-                continue;
-            if (IsPluginDialogMessage(g_hMainWnd, &msg))
-                continue;
+            ShowWindow(hwnd, nCmdShow);
+            UpdateWindow(hwnd);
 
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            MSG msg;
+
+            while (GetMessage(&msg, NULL, 0, 0))
+            {
+                if (g_hwndSoundInput && IsDialogMessage(g_hwndSoundInput, &msg))
+                    continue;
+                if (g_hwndPictureInput && IsDialogMessage(g_hwndPictureInput, &msg))
+                    continue;
+                if (g_hwndSaveTo && IsDialogMessage(g_hwndSaveTo, &msg))
+                    continue;
+                if (g_hwndHotKeys && IsDialogMessage(g_hwndHotKeys, &msg))
+                    continue;
+                if (g_hwndPlugins && IsDialogMessage(g_hwndPlugins, &msg))
+                    continue;
+                if (IsPluginDialogMessage(g_hMainWnd, &msg))
+                    continue;
+
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
         }
     }
 
