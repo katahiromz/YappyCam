@@ -51,7 +51,7 @@ static void OnRefreshListView(HWND hwnd, INT iItem = -1)
         ++item.iItem;
     }
 
-    ListView_SetItemState(hLst1, iItem, LVIS_SELECTED, LVIS_SELECTED);
+    ListView_SetItemState(hLst1, iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 }
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
@@ -68,7 +68,9 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     }
 
     HWND hLst1 = GetDlgItem(hwnd, lst1);
-    ListView_SetExtendedListViewStyle(hLst1, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);
+    ListView_SetExtendedListViewStyle(hLst1,
+        LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT |
+        LVS_EX_INFOTIP | LVS_EX_LABELTIP);
 
     LV_COLUMN column;
     TCHAR szText[64];
@@ -257,7 +259,8 @@ static void OnListViewClick(HWND hwnd)
         if (iItem != iSelected)
         {
             s_bInit = FALSE;
-            ListView_SetItemState(hLst1, iItem, LVIS_SELECTED, LVIS_SELECTED);
+            ListView_SetItemState(hLst1, iSelected, 0, LVIS_SELECTED | LVIS_FOCUSED);
+            ListView_SetItemState(hLst1, iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
             s_bInit = TRUE;
         }
     }
