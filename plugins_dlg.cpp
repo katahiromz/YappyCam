@@ -77,21 +77,21 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     column.cx = 110;
     StringCbCopy(szText, sizeof(szText), LoadStringDx(IDS_NAME));
     column.pszText = szText;
-    ListView_InsertColumn(hLst1, 0, &column);
+    ListView_InsertColumn(hLst1, column.iSubItem, &column);
     column.iSubItem++;
 
     column.fmt = LVCFMT_LEFT;
     column.cx = 150;
     StringCbCopy(szText, sizeof(szText), LoadStringDx(IDS_FILENAME));
     column.pszText = szText;
-    ListView_InsertColumn(hLst1, 1, &column);
+    ListView_InsertColumn(hLst1, column.iSubItem, &column);
     column.iSubItem++;
 
     column.fmt = LVCFMT_LEFT;
     column.cx = 120;
     StringCbCopy(szText, sizeof(szText), LoadStringDx(IDS_PASS));
     column.pszText = szText;
-    ListView_InsertColumn(hLst1, 2, &column);
+    ListView_InsertColumn(hLst1, column.iSubItem, &column);
     column.iSubItem++;
 
     OnRefreshListView(hwnd, 0);
