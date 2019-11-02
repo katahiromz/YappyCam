@@ -224,6 +224,9 @@ static void OnMove(HWND hwnd, int x, int y)
 
 static void OnListViewClick(HWND hwnd)
 {
+    if (!s_bInit)
+        return;
+
     HWND hLst1 = GetDlgItem(hwnd, lst1);
 
     POINT pt;
@@ -236,6 +239,10 @@ static void OnListViewClick(HWND hwnd)
     INT iItem = ht.iItem;
     if (0 <= iItem && iItem < INT(s_plugins.size()))
     {
+        s_bInit = FALSE;
+        ListView_SetItemState(hLst1, iItem, LVIS_SELECTED, LVIS_SELECTED);
+        s_bInit = TRUE;
+
         BOOL bEnabled = ListView_GetCheckState(hLst1, iItem);
         s_plugins[iItem].bEnabled = bEnabled;
     }
