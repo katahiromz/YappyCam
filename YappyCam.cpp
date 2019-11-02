@@ -598,9 +598,6 @@ bool Settings::load(HWND hwnd)
                 StringCbPrintf(szName, sizeof(szName), L"Plugin-Flags-%lu", i);
                 if (ERROR_SUCCESS == app_key.QueryDword(szName, (DWORD&)dwFlags))
                 {
-                    if (!dwFlags)
-                        dwFlags = PLUGIN_FLAG_PASS1;
-
                     m_strvecPluginNames[i] = strName;
                     m_bvecPluginEnabled[i] = !!bEnabled;
                     m_dwvecPluginFlags[i] = dwFlags;
