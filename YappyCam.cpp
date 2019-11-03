@@ -92,7 +92,7 @@ void DoPass1Frame(const cv::Mat& image)
             (plugin.dwInfoFlags & PLUGIN_INFO_TYPEMASK) == PLUGIN_INFO_PASS &&
             !(plugin.dwStateFlags & PLUGIN_STATE_PASS2))
         {
-            PF_ActOne(&plugin, PLUGIN_ACTION_PASS1, (WPARAM)&image, 0);
+            PF_ActOne(&plugin, PLUGIN_ACTION_PASS, (WPARAM)&image, 0);
         }
     }
 }
@@ -105,7 +105,7 @@ void DoPass2Frame(cv::Mat& image)
             (plugin.dwInfoFlags & PLUGIN_INFO_TYPEMASK) == PLUGIN_INFO_PASS &&
             (plugin.dwStateFlags & PLUGIN_STATE_PASS2))
         {
-            PF_ActOne(&plugin, PLUGIN_ACTION_PASS2, (WPARAM)&image, 0);
+            PF_ActOne(&plugin, PLUGIN_ACTION_PASS, (WPARAM)&image, 0);
         }
     }
 }

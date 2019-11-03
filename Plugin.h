@@ -172,21 +172,13 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 //      Return value: zero;
 #define PLUGIN_ACTION_ENDREC 3
 
-// Action: PLUGIN_ACTION_PASS1 (4)
-//      Meaning: Do process Pass 1.
+// Action: PLUGIN_ACTION_PASS (4)
+//      Meaning: Do process Pass.
 //      Parameters:
 //         wParam: cv::Mat* pmat;
 //         lParam: zero;
 //      Return value: zero;
-#define PLUGIN_ACTION_PASS1 4
-
-// Action: PLUGIN_ACTION_PASS2 (5)
-//      Meaning: Do process Pass 2.
-//      Parameters:
-//         wParam: cv::Mat* pmat;
-//         lParam: zero;
-//      Return value: zero;
-#define PLUGIN_ACTION_PASS2 5
+#define PLUGIN_ACTION_PASS 4
 
 // Action: PLUGIN_ACTION_SHOWDIALOG (6)
 //      Meaning: Show/Hide a modeless dialog for plugin settings
