@@ -7,58 +7,76 @@ HWND g_hwndPlugins = NULL;
 // plugins
 extern std::vector<PLUGIN> s_plugins;
 
-static void OnRefreshListView(HWND hwnd, INT iItem = -1)
+void Lst1_SetSelection(HWND hLst1, INT iItem, BOOL bSelected = TRUE)
+{
+    ListView_SetItemState(hLst1, iItem,
+        (bSelected ? LVIS_SELECTED | LVIS_FOCUSED : 0),
+        LVIS_SELECTED | LVIS_FOCUSED);
+}
+
+void Lst1_SetItem(HWND hLst1, PLUGIN& plugin, INT iItem = -1)
+{
+    LV_ITEM item = { LVIF_TEXT };
+
+    if (iItem == -1)
+    {
+        item.iItem = ListView_GetItemCount(hLst1);
+        item.iSubItem = 0;
+        item.pszText = plugin.plugin_product_name;
+        iItem = ListView_InsertItem(hLst1, &item);
+    }
+    else
+    {
+        item.iItem = iItem;
+        item.iSubItem = 0;
+        item.pszText = plugin.plugin_product_name;
+        ListView_SetItem(hLst1, &item);
+    }
+
+    item.iSubItem = 1;
+    item.pszText = plugin.plugin_filename;
+    ListView_SetItem(hLst1, &item);
+
+    item.iSubItem = 2;
+    switch (plugin.dwInfoFlags & PLUGIN_INFO_TYPEMASK)
+    {
+    case PLUGIN_INFO_PASS:
+        if (plugin.dwStateFlags & PLUGIN_STATE_PASS2)
+            item.pszText = LoadStringDx(IDS_PASS2);
+        else
+            item.pszText = LoadStringDx(IDS_PASS1);
+        break;
+    case PLUGIN_INFO_PICINPUT:
+        item.pszText = LoadStringDx(IDS_PICINPUT);
+        break;
+    case PLUGIN_INFO_TRIGGERBOX:
+        item.pszText = LoadStringDx(IDS_TRIGGERBOX);
+        break;
+    case PLUGIN_INFO_SOUNDBOX:
+        item.pszText = LoadStringDx(IDS_SOUNDBOX);
+        break;
+    case PLUGIN_INFO_BROADCASTER:
+        item.pszText = LoadStringDx(IDS_BROADCASTER);
+        break;
+    default:
+        item.pszText = LoadStringDx(IDS_UNKNOWN);
+        break;
+    }
+    ListView_SetItem(hLst1, &item);
+
+    ListView_SetCheckState(hLst1, iItem, plugin.bEnabled);
+}
+
+static void OnRefreshListView(HWND hwnd)
 {
     HWND hLst1 = GetDlgItem(hwnd, lst1);
 
     ListView_DeleteAllItems(hLst1);
 
-    LV_ITEM item = { LVIF_TEXT };
     for (auto& plugin : s_plugins)
     {
-        item.iSubItem = 0;
-        item.pszText = plugin.plugin_product_name;
-        ListView_InsertItem(hLst1, &item);
-
-        item.iSubItem = 1;
-        item.pszText = plugin.plugin_filename;
-        ListView_SetItem(hLst1, &item);
-
-        item.iSubItem = 2;
-
-        switch (plugin.dwInfoFlags & PLUGIN_INFO_TYPEMASK)
-        {
-        case PLUGIN_INFO_PASS:
-            if (plugin.dwStateFlags & PLUGIN_STATE_PASS2)
-                item.pszText = LoadStringDx(IDS_PASS2);
-            else
-                item.pszText = LoadStringDx(IDS_PASS1);
-            break;
-        case PLUGIN_INFO_PICINPUT:
-            item.pszText = LoadStringDx(IDS_PICINPUT);
-            break;
-        case PLUGIN_INFO_TRIGGERBOX:
-            item.pszText = LoadStringDx(IDS_TRIGGERBOX);
-            break;
-        case PLUGIN_INFO_SOUNDBOX:
-            item.pszText = LoadStringDx(IDS_SOUNDBOX);
-            break;
-        case PLUGIN_INFO_BROADCASTER:
-            item.pszText = LoadStringDx(IDS_BROADCASTER);
-            break;
-        default:
-            item.pszText = LoadStringDx(IDS_UNKNOWN);
-            break;
-        }
-
-        ListView_SetItem(hLst1, &item);
-
-        ListView_SetCheckState(hLst1, item.iItem, plugin.bEnabled);
-
-        ++item.iItem;
+        Lst1_SetItem(hLst1, plugin);
     }
-
-    ListView_SetItemState(hLst1, iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 }
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
@@ -109,7 +127,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     s_bInit = TRUE;
 
-    ListView_SetItemState(hLst1, 0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+    Lst1_SetSelection(hLst1, 0);
 
     return TRUE;
 }
@@ -122,14 +140,20 @@ static void OnPsh1(HWND hwnd)
         return;
 
     std::swap(s_plugins[iItem - 1], s_plugins[iItem]);
-
-    s_bInit = FALSE;
-    OnRefreshListView(hwnd, iItem - 1);
-
     PF_ActOne(&s_plugins[iItem - 1], PLUGIN_ACTION_REFRESH, FALSE, 0);
     PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_REFRESH, FALSE, 0);
 
+    s_bInit = FALSE;
+    Lst1_SetItem(hLst1, s_plugins[iItem - 1], iItem - 1);
+    Lst1_SetItem(hLst1, s_plugins[iItem], iItem);
+    Lst1_SetSelection(hLst1, iItem - 1, TRUE);
+    Lst1_SetSelection(hLst1, iItem, FALSE);
     s_bInit = TRUE;
+
+    ListView_EnsureVisible(hLst1, iItem - 1, FALSE);
+
+    EnableWindow(GetDlgItem(hwnd, psh1), iItem - 1 > 0);
+    EnableWindow(GetDlgItem(hwnd, psh2), TRUE);
 }
 
 static void OnPsh2(HWND hwnd)
@@ -140,14 +164,20 @@ static void OnPsh2(HWND hwnd)
         return;
 
     std::swap(s_plugins[iItem], s_plugins[iItem + 1]);
-
-    s_bInit = FALSE;
-    OnRefreshListView(hwnd, iItem + 1);
-
     PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_REFRESH, FALSE, 0);
     PF_ActOne(&s_plugins[iItem + 1], PLUGIN_ACTION_REFRESH, FALSE, 0);
 
+    s_bInit = FALSE;
+    Lst1_SetItem(hLst1, s_plugins[iItem], iItem);
+    Lst1_SetItem(hLst1, s_plugins[iItem + 1], iItem + 1);
+    Lst1_SetSelection(hLst1, iItem, FALSE);
+    Lst1_SetSelection(hLst1, iItem + 1, TRUE);
     s_bInit = TRUE;
+
+    ListView_EnsureVisible(hLst1, iItem + 1, FALSE);
+
+    EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
+    EnableWindow(GetDlgItem(hwnd, psh2), iItem + 1 < INT(s_plugins.size() - 1));
 }
 
 static void OnPsh3(HWND hwnd)
@@ -178,9 +208,7 @@ static void OnPsh4(HWND hwnd)
     PF_ActOne(&plugin, PLUGIN_ACTION_SETSTATE,
               PLUGIN_STATE_PASS1, PLUGIN_STATE_PASS1 | PLUGIN_STATE_PASS2);
 
-    s_bInit = FALSE;
-    OnRefreshListView(hwnd, iItem);
-    s_bInit = TRUE;
+    Lst1_SetItem(hLst1, plugin, iItem);
 }
 
 static void OnPsh5(HWND hwnd)
@@ -197,9 +225,7 @@ static void OnPsh5(HWND hwnd)
     PF_ActOne(&plugin, PLUGIN_ACTION_SETSTATE,
               PLUGIN_STATE_PASS2, PLUGIN_STATE_PASS1 | PLUGIN_STATE_PASS2);
 
-    s_bInit = FALSE;
-    OnRefreshListView(hwnd, iItem);
-    s_bInit = TRUE;
+    Lst1_SetItem(hLst1, plugin, iItem);
 }
 
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
@@ -265,8 +291,8 @@ static void OnListViewItemChanges(HWND hwnd, BOOL bState, INT iItem = -1)
         if (bState && iItem != iSelected)
         {
             s_bInit = FALSE;
-            ListView_SetItemState(hLst1, iSelected, 0, LVIS_SELECTED | LVIS_FOCUSED);
-            ListView_SetItemState(hLst1, iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+            Lst1_SetSelection(hLst1, iSelected, FALSE);
+            Lst1_SetSelection(hLst1, iItem, TRUE);
             s_bInit = TRUE;
         }
     }
