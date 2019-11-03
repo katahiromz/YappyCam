@@ -28,10 +28,10 @@ static LRESULT APIENTRY driver(struct PLUGIN *pi, UINT uFunc, WPARAM wParam, LPA
     {
     case DRIVERFUNC_LISTPLUGINS:
         {
-            LPDWORD pcItems = (LPDWORD)lParam;
-            if (!pcItems || s_plugins.empty())
+            LPINT pnPluginCount = (LPINT)lParam;
+            if (!pnPluginCount || s_plugins.empty())
                 return (LRESULT)NULL;
-            *pcItems = DWORD(s_plugins.size());
+            *pnPluginCount = INT(s_plugins.size());
             return (LRESULT)&s_plugins[0];
         }
         break;
@@ -89,6 +89,14 @@ static void PF_Init(PLUGIN *pi)
     pi->framework_instance = GetModuleHandle(NULL);
     pi->framework_window = NULL;
     pi->driver = driver;
+}
+
+LRESULT PF_DriverFunc(PLUGIN *pi, UINT uFunc, WPARAM wParam, LPARAM lParam)
+{
+    if (!pi || !pi->driver)
+        return 0;
+
+    return (*pi->driver)(pi, uFunc, wParam, lParam);
 }
 
 static BOOL PF_Validate(PLUGIN *pi)

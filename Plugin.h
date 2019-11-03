@@ -55,7 +55,7 @@ typedef struct BANG_INFO
 //      Meaning: Get the plugin from filename.
 //      Parameters:
 //         wParam: zero;
-//         lParam: LPDWORD pcItems;
+//         lParam: LPINT pnPluginCount;
 //      Return value:
 //         The pointer to the PLUGIN structures, or NULL.
 #define DRIVERFUNC_LISTPLUGINS 1
