@@ -2247,7 +2247,7 @@ inline BOOL IsPluginDialogMessage(HWND hwnd, LPMSG lpMsg)
     return FALSE;
 }
 
-void DoClosePopups(HWND hwnd)
+void DoClosePopups(HWND hwnd, BOOL bAll = FALSE)
 {
     if (IsWindow(g_hwndSoundInput))
         PostMessage(g_hwndSoundInput, WM_CLOSE, 0, 0);
@@ -2257,13 +2257,16 @@ void DoClosePopups(HWND hwnd)
         PostMessage(g_hwndSaveTo, WM_CLOSE, 0, 0);
     if (IsWindow(g_hwndHotKeys))
         PostMessage(g_hwndHotKeys, WM_CLOSE, 0, 0);
-    if (IsWindow(g_hwndPlugins))
-        PostMessage(g_hwndPlugins, WM_CLOSE, 0, 0);
-    for (auto& plugin : s_plugins)
+    if (bAll)
     {
-        HWND hPlugin = plugin.plugin_window;
-        if (IsWindow(hPlugin))
-            PostMessage(hPlugin, WM_CLOSE, 0, 0);
+        if (IsWindow(g_hwndPlugins))
+            PostMessage(g_hwndPlugins, WM_CLOSE, 0, 0);
+        for (auto& plugin : s_plugins)
+        {
+            HWND hPlugin = plugin.plugin_window;
+            if (IsWindow(hPlugin))
+                PostMessage(hPlugin, WM_CLOSE, 0, 0);
+        }
     }
 }
 
@@ -2853,6 +2856,8 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
 
 static void OnDestroy(HWND hwnd)
 {
+    DoClosePopups(hwnd, TRUE);
+
     DoRememberPlugins(hwnd);
     DoUnloadPlugins(hwnd);
 
