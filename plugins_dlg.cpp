@@ -172,7 +172,7 @@ static void OnPsh4(HWND hwnd)
         return;
 
     auto& plugin = s_plugins[iItem];
-    if (!(plugin.dwInfoFlags & PLUGIN_INFO_PASS))
+    if ((plugin.dwInfoFlags & PLUGIN_INFO_TYPEMASK) != PLUGIN_INFO_PASS)
         return;
 
     PF_ActOne(&plugin, PLUGIN_ACTION_SETSTATE,
@@ -191,7 +191,7 @@ static void OnPsh5(HWND hwnd)
         return;
 
     auto& plugin = s_plugins[iItem];
-    if (!(plugin.dwInfoFlags & PLUGIN_INFO_PASS))
+    if ((plugin.dwInfoFlags & PLUGIN_INFO_TYPEMASK) != PLUGIN_INFO_PASS)
         return;
 
     PF_ActOne(&plugin, PLUGIN_ACTION_SETSTATE,
@@ -335,7 +335,7 @@ static LRESULT OnNotify(HWND hwnd, int idFrom, LPNMHDR pnmhdr)
             EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
         }
 
-        if (s_plugins[iItem].dwInfoFlags & PLUGIN_INFO_PASS)
+        if ((s_plugins[iItem].dwInfoFlags & PLUGIN_INFO_TYPEMASK) == PLUGIN_INFO_PASS)
         {
             if (s_plugins[iItem].dwStateFlags & PLUGIN_STATE_PASS2)
             {
