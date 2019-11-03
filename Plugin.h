@@ -34,6 +34,23 @@ typedef LRESULT (APIENTRY *PLUGIN_ACT)(struct PLUGIN *pi, UINT uAction, WPARAM w
 
 typedef LRESULT (APIENTRY *PLUGIN_DRIVER)(struct PLUGIN *pi, UINT uFunc, WPARAM wParam, LPARAM lParam);
 
+// The bang IDs.
+typedef enum BANGID
+{
+    BANGID_NONE = 0,
+    BANGID_ENABLE,
+    BANGID_DISABLE,
+    BANGID_TOGGLE,
+    BANGID_SOUND_0 = 100,
+    BANGID_TRIGGER_0 = 200
+} BANGID;
+
+typedef struct BANG_INFO
+{
+    INT nBangID;
+    LPCWSTR name;
+} BANG_INFO;
+
 // Driver: DRIVERFUNC_LISTPLUGINS (1)
 //      Meaning: Get the plugin from filename.
 //      Parameters:
@@ -52,14 +69,14 @@ typedef LRESULT (APIENTRY *PLUGIN_DRIVER)(struct PLUGIN *pi, UINT uFunc, WPARAM 
 //         The pointer to The PLUGIN structure, or NULL.
 #define DRIVERFUNC_GETPLUGIN 2
 
-// Driver: DRIVERFUNC_GETBANGNAME (3)
-//      Meaning: Get the name of a bang;
+// Driver: DRIVERFUNC_GETBANGLIST (3)
+//      Meaning: Get the list of the bangs;
 //      Parameters:
-//         wParam: INT nBangID;
+//         wParam: LPINT pnBangCount;
 //         lParam: LPCWSTR filename;
 //      Return value:
-//         LPCWSTR bangName or NULL;
-#define DRIVERFUNC_GETBANGNAME 3
+//         const BANG_INFO *pList;
+#define DRIVERFUNC_GETBANGLIST 3
 
 // Driver: DRIVERFUNC_DOBANG (4)
 //      Meaning: Do something.
@@ -206,14 +223,14 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 //         TRUE or FALSE;
 #define PLUGIN_ACTION_DOBANG 9
 
-// Action: PLUGIN_ACTION_GETBANGNAME (10)
+// Action: PLUGIN_ACTION_GETBANGLIST (10)
 //      Meaning: Get the name of the bang.
 //      Parameters:
-//         wParam: INT nBangID;
+//         wParam: LPINT pnBangCount;
 //         lParam: zero;
 //      Return value:
-//         LPCWSTR bangName;
-#define PLUGIN_ACTION_GETBANGNAME 10
+//         The number of bang count or zero;
+#define PLUGIN_ACTION_GETBANGLIST 10
 
 #ifdef __cplusplus
 } // extern "C"

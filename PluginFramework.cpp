@@ -48,18 +48,18 @@ static LRESULT APIENTRY driver(struct PLUGIN *pi, UINT uFunc, WPARAM wParam, LPA
             return (LRESULT)pi;
         }
         break;
-    case DRIVERFUNC_GETBANGNAME:
+    case DRIVERFUNC_GETBANGLIST:
         {
-            INT nBangID = (INT)wParam;
+            LPINT pnBangCount = (LPINT)wParam;
             LPCWSTR filename = (LPCWSTR)lParam;
             if (filename)
             {
                 INT i = PF_FindFileName(s_plugins, filename);
                 if (i < 0)
                     return (LRESULT)NULL;
-                return PF_ActOne(&s_plugins[i], PLUGIN_ACTION_GETBANGNAME, nBangID, 0);
+                return PF_ActOne(&s_plugins[i], PLUGIN_ACTION_GETBANGLIST, (WPARAM)pnBangCount, 0);
             }
-            return PF_ActOne(pi, PLUGIN_ACTION_GETBANGNAME, nBangID, 0);
+            return PF_ActOne(pi, PLUGIN_ACTION_GETBANGLIST, (WPARAM)pnBangCount, 0);
         }
         break;
     case DRIVERFUNC_DOBANG:
