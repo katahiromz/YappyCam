@@ -64,6 +64,12 @@
 #define IDS_PASS1                           130
 #define IDS_PASS2                           131
 #define IDS_PASS1AND2                       132
+#define IDS_PICINPUT                        133
+#define IDS_TRIGGERBOX                      134
+#define IDS_SOUNDBOX                        135
+#define IDS_BROADCASTER                     136
+#define IDS_UNKNOWN                         137
+#define IDS_TYPE                            138
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101

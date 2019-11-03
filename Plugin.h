@@ -60,12 +60,17 @@ typedef struct PLUGIN
     LPARAM l_user_data;
 
     // TODO: Add more members and version up...
-#define PLUGIN_FLAG_PASS1 0x1
-#define PLUGIN_FLAG_PASS2 0x2
-#define PLUGIN_FLAG_PASS1AND2 0x3
-#define PLUGIN_FLAG_NOCONFIG 0x4
-#define PLUGIN_FLAG_PASSUNCHANGEABLE 0x8
-    DWORD dwFlags;
+#define PLUGIN_INFO_PASS 0x1
+#define PLUGIN_INFO_PICINPUT 0x2
+#define PLUGIN_INFO_TRIGGERBOX 0x3
+#define PLUGIN_INFO_SOUNDBOX 0x4
+#define PLUGIN_INFO_BROADCASTER 0x5
+#define PLUGIN_INFO_TYPEMASK 0xF
+#define PLUGIN_INFO_NOCONFIG 0x10
+    DWORD dwInfoFlags;
+#define PLUGIN_STATE_PASS1 0x0
+#define PLUGIN_STATE_PASS2 0x1
+    DWORD dwStateFlags;
     BOOL bEnabled;
 } PLUGIN;
 
@@ -146,13 +151,15 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 //      Return value: zero;
 #define PLUGIN_ACTION_REFRESH 7
 
-// Action: PLUGIN_ACTION_SETFLAGS (8)
-//      Meaning: Set the flags of the plugin.
+// Action: PLUGIN_ACTION_SETSTATE (8)
+//      Meaning: Set the state flags of the plugin.
 //      Parameters:
-//         wParam: DWORD dwFlags;
-//         lParam: DWORD dwFlagsMask;
-//      Return value: TRUE if successful;
-#define PLUGIN_ACTION_SETFLAGS 8
+//         wParam: DWORD dwState;
+//         lParam: DWORD dwStateMask;
+//      Return value:
+//         dwStateFlags if successful and dwStateMask is zero;
+//         TRUE if successful and dwStateMask is non-zero;
+#define PLUGIN_ACTION_SETSTATE 8
 
 #ifdef __cplusplus
 } // extern "C"

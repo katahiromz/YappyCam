@@ -28,22 +28,32 @@ static void OnRefreshListView(HWND hwnd, INT iItem = -1)
         ListView_SetItem(hLst1, &item);
 
         item.iSubItem = 2;
-        WCHAR szEmpty[] = L"???";
-        switch (plugin.dwFlags & PLUGIN_FLAG_PASS1AND2)
+
+        switch (plugin.dwInfoFlags & PLUGIN_INFO_TYPEMASK)
         {
-        case 0:
-            item.pszText = szEmpty;
+        case PLUGIN_INFO_PASS:
+            if (plugin.dwStateFlags & PLUGIN_STATE_PASS2)
+                item.pszText = LoadStringDx(IDS_PASS2);
+            else
+                item.pszText = LoadStringDx(IDS_PASS1);
             break;
-        case PLUGIN_FLAG_PASS1:
-            item.pszText = LoadStringDx(IDS_PASS1);
+        case PLUGIN_INFO_PICINPUT:
+            item.pszText = LoadStringDx(IDS_PICINPUT);
             break;
-        case PLUGIN_FLAG_PASS2:
-            item.pszText = LoadStringDx(IDS_PASS2);
+        case PLUGIN_INFO_TRIGGERBOX:
+            item.pszText = LoadStringDx(IDS_TRIGGERBOX);
             break;
-        case PLUGIN_FLAG_PASS1AND2:
-            item.pszText = LoadStringDx(IDS_PASS1AND2);
+        case PLUGIN_INFO_SOUNDBOX:
+            item.pszText = LoadStringDx(IDS_SOUNDBOX);
+            break;
+        case PLUGIN_INFO_BROADCASTER:
+            item.pszText = LoadStringDx(IDS_BROADCASTER);
+            break;
+        default:
+            item.pszText = LoadStringDx(IDS_UNKNOWN);
             break;
         }
+
         ListView_SetItem(hLst1, &item);
 
         ListView_SetCheckState(hLst1, item.iItem, plugin.bEnabled);
@@ -93,7 +103,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     column.fmt = LVCFMT_LEFT;
     column.cx = 120;
-    StringCbCopy(szText, sizeof(szText), LoadStringDx(IDS_PASS));
+    StringCbCopy(szText, sizeof(szText), LoadStringDx(IDS_TYPE));
     column.pszText = szText;
     ListView_InsertColumn(hLst1, column.iSubItem, &column);
     column.iSubItem++;
@@ -148,10 +158,11 @@ static void OnPsh3(HWND hwnd)
     if (iItem < 0 || iItem >= INT(s_plugins.size()))
         return;
 
-    if (s_plugins[iItem].dwFlags & PLUGIN_FLAG_NOCONFIG)
+    auto& plugin = s_plugins[iItem];
+    if (plugin.dwInfoFlags & PLUGIN_INFO_NOCONFIG)
         return;
 
-    PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_SHOWDIALOG, (WPARAM)g_hMainWnd, TRUE);
+    PF_ActOne(&plugin, PLUGIN_ACTION_SHOWDIALOG, (WPARAM)g_hMainWnd, TRUE);
 }
 
 static void OnPsh4(HWND hwnd)
@@ -161,11 +172,12 @@ static void OnPsh4(HWND hwnd)
     if (iItem < 0 || iItem >= INT(s_plugins.size()))
         return;
 
-    if (s_plugins[iItem].dwFlags & PLUGIN_FLAG_PASSUNCHANGEABLE)
+    auto& plugin = s_plugins[iItem];
+    if (!(plugin.dwInfoFlags & PLUGIN_INFO_PASS))
         return;
 
-    PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_SETFLAGS,
-              PLUGIN_FLAG_PASS1, PLUGIN_FLAG_PASS1AND2);
+    PF_ActOne(&plugin, PLUGIN_ACTION_SETSTATE,
+              PLUGIN_STATE_PASS1, PLUGIN_STATE_PASS1 | PLUGIN_STATE_PASS2);
 
     s_bInit = FALSE;
     OnRefreshListView(hwnd, iItem);
@@ -179,11 +191,12 @@ static void OnPsh5(HWND hwnd)
     if (iItem < 0 || iItem >= INT(s_plugins.size()))
         return;
 
-    if (s_plugins[iItem].dwFlags & PLUGIN_FLAG_PASSUNCHANGEABLE)
+    auto& plugin = s_plugins[iItem];
+    if (!(plugin.dwInfoFlags & PLUGIN_INFO_PASS))
         return;
 
-    PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_SETFLAGS,
-              PLUGIN_FLAG_PASS2, PLUGIN_FLAG_PASS1AND2);
+    PF_ActOne(&plugin, PLUGIN_ACTION_SETSTATE,
+              PLUGIN_STATE_PASS2, PLUGIN_STATE_PASS1 | PLUGIN_STATE_PASS2);
 
     s_bInit = FALSE;
     OnRefreshListView(hwnd, iItem);
@@ -314,7 +327,7 @@ static LRESULT OnNotify(HWND hwnd, int idFrom, LPNMHDR pnmhdr)
         else
             EnableWindow(GetDlgItem(hwnd, psh2), FALSE);
 
-        if (s_plugins[iItem].dwFlags & PLUGIN_FLAG_NOCONFIG)
+        if (s_plugins[iItem].dwInfoFlags & PLUGIN_INFO_NOCONFIG)
         {
             EnableWindow(GetDlgItem(hwnd, psh3), FALSE);
         }
@@ -323,15 +336,23 @@ static LRESULT OnNotify(HWND hwnd, int idFrom, LPNMHDR pnmhdr)
             EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
         }
 
-        if (s_plugins[iItem].dwFlags & PLUGIN_FLAG_PASSUNCHANGEABLE)
+        if (s_plugins[iItem].dwInfoFlags & PLUGIN_INFO_PASS)
         {
-            EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
-            EnableWindow(GetDlgItem(hwnd, psh5), FALSE);
+            if (s_plugins[iItem].dwStateFlags & PLUGIN_STATE_PASS2)
+            {
+                EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
+                EnableWindow(GetDlgItem(hwnd, psh5), FALSE);
+            }
+            else
+            {
+                EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
+                EnableWindow(GetDlgItem(hwnd, psh5), TRUE);
+            }
         }
         else
         {
-            EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
-            EnableWindow(GetDlgItem(hwnd, psh5), TRUE);
+            EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
+            EnableWindow(GetDlgItem(hwnd, psh5), FALSE);
         }
 
         OnListViewItemChanges(hwnd, TRUE, iItem);

@@ -88,7 +88,7 @@ void DoPass1Frame(const cv::Mat& image)
 {
     for (auto& plugin : s_plugins)
     {
-        if (plugin.bEnabled && (plugin.dwFlags & PLUGIN_FLAG_PASS1))
+        if (plugin.bEnabled && !(plugin.dwStateFlags & PLUGIN_STATE_PASS2))
         {
             PF_ActOne(&plugin, PLUGIN_ACTION_PASS1, (WPARAM)&image, 0);
         }
@@ -99,7 +99,7 @@ void DoPass2Frame(cv::Mat& image)
 {
     for (auto& plugin : s_plugins)
     {
-        if (plugin.bEnabled && (plugin.dwFlags & PLUGIN_FLAG_PASS2))
+        if (plugin.bEnabled && (plugin.dwStateFlags & PLUGIN_STATE_PASS2))
         {
             PF_ActOne(&plugin, PLUGIN_ACTION_PASS2, (WPARAM)&image, 0);
         }
@@ -464,7 +464,7 @@ void Settings::init()
 
     m_strvecPluginNames.clear();
     m_bvecPluginEnabled.clear();
-    m_dwvecPluginFlags.clear();
+    m_dwvecPluginState.clear();
 }
 
 bool Settings::load(HWND hwnd)
@@ -590,7 +590,7 @@ bool Settings::load(HWND hwnd)
 
     m_strvecPluginNames.resize(cPlugins);
     m_bvecPluginEnabled.resize(cPlugins);
-    m_dwvecPluginFlags.resize(cPlugins);
+    m_dwvecPluginState.resize(cPlugins);
 
     TCHAR szName[64];
     for (DWORD i = 0; i < cPlugins; ++i)
@@ -603,20 +603,20 @@ bool Settings::load(HWND hwnd)
             StringCbPrintf(szName, sizeof(szName), L"Plugin-Enabled-%lu", i);
             if (ERROR_SUCCESS == app_key.QueryDword(szName, (DWORD&)bEnabled))
             {
-                DWORD dwFlags = 0;
-                StringCbPrintf(szName, sizeof(szName), L"Plugin-Flags-%lu", i);
-                if (ERROR_SUCCESS == app_key.QueryDword(szName, (DWORD&)dwFlags))
+                DWORD dwState;
+                StringCbPrintf(szName, sizeof(szName), L"Plugin-State-%lu", i);
+                if (ERROR_SUCCESS == app_key.QueryDword(szName, dwState))
                 {
                     m_strvecPluginNames[i] = strName;
                     m_bvecPluginEnabled[i] = !!bEnabled;
-                    m_dwvecPluginFlags[i] = dwFlags;
+                    m_dwvecPluginState[i] = dwState;
                 }
                 continue;
             }
         }
         m_strvecPluginNames.resize(i);
         m_bvecPluginEnabled.resize(i);
-        m_dwvecPluginFlags.resize(i);
+        m_dwvecPluginState.resize(i);
         break;
     }
 
@@ -730,8 +730,8 @@ bool Settings::save(HWND hwnd) const
         StringCbPrintf(szName, sizeof(szName), L"Plugin-Enabled-%lu", i);
         app_key.SetDword(szName, m_bvecPluginEnabled[i]);
 
-        StringCbPrintf(szName, sizeof(szName), L"Plugin-Flags-%lu", i);
-        app_key.SetDword(szName, m_dwvecPluginFlags[i]);
+        StringCbPrintf(szName, sizeof(szName), L"Plugin-State-%lu", i);
+        app_key.SetDword(szName, m_dwvecPluginState[i]);
     }
 
     return true;
@@ -741,13 +741,13 @@ void DoRememberPlugins(HWND hwnd)
 {
     g_settings.m_strvecPluginNames.clear();
     g_settings.m_bvecPluginEnabled.clear();
-    g_settings.m_dwvecPluginFlags.clear();
+    g_settings.m_dwvecPluginState.clear();
 
     for (auto& plugin : s_plugins)
     {
         g_settings.m_strvecPluginNames.push_back(plugin.plugin_filename);
         g_settings.m_bvecPluginEnabled.push_back(plugin.bEnabled);
-        g_settings.m_dwvecPluginFlags.push_back(plugin.dwFlags);
+        g_settings.m_dwvecPluginState.push_back(plugin.dwStateFlags);
     }
 }
 
@@ -796,7 +796,7 @@ void DoReorderPlugins(HWND hwnd)
         if (i == nCount)
             break;
         plugin.bEnabled = g_settings.m_bvecPluginEnabled[i];
-        plugin.dwFlags = g_settings.m_dwvecPluginFlags[i];
+        plugin.dwStateFlags = g_settings.m_dwvecPluginState[i];
         ++i;
     }
 
