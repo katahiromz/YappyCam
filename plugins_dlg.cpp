@@ -4,9 +4,6 @@
 static BOOL s_bInit = FALSE;
 HWND g_hwndPlugins = NULL;
 
-// plugins
-extern std::vector<PLUGIN> s_plugins;
-
 void Lst1_SetSelection(HWND hLst1, INT iItem, BOOL bSelected = TRUE)
 {
     ListView_SetItemState(hLst1, iItem,

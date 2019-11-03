@@ -2,7 +2,7 @@
 // Copyright (C) 2019 Katayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>
 // This file is public domain software.
 
-#include "PluginFramework.h"
+#include "YappyCam.hpp"
 #include <cstdio>
 #include <cassert>
 #include <shlwapi.h>
@@ -24,7 +24,59 @@ private:
 
 static LRESULT APIENTRY driver(struct PLUGIN *pi, UINT uFunc, WPARAM wParam, LPARAM lParam)
 {
-    // TODO:
+    switch (uFunc)
+    {
+    case DRIVERFUNC_LISTPLUGINS:
+        {
+            LPDWORD pcItems = (LPDWORD)lParam;
+            if (!pcItems || s_plugins.empty())
+                return (LRESULT)NULL;
+            *pcItems = DWORD(s_plugins.size());
+            return (LRESULT)&s_plugins[0];
+        }
+        break;
+    case DRIVERFUNC_GETPLUGIN:
+        {
+            LPCWSTR filename = (LPCWSTR)wParam;
+            if (filename)
+            {
+                INT i = PF_FindFileName(s_plugins, filename);
+                if (i < 0)
+                    return (LRESULT)NULL;
+                return (LRESULT)&s_plugins[i];
+            }
+            return (LRESULT)pi;
+        }
+        break;
+    case DRIVERFUNC_GETBANGNAME:
+        {
+            INT nBangID = (INT)wParam;
+            LPCWSTR filename = (LPCWSTR)lParam;
+            if (filename)
+            {
+                INT i = PF_FindFileName(s_plugins, filename);
+                if (i < 0)
+                    return (LRESULT)NULL;
+                return PF_ActOne(&s_plugins[i], PLUGIN_ACTION_GETBANGNAME, nBangID, 0);
+            }
+            return PF_ActOne(pi, PLUGIN_ACTION_GETBANGNAME, nBangID, 0);
+        }
+        break;
+    case DRIVERFUNC_DOBANG:
+        {
+            INT nBangID = (INT)wParam;
+            LPCWSTR filename = (LPCWSTR)lParam;
+            if (filename)
+            {
+                INT i = PF_FindFileName(s_plugins, filename);
+                if (i < 0)
+                    return (LRESULT)NULL;
+                return PF_ActOne(&s_plugins[i], PLUGIN_ACTION_DOBANG, nBangID, 0);
+            }
+            return PF_ActOne(pi, PLUGIN_ACTION_DOBANG, nBangID, 0);
+        }
+        break;
+    }
     return 0;
 }
 
@@ -37,7 +89,6 @@ static void PF_Init(PLUGIN *pi)
     pi->framework_instance = GetModuleHandle(NULL);
     pi->framework_window = NULL;
     pi->driver = driver;
-    //pi->driver = NULL;
 }
 
 static BOOL PF_Validate(PLUGIN *pi)

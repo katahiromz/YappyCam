@@ -150,6 +150,9 @@ typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
 extern sound_devices_t g_sound_devices;
 extern std::vector<WAVE_FORMAT_INFO> m_wave_formats;
 
+// plugins
+extern std::vector<PLUGIN> s_plugins;
+
 // dialogs
 BOOL DoSoundInputDialogBox(HWND hwndParent);
 BOOL DoPictureInputDialogBox(HWND hwndParent);

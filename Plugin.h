@@ -34,6 +34,42 @@ typedef LRESULT (APIENTRY *PLUGIN_ACT)(struct PLUGIN *pi, UINT uAction, WPARAM w
 
 typedef LRESULT (APIENTRY *PLUGIN_DRIVER)(struct PLUGIN *pi, UINT uFunc, WPARAM wParam, LPARAM lParam);
 
+// Driver: DRIVERFUNC_LISTPLUGINS (1)
+//      Meaning: Get the plugin from filename.
+//      Parameters:
+//         wParam: zero;
+//         lParam: LPDWORD pcItems;
+//      Return value:
+//         The pointer to the PLUGIN structures, or NULL.
+#define DRIVERFUNC_LISTPLUGINS 1
+
+// Driver: DRIVERFUNC_GETPLUGIN (2)
+//      Meaning: Get the plugin from filename.
+//      Parameters:
+//         wParam: LPCWSTR filename;
+//         lParam: zero;
+//      Return value:
+//         The pointer to The PLUGIN structure, or NULL.
+#define DRIVERFUNC_GETPLUGIN 2
+
+// Driver: DRIVERFUNC_GETBANGNAME (3)
+//      Meaning: Get the name of a bang;
+//      Parameters:
+//         wParam: INT nBangID;
+//         lParam: LPCWSTR filename;
+//      Return value:
+//         LPCWSTR bangName or NULL;
+#define DRIVERFUNC_GETBANGNAME 3
+
+// Driver: DRIVERFUNC_DOBANG (4)
+//      Meaning: Do something.
+//      Parameters:
+//         wParam: INT nBangID;
+//         lParam: LPCWSTR filename;
+//      Return value:
+//         TRUE or FALSE;
+#define DRIVERFUNC_DOBANG 4
+
 // NOTE: This structure must be a POD (Plain Old Data).
 typedef struct PLUGIN
 {
@@ -54,11 +90,6 @@ typedef struct PLUGIN
     TCHAR plugin_copyright[128];
     HINSTANCE plugin_instance;
 
-    // Use freely:
-    HWND plugin_window;
-    void *p_user_data;
-    LPARAM l_user_data;
-
     // TODO: Add more members and version up...
 #define PLUGIN_INFO_PASS 0x1
 #define PLUGIN_INFO_PICINPUT 0x2
@@ -72,6 +103,11 @@ typedef struct PLUGIN
 #define PLUGIN_STATE_PASS2 0x1
     DWORD dwStateFlags;
     BOOL bEnabled;
+
+    // Use freely:
+    HWND plugin_window;
+    void *p_user_data;
+    LPARAM l_user_data;
 } PLUGIN;
 
 #ifdef __cplusplus
@@ -160,6 +196,24 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 //         dwStateFlags if successful and dwStateMask is zero;
 //         TRUE if successful and dwStateMask is non-zero;
 #define PLUGIN_ACTION_SETSTATE 8
+
+// Action: PLUGIN_ACTION_DOBANG (9)
+//      Meaning: Do something.
+//      Parameters:
+//         wParam: INT nBangID;
+//         lParam: zero;
+//      Return value:
+//         TRUE or FALSE;
+#define PLUGIN_ACTION_DOBANG 9
+
+// Action: PLUGIN_ACTION_GETBANGNAME (10)
+//      Meaning: Get the name of the bang.
+//      Parameters:
+//         wParam: INT nBangID;
+//         lParam: zero;
+//      Return value:
+//         LPCWSTR bangName;
+#define PLUGIN_ACTION_GETBANGNAME 10
 
 #ifdef __cplusplus
 } // extern "C"
