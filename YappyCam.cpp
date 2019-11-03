@@ -2314,8 +2314,6 @@ void OnRecStop(HWND hwnd)
     g_sound.SetSoundFile(szPath);
 
     // update UI
-    EnableWindow(GetDlgItem(hwnd, psh4), FALSE);
-    SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
     CheckDlgButton(hwnd, psh2, BST_UNCHECKED);
     s_bWritingOld = FALSE;
 
@@ -3130,6 +3128,31 @@ static void OnDropFiles(HWND hwnd, HDROP hdrop)
         DoPictureInputDialogBox(hwnd);
 }
 
+static void OnInitMenuPopup(HWND hwnd, HMENU hMenu, UINT item, BOOL fSystemMenu)
+{
+    if (fSystemMenu)
+        return;
+
+    if (s_bWriting)
+    {
+        EnableMenuItem(hMenu, ID_PICTUREINPUT, MF_BYCOMMAND | MF_GRAYED);
+        EnableMenuItem(hMenu, ID_SOUNDINPUT, MF_BYCOMMAND | MF_GRAYED);
+        EnableMenuItem(hMenu, ID_SAVETO, MF_BYCOMMAND | MF_GRAYED);
+        EnableMenuItem(hMenu, ID_HOTKEYS, MF_BYCOMMAND | MF_GRAYED);
+        EnableMenuItem(hMenu, ID_INITSETTINGS, MF_BYCOMMAND | MF_GRAYED);
+        EnableMenuItem(hMenu, ID_ABOUT, MF_BYCOMMAND | MF_GRAYED);
+    }
+    else
+    {
+        EnableMenuItem(hMenu, ID_PICTUREINPUT, MF_BYCOMMAND | MF_ENABLED);
+        EnableMenuItem(hMenu, ID_SOUNDINPUT, MF_BYCOMMAND | MF_ENABLED);
+        EnableMenuItem(hMenu, ID_SAVETO, MF_BYCOMMAND | MF_ENABLED);
+        EnableMenuItem(hMenu, ID_HOTKEYS, MF_BYCOMMAND | MF_ENABLED);
+        EnableMenuItem(hMenu, ID_INITSETTINGS, MF_BYCOMMAND | MF_ENABLED);
+        EnableMenuItem(hMenu, ID_ABOUT, MF_BYCOMMAND | MF_ENABLED);
+    }
+}
+
 // the dialog procedure of the main window
 static INT_PTR CALLBACK
 DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -3154,6 +3177,7 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HANDLE_MSG(hwnd, WM_RBUTTONDBLCLK, OnRButtonDown);
         HANDLE_MSG(hwnd, WM_MBUTTONDOWN, OnMButtonDown);
         HANDLE_MSG(hwnd, WM_MBUTTONDBLCLK, OnMButtonDown);
+        HANDLE_MSG(hwnd, WM_INITMENUPOPUP, OnInitMenuPopup);
         case WM_SIZING:
         {
             if (OnSizing(hwnd, (DWORD)wParam, (LPRECT)lParam))
