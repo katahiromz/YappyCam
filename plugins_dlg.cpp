@@ -11,9 +11,6 @@ static void OnRefreshListView(HWND hwnd, INT iItem = -1)
 {
     HWND hLst1 = GetDlgItem(hwnd, lst1);
 
-    if (iItem == -1)
-        iItem = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
-
     ListView_DeleteAllItems(hLst1);
 
     LV_ITEM item = { LVIF_TEXT };
@@ -108,9 +105,11 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     ListView_InsertColumn(hLst1, column.iSubItem, &column);
     column.iSubItem++;
 
-    OnRefreshListView(hwnd, 0);
+    OnRefreshListView(hwnd);
 
     s_bInit = TRUE;
+
+    ListView_SetItemState(hLst1, 0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 
     return TRUE;
 }
