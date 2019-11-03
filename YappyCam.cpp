@@ -113,8 +113,7 @@ void DoRefreshPlugins(BOOL bReset)
     new_plugins = s_plugins;
 
     std::sort(new_plugins.begin(), new_plugins.end(),
-        [](const PLUGIN& p1, const PLUGIN& p2)
-        {
+        [](const PLUGIN& p1, const PLUGIN& p2) {
             return lstrcmpiW(p1.plugin_filename, p2.plugin_filename) < 0;
         }
     );
@@ -788,7 +787,7 @@ void DoReorderPlugins(HWND hwnd)
         }
     }
 
-    s_plugins = new_plugins;
+    s_plugins = std::move(new_plugins);
 
     INT i = 0;
     for (auto& plugin : s_plugins)
@@ -2432,7 +2431,7 @@ static void OnInitSettings(HWND hwnd)
 
     if (nID == IDYES)
     {
-        DoClosePopups(hwnd);
+        DoClosePopups(hwnd, TRUE);
         g_settings.init();
         g_settings.save(hwnd);
         g_settings.update(hwnd);
