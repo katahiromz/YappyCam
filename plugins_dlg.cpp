@@ -97,14 +97,14 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     ZeroMemory(&column, sizeof(column));
     column.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
     column.fmt = LVCFMT_LEFT;
-    column.cx = 110;
+    column.cx = 130;
     StringCbCopy(szText, sizeof(szText), LoadStringDx(IDS_NAME));
     column.pszText = szText;
     ListView_InsertColumn(hLst1, column.iSubItem, &column);
     column.iSubItem++;
 
     column.fmt = LVCFMT_LEFT;
-    column.cx = 150;
+    column.cx = 130;
     StringCbCopy(szText, sizeof(szText), LoadStringDx(IDS_FILENAME));
     column.pszText = szText;
     ListView_InsertColumn(hLst1, column.iSubItem, &column);
