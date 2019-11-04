@@ -268,6 +268,11 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
 
         point1 = clock::now();
 
+        if (g_settings.GetPictureType() != PT_IMAGEFILE)
+        {
+            s_image_cap.release();
+        }
+
         cv::Mat image;
         switch (g_settings.GetPictureType())
         {
