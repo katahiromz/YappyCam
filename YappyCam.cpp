@@ -317,7 +317,10 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             {
                 s_image_cap.release();
                 s_image_cap.open(g_settings.m_strInputFileNameA.c_str());
-                s_image_cap.read(image);
+                if (!s_image_cap.read(image))
+                {
+                    image = cv::Mat::zeros(g_settings.m_nWidth, g_settings.m_nHeight, CV_8UC3);
+                }
             }
             if (image.data)
             {
@@ -1109,6 +1112,7 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
 
     s_camera.release();
     s_frame.release();
+    s_image_cap.release();
 
     switch (type)
     {
@@ -1139,10 +1143,14 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         break;
     case PT_IMAGEFILE:
         SetDisplayMode(DM_IMAGEFILE);
-        s_image_cap.release();
         s_image_cap.open(g_settings.m_strInputFileNameA.c_str());
         m_nWidth = (int)s_image_cap.get(cv::CAP_PROP_FRAME_WIDTH);
         m_nHeight = (int)s_image_cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+        if (m_nWidth <= 1 || m_nHeight <= 1)
+        {
+            m_nWidth = 320;
+            m_nHeight = 240;
+        }
         break;
     }
 
