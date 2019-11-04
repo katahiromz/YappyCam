@@ -115,10 +115,10 @@ typedef struct PLUGIN
 #define PLUGIN_INFO_BROADCASTER 0x5
 #define PLUGIN_INFO_TYPEMASK 0xF
 #define PLUGIN_INFO_NOCONFIG 0x10
-    DWORD dwInfoFlags;
+    DWORD dwInfo;
 #define PLUGIN_STATE_PASS1 0x0
 #define PLUGIN_STATE_PASS2 0x1
-    DWORD dwStateFlags;
+    DWORD dwState;
     BOOL bEnabled;
 
     // Use freely:
@@ -202,7 +202,7 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 //         wParam: DWORD dwState;
 //         lParam: DWORD dwStateMask;
 //      Return value:
-//         dwStateFlags if successful and dwStateMask is zero;
+//         dwState if successful and dwStateMask is zero;
 //         TRUE if successful and dwStateMask is non-zero;
 #define PLUGIN_ACTION_SETSTATE 8
 

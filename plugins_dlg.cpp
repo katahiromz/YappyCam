@@ -35,10 +35,10 @@ void Lst1_SetItem(HWND hLst1, PLUGIN& plugin, INT iItem = -1)
     ListView_SetItem(hLst1, &item);
 
     item.iSubItem = 2;
-    switch (plugin.dwInfoFlags & PLUGIN_INFO_TYPEMASK)
+    switch (plugin.dwInfo & PLUGIN_INFO_TYPEMASK)
     {
     case PLUGIN_INFO_PASS:
-        if (plugin.dwStateFlags & PLUGIN_STATE_PASS2)
+        if (plugin.dwState & PLUGIN_STATE_PASS2)
             item.pszText = LoadStringDx(IDS_PASS2);
         else
             item.pszText = LoadStringDx(IDS_PASS1);
@@ -185,7 +185,7 @@ static void OnPsh3(HWND hwnd)
         return;
 
     auto& plugin = s_plugins[iItem];
-    if (plugin.dwInfoFlags & PLUGIN_INFO_NOCONFIG)
+    if (plugin.dwInfo & PLUGIN_INFO_NOCONFIG)
         return;
 
     PF_ActOne(&plugin, PLUGIN_ACTION_SHOWDIALOG, (WPARAM)g_hMainWnd, TRUE);
@@ -199,7 +199,7 @@ static void OnPsh4(HWND hwnd)
         return;
 
     auto& plugin = s_plugins[iItem];
-    if ((plugin.dwInfoFlags & PLUGIN_INFO_TYPEMASK) != PLUGIN_INFO_PASS)
+    if ((plugin.dwInfo & PLUGIN_INFO_TYPEMASK) != PLUGIN_INFO_PASS)
         return;
 
     PF_ActOne(&plugin, PLUGIN_ACTION_SETSTATE,
@@ -216,7 +216,7 @@ static void OnPsh5(HWND hwnd)
         return;
 
     auto& plugin = s_plugins[iItem];
-    if ((plugin.dwInfoFlags & PLUGIN_INFO_TYPEMASK) != PLUGIN_INFO_PASS)
+    if ((plugin.dwInfo & PLUGIN_INFO_TYPEMASK) != PLUGIN_INFO_PASS)
         return;
 
     PF_ActOne(&plugin, PLUGIN_ACTION_SETSTATE,
@@ -349,7 +349,7 @@ static LRESULT OnNotify(HWND hwnd, int idFrom, LPNMHDR pnmhdr)
         else
             EnableWindow(GetDlgItem(hwnd, psh2), FALSE);
 
-        if (s_plugins[iItem].dwInfoFlags & PLUGIN_INFO_NOCONFIG)
+        if (s_plugins[iItem].dwInfo & PLUGIN_INFO_NOCONFIG)
         {
             EnableWindow(GetDlgItem(hwnd, psh3), FALSE);
         }
@@ -358,9 +358,9 @@ static LRESULT OnNotify(HWND hwnd, int idFrom, LPNMHDR pnmhdr)
             EnableWindow(GetDlgItem(hwnd, psh3), TRUE);
         }
 
-        if ((s_plugins[iItem].dwInfoFlags & PLUGIN_INFO_TYPEMASK) == PLUGIN_INFO_PASS)
+        if ((s_plugins[iItem].dwInfo & PLUGIN_INFO_TYPEMASK) == PLUGIN_INFO_PASS)
         {
-            if (s_plugins[iItem].dwStateFlags & PLUGIN_STATE_PASS2)
+            if (s_plugins[iItem].dwState & PLUGIN_STATE_PASS2)
             {
                 EnableWindow(GetDlgItem(hwnd, psh4), TRUE);
                 EnableWindow(GetDlgItem(hwnd, psh5), FALSE);

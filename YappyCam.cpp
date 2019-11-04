@@ -92,8 +92,8 @@ void DoPass1Frame(const cv::Mat& image)
     for (auto& plugin : s_plugins)
     {
         if (plugin.bEnabled &&
-            (plugin.dwInfoFlags & PLUGIN_INFO_TYPEMASK) == PLUGIN_INFO_PASS &&
-            !(plugin.dwStateFlags & PLUGIN_STATE_PASS2))
+            (plugin.dwInfo & PLUGIN_INFO_TYPEMASK) == PLUGIN_INFO_PASS &&
+            !(plugin.dwState & PLUGIN_STATE_PASS2))
         {
             PF_ActOne(&plugin, PLUGIN_ACTION_PASS, (WPARAM)&image, 0);
         }
@@ -105,8 +105,8 @@ void DoPass2Frame(cv::Mat& image)
     for (auto& plugin : s_plugins)
     {
         if (plugin.bEnabled &&
-            (plugin.dwInfoFlags & PLUGIN_INFO_TYPEMASK) == PLUGIN_INFO_PASS &&
-            (plugin.dwStateFlags & PLUGIN_STATE_PASS2))
+            (plugin.dwInfo & PLUGIN_INFO_TYPEMASK) == PLUGIN_INFO_PASS &&
+            (plugin.dwState & PLUGIN_STATE_PASS2))
         {
             PF_ActOne(&plugin, PLUGIN_ACTION_PASS, (WPARAM)&image, 0);
         }
@@ -762,7 +762,7 @@ void DoRememberPlugins(HWND hwnd)
     {
         g_settings.m_strvecPluginNames.push_back(plugin.plugin_filename);
         g_settings.m_bvecPluginEnabled.push_back(plugin.bEnabled);
-        g_settings.m_dwvecPluginState.push_back(plugin.dwStateFlags);
+        g_settings.m_dwvecPluginState.push_back(plugin.dwState);
     }
 }
 
@@ -811,7 +811,7 @@ void DoReorderPlugins(HWND hwnd)
         if (i == nCount)
             break;
         plugin.bEnabled = g_settings.m_bvecPluginEnabled[i];
-        plugin.dwStateFlags = g_settings.m_dwvecPluginState[i];
+        plugin.dwState = g_settings.m_dwvecPluginState[i];
         ++i;
     }
 
