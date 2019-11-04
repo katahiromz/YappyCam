@@ -110,8 +110,7 @@ typedef struct PLUGIN
     // TODO: Add more members and version up...
 #define PLUGIN_INFO_PASS 0x1
 #define PLUGIN_INFO_PICINPUT 0x2
-#define PLUGIN_INFO_FUSEBOX 0x3
-#define PLUGIN_INFO_SOUNDBOX 0x4
+#define PLUGIN_INFO_SWITCHBOARD 0x3
 #define PLUGIN_INFO_BROADCASTER 0x5
 #define PLUGIN_INFO_TYPEMASK 0xF
 #define PLUGIN_INFO_NOCONFIG 0x10

@@ -46,11 +46,8 @@ void Lst1_SetItem(HWND hLst1, PLUGIN& plugin, INT iItem = -1)
     case PLUGIN_INFO_PICINPUT:
         item.pszText = LoadStringDx(IDS_PICINPUT);
         break;
-    case PLUGIN_INFO_FUSEBOX:
-        item.pszText = LoadStringDx(IDS_FUSEBOX);
-        break;
-    case PLUGIN_INFO_SOUNDBOX:
-        item.pszText = LoadStringDx(IDS_SOUNDBOX);
+    case PLUGIN_INFO_SWITCHBOARD:
+        item.pszText = LoadStringDx(IDS_SWITCHBOARD);
         break;
     case PLUGIN_INFO_BROADCASTER:
         item.pszText = LoadStringDx(IDS_BROADCASTER);

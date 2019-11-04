@@ -248,7 +248,7 @@ STRINGTABLE
     IDS_PASS2, "Pass 2"
     IDS_PASS1AND2, "Pass 1&2"
     IDS_PICINPUT, "Picture Input"
-    IDS_FUSEBOX, "Fuse Box"
+    IDS_SWITCHBOARD, "Switch Board"
     IDS_SOUNDBOX, "Sound Box"
     IDS_BROADCASTER, "Broadcaster"
     IDS_UNKNOWN, "(Unknown Type)"
