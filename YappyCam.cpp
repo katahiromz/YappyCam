@@ -113,6 +113,18 @@ void DoPass2Frame(cv::Mat& image)
     }
 }
 
+void DoBoardcastFrame(cv::Mat& image)
+{
+    for (auto& plugin : s_plugins)
+    {
+        if (plugin.bEnabled &&
+            (plugin.dwInfo & PLUGIN_INFO_TYPEMASK) == PLUGIN_INFO_BROADCASTER)
+        {
+            PF_ActOne(&plugin, PLUGIN_ACTION_PASS, (WPARAM)&image, 0);
+        }
+    }
+}
+
 void DoRefreshPlugins(BOOL bReset)
 {
     std::vector<PLUGIN> new_plugins;
@@ -344,6 +356,7 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
 
         DoPass1Frame(image);
         DoPass2Frame(image);
+        DoBoardcastFrame(image);
 
         if (s_bWriting)
         {

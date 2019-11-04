@@ -249,7 +249,7 @@ STRINGTABLE
     IDS_PASS2, "第二段階"
     IDS_PASS1AND2, "第一&第二段階"
     IDS_PICINPUT, "映像入力"
-    IDS_TRIGGERBOX, "トリガーボックス"
+    IDS_FUSEBOX, "導火線の箱"
     IDS_SOUNDBOX, "サウンドボックス"
     IDS_BROADCASTER, "放映機"
     IDS_UNKNOWN, "(未知の種類)"
