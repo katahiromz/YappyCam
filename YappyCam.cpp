@@ -2909,7 +2909,6 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
         case PT_BLACK:
         case PT_WHITE:
         case PT_FINALIZING:
-        case PT_IMAGEFILE:
             g_settings.m_nWindow1CX = cxWnd;
             g_settings.m_nWindow1CY = cyWnd;
             break;
@@ -2920,6 +2919,10 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
         case PT_VIDEOCAP:
             g_settings.m_nWindow3CX = cxWnd;
             g_settings.m_nWindow3CY = cyWnd;
+            break;
+        case PT_IMAGEFILE:
+            g_settings.m_nWindow4CX = cxWnd;
+            g_settings.m_nWindow4CY = cyWnd;
             break;
         }
     }
