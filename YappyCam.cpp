@@ -432,6 +432,7 @@ void Settings::init()
     m_nWindow1X = m_nWindow1Y = CW_USEDEFAULT;
     m_nWindow2X = m_nWindow2Y = CW_USEDEFAULT;
     m_nWindow3X = m_nWindow3Y = CW_USEDEFAULT;
+    m_nWindow4X = m_nWindow4Y = CW_USEDEFAULT;
 
     m_nWindow1CX = 250;
     m_nWindow1CY = 160;
@@ -439,6 +440,8 @@ void Settings::init()
     m_nWindow2CY = 160;
     m_nWindow3CX = 250;
     m_nWindow3CY = 160;
+    m_nWindow4CX = 250;
+    m_nWindow4CY = 160;
 
     m_nSoundDlgX = m_nSoundDlgY = CW_USEDEFAULT;
     m_nPicDlgX = m_nPicDlgY = CW_USEDEFAULT;
@@ -530,6 +533,8 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"Window2Y", (DWORD&)m_nWindow2Y);
     app_key.QueryDword(L"Window3X", (DWORD&)m_nWindow3X);
     app_key.QueryDword(L"Window3Y", (DWORD&)m_nWindow3Y);
+    app_key.QueryDword(L"Window4X", (DWORD&)m_nWindow4X);
+    app_key.QueryDword(L"Window4Y", (DWORD&)m_nWindow4Y);
 
     app_key.QueryDword(L"Window1CX", (DWORD&)m_nWindow1CX);
     app_key.QueryDword(L"Window1CY", (DWORD&)m_nWindow1CY);
@@ -537,6 +542,8 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"Window2CY", (DWORD&)m_nWindow2CY);
     app_key.QueryDword(L"Window3CX", (DWORD&)m_nWindow3CX);
     app_key.QueryDword(L"Window3CY", (DWORD&)m_nWindow3CY);
+    app_key.QueryDword(L"Window4CX", (DWORD&)m_nWindow4CX);
+    app_key.QueryDword(L"Window4CY", (DWORD&)m_nWindow4CY);
 
     app_key.QueryDword(L"SoundDlgX", (DWORD&)m_nSoundDlgX);
     app_key.QueryDword(L"SoundDlgY", (DWORD&)m_nSoundDlgY);
@@ -701,6 +708,8 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"Window2Y", m_nWindow2Y);
     app_key.SetDword(L"Window3X", m_nWindow3X);
     app_key.SetDword(L"Window3Y", m_nWindow3Y);
+    app_key.SetDword(L"Window4X", m_nWindow4X);
+    app_key.SetDword(L"Window4Y", m_nWindow4Y);
 
     app_key.SetDword(L"Window1CX", m_nWindow1CX);
     app_key.SetDword(L"Window1CY", m_nWindow1CY);
@@ -708,6 +717,8 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"Window2CY", m_nWindow2CY);
     app_key.SetDword(L"Window3CX", m_nWindow3CX);
     app_key.SetDword(L"Window3CY", m_nWindow3CY);
+    app_key.SetDword(L"Window4CX", m_nWindow4CX);
+    app_key.SetDword(L"Window4CY", m_nWindow4CY);
 
     app_key.SetDword(L"SoundDlgX", m_nSoundDlgX);
     app_key.SetDword(L"SoundDlgY", m_nSoundDlgY);
@@ -1066,8 +1077,11 @@ void Settings::fix_size(HWND hwnd)
     case PT_FINALIZING:
         return;
     case PT_IMAGEFILE:
-        fix_size0(hwnd);
-        return;
+        x = m_nWindow4X;
+        y = m_nWindow4Y;
+        cx = m_nWindow4CX;
+        cy = m_nWindow4CY;
+        break;
     }
 
     if (x != CW_USEDEFAULT && y != CW_USEDEFAULT)
@@ -2817,7 +2831,6 @@ static void OnMove(HWND hwnd, int x, int y)
     case PT_BLACK:
     case PT_WHITE:
     case PT_FINALIZING:
-    case PT_IMAGEFILE:
         g_settings.m_nWindow1X = rc.left;
         g_settings.m_nWindow1Y = rc.top;
         break;
@@ -2828,6 +2841,10 @@ static void OnMove(HWND hwnd, int x, int y)
     case PT_VIDEOCAP:
         g_settings.m_nWindow3X = rc.left;
         g_settings.m_nWindow3Y = rc.top;
+        break;
+    case PT_IMAGEFILE:
+        g_settings.m_nWindow4X = rc.left;
+        g_settings.m_nWindow4Y = rc.top;
         break;
     }
 }

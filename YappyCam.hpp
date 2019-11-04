@@ -62,12 +62,16 @@ struct Settings
     INT m_nWindow2Y;
     INT m_nWindow3X;
     INT m_nWindow3Y;
+    INT m_nWindow4X;
+    INT m_nWindow4Y;
     INT m_nWindow1CX;
     INT m_nWindow1CY;
     INT m_nWindow2CX;
     INT m_nWindow2CY;
     INT m_nWindow3CX;
     INT m_nWindow3CY;
+    INT m_nWindow4CX;
+    INT m_nWindow4CY;
     INT m_nSoundDlgX;
     INT m_nSoundDlgY;
     INT m_nPicDlgX;
