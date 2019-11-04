@@ -2794,9 +2794,11 @@ static void OnGetMinMaxInfo(HWND hwnd, LPMINMAXINFO lpMinMaxInfo)
 
     // restrict the maximum size of the main window
     SetRectEmpty(&rc);
-    rc.right = 192;
-    rc.bottom = rc.right * g_settings.m_nHeight / g_settings.m_nWidth;
+    rc.bottom = 80;
+    rc.right = rc.bottom * g_settings.m_nWidth / g_settings.m_nHeight;
+    rc.right += s_button_width + s_progress_width;
     AdjustWindowRectEx(&rc, style, bMenu, exstyle);
+
     lpMinMaxInfo->ptMinTrackSize.x = rc.right - rc.left;
     lpMinMaxInfo->ptMinTrackSize.y = rc.bottom - rc.top;
 }
@@ -3233,6 +3235,9 @@ DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HANDLE_MSG(hwnd, WM_MBUTTONDOWN, OnMButtonDown);
         HANDLE_MSG(hwnd, WM_MBUTTONDBLCLK, OnMButtonDown);
         HANDLE_MSG(hwnd, WM_INITMENUPOPUP, OnInitMenuPopup);
+        case WM_NCLBUTTONDBLCLK:
+            SetWindowLongPtr(hwnd, DWLP_MSGRESULT, 0);
+            break;
         case WM_SIZING:
         {
             if (OnSizing(hwnd, (DWORD)wParam, (LPRECT)lParam))
