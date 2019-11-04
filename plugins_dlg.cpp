@@ -282,7 +282,7 @@ static void OnListViewItemChanges(HWND hwnd, BOOL bState, INT iItem = -1)
     if (0 <= iItem && iItem < INT(s_plugins.size()))
     {
         BOOL bEnabled = ListView_GetCheckState(hLst1, iItem);
-        s_plugins[iItem].bEnabled = bEnabled;
+        PF_ActOne(&s_plugins[iItem], PLUGIN_ACTION_ENABLE, bEnabled, 0);
 
         INT iSelected = ListView_GetNextItem(hLst1, -1, LVNI_ALL | LVNI_SELECTED);
         if (bState && iItem != iSelected)

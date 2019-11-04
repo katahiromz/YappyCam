@@ -197,10 +197,7 @@ LRESULT PF_ActAll(std::vector<PLUGIN>& pis, UINT uAction, WPARAM wParam, LPARAM 
     LRESULT ret = 0;
     for (size_t i = 0; i < pis.size(); ++i)
     {
-        if (pis[i].bEnabled)
-        {
-            ret = PF_ActOne(&pis[i], uAction, wParam, lParam);
-        }
+        ret = PF_ActOne(&pis[i], uAction, wParam, lParam);
     }
     return ret;
 }

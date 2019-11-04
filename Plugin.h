@@ -180,6 +180,15 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 //      Return value: zero;
 #define PLUGIN_ACTION_PASS 4
 
+// Action: PLUGIN_ACTION_ENABLE (5)
+//      Meaning: Enable/Disable the plugin.
+//      Parameters:
+//         wParam: INT nSwitch;
+//            0: Disable, 1: Enable, 2: Toggle;
+//         lParam: zero;
+//      Return value: zero;
+#define PLUGIN_ACTION_ENABLE 5
+
 // Action: PLUGIN_ACTION_SHOWDIALOG (6)
 //      Meaning: Show/Hide a modeless dialog for plugin settings
 //      Parameters:

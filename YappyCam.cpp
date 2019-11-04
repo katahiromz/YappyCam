@@ -810,7 +810,9 @@ void DoReorderPlugins(HWND hwnd)
     {
         if (i == nCount)
             break;
-        plugin.bEnabled = g_settings.m_bvecPluginEnabled[i];
+
+        PF_ActOne(&plugin, PLUGIN_ACTION_ENABLE, g_settings.m_bvecPluginEnabled[i], 0);
+
         plugin.dwState = g_settings.m_dwvecPluginState[i];
         ++i;
     }
