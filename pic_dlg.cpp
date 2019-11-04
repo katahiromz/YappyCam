@@ -709,6 +709,7 @@ static void Page2_OnCmb1(HWND hwnd)
     if (attrs != 0xFFFFFFFF && !(attrs & FILE_ATTRIBUTE_DIRECTORY))
     {
         g_settings.m_strInputFileName = szText;
+        g_settings.m_strInputFileNameA = ansi_from_wide(szText);
         Page2_DoUpdateInput(hwnd);
     }
 }
@@ -729,6 +730,7 @@ static void Page2_OnPsh1(HWND hwnd)
     if (GetOpenFileName(&ofn))
     {
         g_settings.m_strInputFileName = szFile;
+        g_settings.m_strInputFileNameA = ansi_from_wide(szFile);
         SetDlgItemText(hwnd, cmb1, szFile);
         Page2_DoUpdateInput(hwnd);
     }
@@ -776,6 +778,7 @@ static void Page2_OnDropFiles(HWND hwnd, HDROP hdrop)
     if (attrs != 0xFFFFFFFF && !(attrs & FILE_ATTRIBUTE_DIRECTORY))
     {
         g_settings.m_strInputFileName = szPath;
+        g_settings.m_strInputFileNameA = ansi_from_wide(szPath);
         SetDlgItemText(hwnd, cmb1, szPath);
         Page2_DoUpdateInput(hwnd);
     }

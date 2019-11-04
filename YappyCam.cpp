@@ -39,6 +39,9 @@ std::vector<WAVE_FORMAT_INFO> m_wave_formats;
 // for camera capture
 static cv::VideoCapture s_camera;
 
+// for image file capture
+static cv::VideoCapture s_image_cap;
+
 // for video writing
 static cv::VideoWriter s_writer;
 static BOOL s_bWriting = FALSE;
@@ -310,17 +313,16 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             }
             break;
         case PT_IMAGEFILE:
+            if (!s_image_cap.read(image))
             {
-                image = cv::imread(ansi_from_wide(g_settings.m_strInputFileName.c_str()));
-                if (!image.data)
-                {
-                    image = cv::Mat::zeros(g_settings.m_nHeight, g_settings.m_nWidth, CV_8UC3);
-                }
-                else
-                {
-                    g_settings.m_nWidth = (int)image.cols;
-                    g_settings.m_nHeight = (int)image.rows;
-                }
+                s_image_cap.release();
+                s_image_cap.open(g_settings.m_strInputFileNameA.c_str());
+                s_image_cap.read(image);
+            }
+            if (image.data)
+            {
+                g_settings.m_nWidth = (int)image.cols;
+                g_settings.m_nHeight = (int)image.rows;
             }
             break;
         }
@@ -461,7 +463,8 @@ void Settings::init()
     m_strSoundFileName = TEXT("Sound.wav");
     m_strSoundTempFileName = TEXT("Sound.sound");
     m_strShotFileName = TEXT("Shot-%04u-%02u-%02u-%02u-%02u-%02u.jpg");
-    m_strInputFileName.clear();;
+    m_strInputFileName.clear();
+    m_strInputFileNameA.clear();
 
     m_strStatusText = TEXT("No image");
 
@@ -581,10 +584,12 @@ bool Settings::load(HWND hwnd)
         if (attrs != 0xFFFFFFFF && !(attrs & FILE_ATTRIBUTE_DIRECTORY))
         {
             m_strInputFileName = szText;
+            m_strInputFileNameA = ansi_from_wide(szText);
         }
         else
         {
             m_strInputFileName.clear();
+            m_strInputFileNameA.clear();
         }
     }
 
@@ -1133,17 +1138,12 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         SetDisplayMode(DM_TEXT);
         break;
     case PT_IMAGEFILE:
-        {
-            SetDisplayMode(DM_IMAGEFILE);
-            cv::Mat image;
-            image = cv::imread(ansi_from_wide(g_settings.m_strInputFileName.c_str()));
-            if (image.data)
-            {
-                m_nWidth = (int)image.cols;
-                m_nHeight = (int)image.rows;
-            }
-            break;
-        }
+        SetDisplayMode(DM_IMAGEFILE);
+        s_image_cap.release();
+        s_image_cap.open(g_settings.m_strInputFileNameA.c_str());
+        m_nWidth = (int)s_image_cap.get(cv::CAP_PROP_FRAME_WIDTH);
+        m_nHeight = (int)s_image_cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+        break;
     }
 
     m_nPictureType = type;
@@ -3119,6 +3119,7 @@ static void OnDropFiles(HWND hwnd, HDROP hdrop)
     if (attrs != 0xFFFFFFFF && !(attrs & FILE_ATTRIBUTE_DIRECTORY))
     {
         g_settings.m_strInputFileName = szPath;
+        g_settings.m_strInputFileNameA = ansi_from_wide(szPath);
         DoStartStopTimers(hwnd, FALSE);
         g_settings.SetPictureType(hwnd, PT_IMAGEFILE);
         DoStartStopTimers(hwnd, TRUE);
