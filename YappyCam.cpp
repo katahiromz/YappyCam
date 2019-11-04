@@ -319,7 +319,11 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
                 s_image_cap.open(g_settings.m_strInputFileNameA.c_str());
                 if (!s_image_cap.read(image))
                 {
-                    image = cv::Mat::zeros(g_settings.m_nWidth, g_settings.m_nHeight, CV_8UC3);
+                    image = cv::imread(g_settings.m_strInputFileNameA.c_str());
+                    if (!image.data)
+                    {
+                        image = cv::Mat::zeros(g_settings.m_nWidth, g_settings.m_nHeight, CV_8UC3);
+                    }
                 }
             }
             if (image.data)
@@ -1143,9 +1147,21 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         break;
     case PT_IMAGEFILE:
         SetDisplayMode(DM_IMAGEFILE);
-        s_image_cap.open(g_settings.m_strInputFileNameA.c_str());
-        m_nWidth = (int)s_image_cap.get(cv::CAP_PROP_FRAME_WIDTH);
-        m_nHeight = (int)s_image_cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+        s_image_cap.open(m_strInputFileNameA.c_str());
+        if (s_image_cap.isOpened())
+        {
+            m_nWidth = (int)s_image_cap.get(cv::CAP_PROP_FRAME_WIDTH);
+            m_nHeight = (int)s_image_cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+        }
+        else
+        {
+            cv::Mat image = cv::imread(m_strInputFileNameA.c_str());
+            if (image.data)
+            {
+                m_nWidth = image.cols;
+                m_nHeight = image.rows;
+            }
+        }
         if (m_nWidth <= 1 || m_nHeight <= 1)
         {
             m_nWidth = 320;
