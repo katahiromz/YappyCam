@@ -198,6 +198,8 @@ LRESULT PF_ActAll(std::vector<PLUGIN>& pis, UINT uAction, WPARAM wParam, LPARAM 
     for (size_t i = 0; i < pis.size(); ++i)
     {
         ret = PF_ActOne(&pis[i], uAction, wParam, lParam);
+        if (!ret)
+            break;
     }
     return ret;
 }

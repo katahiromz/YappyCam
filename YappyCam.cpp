@@ -1950,6 +1950,8 @@ void OnStop(HWND hwnd)
     CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
     CheckDlgButton(hwnd, psh2, BST_UNCHECKED);
 
+    PF_ActAll(s_plugins, PLUGIN_ACTION_ENDREC, 0, 0);
+
     if (!s_nFrames)
     {
         // not recorded yet
@@ -2322,8 +2324,12 @@ void OnRecStop(HWND hwnd)
         return;
     }
 
+    if (!PF_ActAll(s_plugins, PLUGIN_ACTION_STARTREC, 0, 0))
+        return;
+
     // play sound
     PlaySound(MAKEINTRESOURCE(IDR_STARTREC), g_hInst, SND_ASYNC | SND_NODEFAULT | SND_RESOURCE);
+
 
     // build image file path
     TCHAR szPath[MAX_PATH];
@@ -2396,6 +2402,8 @@ void OnResume(HWND hwnd)
         return;
     }
 
+    PF_ActAll(s_plugins, PLUGIN_ACTION_PAUSE, FALSE, 0);
+
     if (s_bWritingOld)
     {
         s_bWriting = TRUE;
@@ -2412,6 +2420,8 @@ void OnPause(HWND hwnd)
     {
         return;
     }
+
+    PF_ActAll(s_plugins, PLUGIN_ACTION_PAUSE, TRUE, 0);
 
     // disable recording
     s_bWritingOld = s_bWriting;

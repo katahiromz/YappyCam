@@ -155,7 +155,7 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 // Action: PLUGIN_ACTION_STARTREC (1)
 //      Meaning: Recording started.
 //      Parameters: zero;
-//      Return value: zero;
+//      Return value: TRUE to continue;
 #define PLUGIN_ACTION_STARTREC 1
 
 // Action: PLUGIN_ACTION_PAUSE (2)
@@ -163,13 +163,13 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 //      Parameters:
 //         wParam: TRUE for paused, FALSE for resumed;
 //         lParam: zero;
-//      Return value: zero;
+//      Return value: TRUE to continue;
 #define PLUGIN_ACTION_PAUSE 2
 
 // Action: PLUGIN_ACTION_ENDREC (3)
 //      Meaning: Recording ended.
 //      Parameters: zero;
-//      Return value: zero;
+//      Return value: TRUE to continue;
 #define PLUGIN_ACTION_ENDREC 3
 
 // Action: PLUGIN_ACTION_PASS (4)
@@ -177,7 +177,7 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 //      Parameters:
 //         wParam: cv::Mat* pmat;
 //         lParam: zero;
-//      Return value: zero;
+//      Return value: TRUE to continue;
 #define PLUGIN_ACTION_PASS 4
 
 // Action: PLUGIN_ACTION_ENABLE (5)
@@ -202,7 +202,7 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 //      Parameters:
 //         wParam: BOOL bResetSettings;
 //         lParam: zero;
-//      Return value: zero;
+//      Return value: TRUE to continue;
 #define PLUGIN_ACTION_REFRESH 7
 
 // Action: PLUGIN_ACTION_SETSTATE (8)
@@ -221,7 +221,7 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 //         wParam: INT nBangID;
 //         lParam: zero;
 //      Return value:
-//         TRUE or FALSE;
+//         TRUE to continue;
 #define PLUGIN_ACTION_DOBANG 9
 
 // Action: PLUGIN_ACTION_GETBANGLIST (10)
@@ -230,7 +230,7 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 //         wParam: LPINT pnBangCount;
 //         lParam: zero;
 //      Return value:
-//         The number of bang count or zero;
+//         const BANG_INFO *pList or NULL;
 #define PLUGIN_ACTION_GETBANGLIST 10
 
 #ifdef __cplusplus
