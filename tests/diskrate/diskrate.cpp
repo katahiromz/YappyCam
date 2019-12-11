@@ -8,7 +8,7 @@
 void usage(void)
 {
     std::cout <<
-        "diskrate 1.0 by katahiromz\n" << 
+        "diskrate 0.9.1 by katahiromz\n" << 
         "Usage: diskrate X N\n" <<
         "Writes random data of X bytes N times to a temporary file." <<
         std::endl;

@@ -56,14 +56,8 @@ struct Settings
     INT m_yCap;
     INT m_cxCap;
     INT m_cyCap;
-    INT m_nWindow1X;
-    INT m_nWindow1Y;
-    INT m_nWindow2X;
-    INT m_nWindow2Y;
-    INT m_nWindow3X;
-    INT m_nWindow3Y;
-    INT m_nWindow4X;
-    INT m_nWindow4Y;
+    INT m_nWindowX;
+    INT m_nWindowY;
     INT m_nWindow1CX;
     INT m_nWindow1CY;
     INT m_nWindow2CX;

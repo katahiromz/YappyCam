@@ -429,10 +429,7 @@ void Settings::init()
     m_cxCap = GetSystemMetrics(SM_CXSCREEN);
     m_cyCap = GetSystemMetrics(SM_CYSCREEN);
 
-    m_nWindow1X = m_nWindow1Y = CW_USEDEFAULT;
-    m_nWindow2X = m_nWindow2Y = CW_USEDEFAULT;
-    m_nWindow3X = m_nWindow3Y = CW_USEDEFAULT;
-    m_nWindow4X = m_nWindow4Y = CW_USEDEFAULT;
+    m_nWindowX = m_nWindowY = CW_USEDEFAULT;
 
     m_nWindow1CX = 250;
     m_nWindow1CY = 160;
@@ -527,14 +524,8 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"cxCap", (DWORD&)m_cxCap);
     app_key.QueryDword(L"cyCap", (DWORD&)m_cyCap);
 
-    app_key.QueryDword(L"Window1X", (DWORD&)m_nWindow1X);
-    app_key.QueryDword(L"Window1Y", (DWORD&)m_nWindow1Y);
-    app_key.QueryDword(L"Window2X", (DWORD&)m_nWindow2X);
-    app_key.QueryDword(L"Window2Y", (DWORD&)m_nWindow2Y);
-    app_key.QueryDword(L"Window3X", (DWORD&)m_nWindow3X);
-    app_key.QueryDword(L"Window3Y", (DWORD&)m_nWindow3Y);
-    app_key.QueryDword(L"Window4X", (DWORD&)m_nWindow4X);
-    app_key.QueryDword(L"Window4Y", (DWORD&)m_nWindow4Y);
+    app_key.QueryDword(L"WindowX", (DWORD&)m_nWindowX);
+    app_key.QueryDword(L"WindowY", (DWORD&)m_nWindowY);
 
     app_key.QueryDword(L"Window1CX", (DWORD&)m_nWindow1CX);
     app_key.QueryDword(L"Window1CY", (DWORD&)m_nWindow1CY);
@@ -702,14 +693,8 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"cxCap", m_cxCap);
     app_key.SetDword(L"cyCap", m_cyCap);
 
-    app_key.SetDword(L"Window1X", m_nWindow1X);
-    app_key.SetDword(L"Window1Y", m_nWindow1Y);
-    app_key.SetDword(L"Window2X", m_nWindow2X);
-    app_key.SetDword(L"Window2Y", m_nWindow2Y);
-    app_key.SetDword(L"Window3X", m_nWindow3X);
-    app_key.SetDword(L"Window3Y", m_nWindow3Y);
-    app_key.SetDword(L"Window4X", m_nWindow4X);
-    app_key.SetDword(L"Window4Y", m_nWindow4Y);
+    app_key.SetDword(L"WindowX", m_nWindowX);
+    app_key.SetDword(L"WindowY", m_nWindowY);
 
     app_key.SetDword(L"Window1CX", m_nWindow1CX);
     app_key.SetDword(L"Window1CY", m_nWindow1CY);
@@ -1057,28 +1042,28 @@ void Settings::fix_size(HWND hwnd)
     {
     case PT_BLACK:
     case PT_WHITE:
-        x = m_nWindow1X;
-        y = m_nWindow1Y;
+        x = m_nWindowX;
+        y = m_nWindowY;
         cx = m_nWindow1CX;
         cy = m_nWindow1CY;
         break;
     case PT_SCREENCAP:
-        x = m_nWindow2X;
-        y = m_nWindow2Y;
+        x = m_nWindowX;
+        y = m_nWindowY;
         cx = m_nWindow2CX;
         cy = m_nWindow2CY;
         break;
     case PT_VIDEOCAP:
-        x = m_nWindow3X;
-        y = m_nWindow3Y;
+        x = m_nWindowX;
+        y = m_nWindowY;
         cx = m_nWindow3CX;
         cy = m_nWindow3CY;
         break;
     case PT_FINALIZING:
         return;
     case PT_IMAGEFILE:
-        x = m_nWindow4X;
-        y = m_nWindow4Y;
+        x = m_nWindowX;
+        y = m_nWindowY;
         cx = m_nWindow4CX;
         cy = m_nWindow4CY;
         break;
@@ -2826,27 +2811,8 @@ static void OnMove(HWND hwnd, int x, int y)
     GetWindowRect(hwnd, &rc);
 
     // record the positions for usability
-    switch (g_settings.GetPictureType())
-    {
-    case PT_BLACK:
-    case PT_WHITE:
-    case PT_FINALIZING:
-        g_settings.m_nWindow1X = rc.left;
-        g_settings.m_nWindow1Y = rc.top;
-        break;
-    case PT_SCREENCAP:
-        g_settings.m_nWindow2X = rc.left;
-        g_settings.m_nWindow2Y = rc.top;
-        break;
-    case PT_VIDEOCAP:
-        g_settings.m_nWindow3X = rc.left;
-        g_settings.m_nWindow3Y = rc.top;
-        break;
-    case PT_IMAGEFILE:
-        g_settings.m_nWindow4X = rc.left;
-        g_settings.m_nWindow4Y = rc.top;
-        break;
-    }
+    g_settings.m_nWindowX = rc.left;
+    g_settings.m_nWindowY = rc.top;
 }
 
 static void OnSize(HWND hwnd, UINT state, int cx, int cy)

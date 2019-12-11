@@ -173,7 +173,7 @@ int main(int argc, char **argv)
 {
     if (argc >= 2 && lstrcmpiA(argv[1], "--version") == 0)
     {
-        puts("finalize version 1.0 by katahiromz");
+        puts("finalize version 0.9.1 by katahiromz");
         return EXIT_SUCCESS;
     }
     if (argc <= 1)
