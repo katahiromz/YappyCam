@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "YappyCam"
-#define MyAppVersion "0.9.1"
+#define MyAppVersion "0.9.2"
 #define MyAppPublisher "Katayama Hirofumi MZ"
 #define MyAppURL "https://katahiromz.web.fc2.com"
 #define MyAppExeName "YappyCam.exe"
@@ -22,7 +22,7 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\{#MyAppName}
 DisableProgramGroupPage=yes
 LicenseFile=LICENSE.txt
-OutputBaseFilename=YappyCam32-0.9.1-setup
+OutputBaseFilename=YappyCam32-0.9.2-setup
 Compression=lzma
 SolidCompression=yes
 OutputDir=.
