@@ -66,6 +66,7 @@ Source: "..\msys2\x86\libzstd.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x86\tbb.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x86\zlib1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x86\libgcc_s_dw2-1.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x86\opencv_videoio_ffmpeg412.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x86\openh264-1.8.0-win32.dll"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
