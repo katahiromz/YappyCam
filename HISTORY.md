@@ -33,5 +33,5 @@
     - Made MAX_FPS 20.0.
     - Able to input from movie file or image file sequence.
 - 20XX.YY.ZZ ver.0.9.2
-    - Update DLL files.
+    - Upgrade DLL files.
     - Fix recording failure upon no plugins.
