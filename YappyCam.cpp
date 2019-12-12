@@ -2336,12 +2336,10 @@ void OnRecStop(HWND hwnd)
         return;
     }
 
-    if (!PF_ActAll(s_plugins, PLUGIN_ACTION_STARTREC, 0, 0))
-        return;
+    PF_ActAll(s_plugins, PLUGIN_ACTION_STARTREC, 0, 0);
 
     // play sound
     PlaySound(MAKEINTRESOURCE(IDR_STARTREC), g_hInst, SND_ASYNC | SND_NODEFAULT | SND_RESOURCE);
-
 
     // build image file path
     TCHAR szPath[MAX_PATH];
@@ -2507,6 +2505,8 @@ static void OnTakeAShot(HWND hwnd)
     SYSTEMTIME now;
 
     GetLocalTime(&now);
+
+    g_settings.create_dirs();
 
     char szFileName[MAX_PATH];
     StringCbPrintfA(szFileName, sizeof(szFileName),

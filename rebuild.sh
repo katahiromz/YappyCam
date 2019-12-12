@@ -1,6 +1,6 @@
 #!/bin/bash
 rm CMakeCache.txt
-CXX=clang++ cmake -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release .
+cmake -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release .
 make -j3
 strip YappyCam.exe
 strip finalize.exe
