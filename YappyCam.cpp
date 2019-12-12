@@ -2497,6 +2497,8 @@ static void OnInitSettings(HWND hwnd)
 
 static void OnOpenFolder(HWND hwnd)
 {
+    g_settings.create_dirs();
+
     ShellExecute(hwnd, NULL, g_settings.m_strDir.c_str(), NULL, NULL, SW_SHOWNORMAL);
 }
 

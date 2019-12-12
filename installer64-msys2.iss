@@ -45,19 +45,19 @@ Source: "READMEJP.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libgcc_s_seh-1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libgfortran-5.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\msys2\x64\libHalf-2_3.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\msys2\x64\libIex-2_3.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\msys2\x64\libIlmImf-2_3.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\msys2\x64\libIlmThread-2_3.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\msys2\x64\libImath-2_3.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x64\libHalf-2_4.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x64\libIex-2_4.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x64\libIlmImf-2_4.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x64\libIlmThread-2_4.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x64\libImath-2_4.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libjasper-4.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libjpeg-8.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\liblzma-5.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libopenblas.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\msys2\x64\libopencv_core411.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\msys2\x64\libopencv_imgcodecs411.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\msys2\x64\libopencv_imgproc411.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\msys2\x64\libopencv_videoio411.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x64\libopencv_core412.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x64\libopencv_imgcodecs412.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x64\libopencv_imgproc412.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x64\libopencv_videoio412.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libpng16-16.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libquadmath-0.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libstdc++-6.dll"; DestDir: "{app}"; Flags: ignoreversion
@@ -65,10 +65,10 @@ Source: "..\msys2\x64\libtiff-5.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libwebp-7.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libwinpthread-1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libzstd.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\msys2\x64\opencv_videoio_ffmpeg411_64.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x64\opencv_videoio_ffmpeg412_64.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\msys2\x64\openh264-1.8.0-win64.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\tbb.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\zlib1.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\msys2\x64\openh264-1.8.0-win64.dll"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
