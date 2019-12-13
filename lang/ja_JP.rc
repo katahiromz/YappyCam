@@ -20,7 +20,7 @@ IDR_MAINMENU MENU
         MENUITEM "保存オプション(&O)...", ID_SAVETO
         MENUITEM "ホットキー(&H)...", ID_HOTKEYS
         MENUITEM "フォルダーを開く(&F)", ID_OPENFOLDER
-        MENUITEM "顔認識(&R)...", ID_FACES
+        MENUITEM "顔検出(&D)...", ID_FACES
         MENUITEM "プラグイン(&G)...", ID_PLUGINS
         MENUITEM SEPARATOR
         MENUITEM "設定の初期化(&I)", ID_INITSETTINGS
