@@ -21,7 +21,7 @@ IDR_MAINMENU MENU
         MENUITEM "&Hotkeys...", ID_HOTKEYS
         MENUITEM "Open &folder", ID_OPENFOLDER
         MENUITEM "Face &detection...", ID_FACES
-        MENUITEM "Plu&g-in...", ID_PLUGINS
+        MENUITEM "Plu&g-ins...", ID_PLUGINS
         MENUITEM SEPARATOR
         MENUITEM "&Initialize settings", ID_INITSETTINGS
         MENUITEM SEPARATOR
