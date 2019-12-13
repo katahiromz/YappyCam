@@ -87,6 +87,15 @@ typedef struct BANG_INFO
 //         TRUE or FALSE;
 #define DRIVERFUNC_DOBANG 4
 
+// Driver: DRIVERFUNC_GETFACES (5)
+//      Meaning: Get faces.
+//      Parameters:
+//         wParam: SIZE_T nNumFaces;
+//         lParam: cv::Rect *pFaces;
+//      Return value:
+//         The number of faces.
+#define DRIVERFUNC_GETFACES 5
+
 // NOTE: This structure must be a POD (Plain Old Data).
 typedef struct PLUGIN
 {

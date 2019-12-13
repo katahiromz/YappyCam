@@ -76,6 +76,22 @@ static LRESULT APIENTRY driver(struct PLUGIN *pi, UINT uFunc, WPARAM wParam, LPA
             return PF_ActOne(pi, PLUGIN_ACTION_DOBANG, nBangID, 0);
         }
         break;
+    case DRIVERFUNC_GETFACES:
+        {
+            if (!wParam || !lParam || g_faces.empty())
+            {
+                return g_faces.size();
+            }
+
+            SIZE_T nNumFaces = SIZE_T(wParam);
+            cv::Rect *pFaces = (cv::Rect *)lParam;
+            if (nNumFaces > g_faces.size())
+                nNumFaces = g_faces.size();
+
+            memcpy(pFaces, &g_faces[0], nNumFaces * sizeof(cv::Rect));
+            return g_faces.size();
+        }
+        break;
     }
     return 0;
 }

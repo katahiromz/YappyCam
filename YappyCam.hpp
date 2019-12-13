@@ -149,6 +149,10 @@ typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
 extern sound_devices_t g_sound_devices;
 extern std::vector<WAVE_FORMAT_INFO> m_wave_formats;
 
+// facial recognition
+extern cv::CascadeClassifier g_cascade;
+extern std::vector<cv::Rect> g_faces;
+
 // plugins
 extern std::vector<PLUGIN> s_plugins;
 

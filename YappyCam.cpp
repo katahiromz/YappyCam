@@ -87,6 +87,10 @@ static cv::Mat s_black_mat;
 // plugins
 std::vector<PLUGIN> s_plugins;
 
+// facial recognition
+cv::CascadeClassifier g_cascade;
+std::vector<cv::Rect> g_faces;
+
 void DoPass1Frame(const cv::Mat& image)
 {
     for (auto& plugin : s_plugins)
@@ -353,6 +357,8 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
 
         INT cols = image.cols;
         INT rows = image.rows;
+
+        g_cascade.detectMultiScale(image, g_faces, 1.1, 3, 0, cv::Size(20, 20));
 
         DoPass1Frame(image);
         DoPass2Frame(image);
@@ -1299,6 +1305,8 @@ BOOL DoUnloadPlugins(HWND hwnd)
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
+    g_cascade.load("haarcascade_frontalface_alt.xml");
+
     DoLoadPlugins(hwnd);
 
     DragAcceptFiles(hwnd, TRUE);
