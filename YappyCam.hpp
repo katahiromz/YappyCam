@@ -76,6 +76,9 @@ struct Settings
     INT m_nHotKeysDlgY;
     INT m_nPluginsDlgX;
     INT m_nPluginsDlgY;
+    INT m_nFacesDlgX;
+    INT m_nFacesDlgY;
+    BOOL m_bEnableFaces;
     UINT m_nFPSx100;
     BOOL m_bDrawCursor;
     BOOL m_bNoSound;
@@ -96,6 +99,8 @@ struct Settings
     std::wstring m_strShotFileName;
     std::wstring m_strInputFileName;
     std::string m_strInputFileNameA;
+    std::wstring m_strCascadeClassifierW;
+    std::string m_strCascadeClassifierA;
     std::wstring m_strStatusText;
     std::vector<std::wstring> m_strvecPluginNames;
     std::vector<BOOL> m_bvecPluginEnabled;
@@ -144,6 +149,7 @@ extern HWND g_hwndPictureInput;
 extern HWND g_hwndSaveTo;
 extern HWND g_hwndHotKeys;
 extern HWND g_hwndPlugins;
+extern HWND g_hwndFaces;
 
 typedef std::vector<CComPtr<IMMDevice> > sound_devices_t;
 extern sound_devices_t g_sound_devices;
@@ -162,6 +168,7 @@ BOOL DoPictureInputDialogBox(HWND hwndParent);
 BOOL DoSaveToDialogBox(HWND hwndParent);
 BOOL DoHotKeysDialogBox(HWND hwndParent);
 BOOL DoPluginsDialogBox(HWND hwndParent);
+BOOL DoFacesDialogBox(HWND hwndParent);
 
 void DoStartStopTimers(HWND hwnd, BOOL bStart);
 
@@ -222,5 +229,7 @@ public:
         std::mutex::unlock();
     }
 };
+
+extern mutex_debug g_face_lock;
 
 #endif  // ndef YAPPYCAM_HPP_

@@ -62,6 +62,7 @@ add_definitions(-DUNICODE -D_UNICODE)
 add_executable(YappyCam WIN32
     YappyCam.cpp
     PluginFramework.cpp
+    faces_dlg.cpp
     hotkeys_dlg.cpp
     misc.cpp
     multires_dlg.cpp

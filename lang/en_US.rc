@@ -20,6 +20,7 @@ IDR_MAINMENU MENU
         MENUITEM "Save &Options...", ID_SAVETO
         MENUITEM "&Hotkeys...", ID_HOTKEYS
         MENUITEM "Open &folder", ID_OPENFOLDER
+        MENUITEM "Facial &recoginition...", ID_FACES
         MENUITEM "Plu&g-in...", ID_PLUGINS
         MENUITEM SEPARATOR
         MENUITEM "&Initialize settings", ID_INITSETTINGS
@@ -207,6 +208,17 @@ FONT 8, "Tahoma"
     PUSHBUTTON "&Config", psh3, 220, 60, 60, 14
     PUSHBUTTON "Pass &1", psh4, 220, 80, 60, 14
     PUSHBUTTON "Pass &2", psh5, 220, 100, 60, 14
+}
+
+IDD_FACES DIALOG 0, 0, 190, 65
+CAPTION "Facial Recognition"
+STYLE DS_CENTER | DS_MODALFRAME | WS_POPUPWINDOW | WS_CAPTION
+EXSTYLE WS_EX_TOOLWINDOW
+FONT 8, "Tahoma"
+{
+    AUTOCHECKBOX "&Enable facial recognition (become slower)", chx1, 5, 7, 135, 14
+    LTEXT "&Cascade classifier:", IDC_STATIC, 5, 30, 124, 10
+    COMBOBOX cmb1, 5, 45, 180, 300, CBS_HASSTRINGS | CBS_AUTOHSCROLL | CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -90,6 +90,7 @@ std::vector<PLUGIN> s_plugins;
 // facial recognition
 cv::CascadeClassifier g_cascade;
 std::vector<cv::Rect> g_faces;
+mutex_debug g_face_lock("g_face_lock");
 
 void DoPass1Frame(const cv::Mat& image)
 {
@@ -358,10 +359,22 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
         INT cols = image.cols;
         INT rows = image.rows;
 
-        g_cascade.detectMultiScale(image, g_faces, 1.1, 3, 0, cv::Size(20, 20));
+        g_face_lock.lock(__LINE__);
+
+        if (g_settings.m_bEnableFaces)
+        {
+            g_cascade.detectMultiScale(image, g_faces, 1.1, 3, 0, cv::Size(20, 20));
+        }
+        else
+        {
+            g_faces.clear();
+        }
 
         DoPass1Frame(image);
         DoPass2Frame(image);
+
+        g_face_lock.unlock(__LINE__);
+
         DoBoardcastFrame(image);
 
         if (s_bWriting)
@@ -451,7 +464,9 @@ void Settings::init()
     m_nSaveToDlgX = m_nSaveToDlgY = CW_USEDEFAULT;
     m_nHotKeysDlgX = m_nHotKeysDlgY = CW_USEDEFAULT;
     m_nPluginsDlgX = m_nPluginsDlgY = CW_USEDEFAULT;
+    m_nFacesDlgX = m_nFacesDlgY = CW_USEDEFAULT;
 
+    m_bEnableFaces = FALSE;
     m_nFPSx100 = UINT(DEFAULT_FPS * 100);
     m_bDrawCursor = TRUE;
     m_bNoSound = FALSE;
@@ -496,6 +511,9 @@ void Settings::init()
     m_strShotFileName = TEXT("Shot-%04u-%02u-%02u-%02u-%02u-%02u.jpg");
     m_strInputFileName.clear();
     m_strInputFileNameA.clear();
+
+    m_strCascadeClassifierA = "haarcascade_frontalface_alt.xml";
+    m_strCascadeClassifierW = L"haarcascade_frontalface_alt.xml";
 
     m_strStatusText = TEXT("No image");
 
@@ -552,7 +570,10 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"HotKeysDlgX", (DWORD&)m_nHotKeysDlgY);
     app_key.QueryDword(L"PluginsDlgX", (DWORD&)m_nPluginsDlgX);
     app_key.QueryDword(L"PluginsDlgY", (DWORD&)m_nPluginsDlgY);
+    app_key.QueryDword(L"FacesDlgX", (DWORD&)m_nFacesDlgX);
+    app_key.QueryDword(L"FacesDlgY", (DWORD&)m_nFacesDlgY);
 
+    app_key.QueryDword(L"EnableFaces", (DWORD&)m_bEnableFaces);
     app_key.QueryDword(L"FPSx100", (DWORD&)m_nFPSx100);
     app_key.QueryDword(L"DrawCursor", (DWORD&)m_bDrawCursor);
     app_key.QueryDword(L"NoSound", (DWORD&)m_bNoSound);
@@ -620,6 +641,11 @@ bool Settings::load(HWND hwnd)
             m_strInputFileName.clear();
             m_strInputFileNameA.clear();
         }
+    }
+    if (ERROR_SUCCESS == app_key.QuerySz(L"CascadeClassifier", szText, ARRAYSIZE(szText)))
+    {
+        m_strCascadeClassifierW = szText;
+        m_strCascadeClassifierA = ansi_from_wide(szText);
     }
 
     DWORD cPlugins = 0;
@@ -721,7 +747,10 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"HotKeysDlgX", m_nHotKeysDlgY);
     app_key.SetDword(L"PluginsDlgX", m_nPluginsDlgX);
     app_key.SetDword(L"PluginsDlgY", m_nPluginsDlgY);
+    app_key.SetDword(L"FacesDlgX", m_nFacesDlgX);
+    app_key.SetDword(L"FacesDlgY", m_nFacesDlgY);
 
+    app_key.SetDword(L"EnableFaces", m_bEnableFaces);
     app_key.SetDword(L"FPSx100", m_nFPSx100);
     app_key.SetDword(L"DrawCursor", m_bDrawCursor);
     app_key.SetDword(L"NoSound", m_bNoSound);
@@ -751,6 +780,7 @@ bool Settings::save(HWND hwnd) const
     app_key.SetSz(L"SoundTempFileName", m_strSoundTempFileName.c_str());
     app_key.SetSz(L"ShotFileName", m_strShotFileName.c_str());
     app_key.SetSz(L"InputFileName", m_strInputFileName.c_str());
+    app_key.SetSz(L"CascadeClassifier", m_strCascadeClassifierW.c_str());
 
     DWORD cPlugins = DWORD(m_strvecPluginNames.size());
     app_key.SetDword(L"PluginCount", cPlugins);
@@ -2124,7 +2154,8 @@ static void OnFinalized(HWND hwnd)
         !IsWindow(g_hwndPictureInput) &&
         !IsWindow(g_hwndSaveTo) &&
         !IsWindow(g_hwndHotKeys) &&
-        !IsWindow(g_hwndPlugins))
+        !IsWindow(g_hwndPlugins) &&
+        !IsWindow(g_hwndFaces))
     {
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
@@ -2194,7 +2225,8 @@ static void OnFinalizeFail(HWND hwnd)
         !IsWindow(g_hwndPictureInput) &&
         !IsWindow(g_hwndSaveTo) &&
         !IsWindow(g_hwndHotKeys) &&
-        !IsWindow(g_hwndPlugins))
+        !IsWindow(g_hwndPlugins) &&
+        !IsWindow(g_hwndFaces))
     {
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
@@ -2237,7 +2269,8 @@ static void OnFinalizeCancel(HWND hwnd, INT iType)
         !IsWindow(g_hwndPictureInput) &&
         !IsWindow(g_hwndSaveTo) &&
         !IsWindow(g_hwndHotKeys) &&
-        !IsWindow(g_hwndPlugins))
+        !IsWindow(g_hwndPlugins) &&
+        !IsWindow(g_hwndFaces))
     {
         SendDlgItemMessage(hwnd, psh1, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmRec);
         SendDlgItemMessage(hwnd, psh4, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)s_hbmDots);
@@ -2273,7 +2306,8 @@ BOOL IsAnyPopupsOpen(HWND hwnd)
         IsWindow(g_hwndPictureInput) ||
         IsWindow(g_hwndSaveTo) ||
         IsWindow(g_hwndHotKeys) ||
-        IsWindow(g_hwndPlugins))
+        IsWindow(g_hwndPlugins) ||
+        IsWindow(g_hwndFaces))
     {
         return TRUE;
     }
@@ -2315,6 +2349,8 @@ void DoClosePopups(HWND hwnd, BOOL bAll = FALSE)
         PostMessage(g_hwndHotKeys, WM_CLOSE, 0, 0);
     if (bAll)
     {
+        if (IsWindow(g_hwndFaces))
+            PostMessage(g_hwndFaces, WM_CLOSE, 0, 0);
         if (IsWindow(g_hwndPlugins))
             PostMessage(g_hwndPlugins, WM_CLOSE, 0, 0);
         for (auto& plugin : s_plugins)
@@ -2539,6 +2575,11 @@ static void OnPlugins(HWND hwnd)
     DoPluginsDialogBox(hwnd);
 }
 
+static void OnFaces(HWND hwnd)
+{
+    DoFacesDialogBox(hwnd);
+}
+
 static void OnLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFlags)
 {
     if (fDoubleClick)
@@ -2705,6 +2746,9 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         break;
     case ID_PLUGINS:
         OnPlugins(hwnd);
+        break;
+    case ID_FACES:
+        OnFaces(hwnd);
         break;
     }
 }
@@ -3339,6 +3383,8 @@ WinMain(HINSTANCE   hInstance,
                 if (g_hwndHotKeys && IsDialogMessage(g_hwndHotKeys, &msg))
                     continue;
                 if (g_hwndPlugins && IsDialogMessage(g_hwndPlugins, &msg))
+                    continue;
+                if (g_hwndFaces && IsDialogMessage(g_hwndFaces, &msg))
                     continue;
                 if (IsPluginDialogMessage(g_hMainWnd, &msg))
                     continue;
