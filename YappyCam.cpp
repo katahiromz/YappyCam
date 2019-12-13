@@ -466,7 +466,7 @@ void Settings::init()
     m_nPluginsDlgX = m_nPluginsDlgY = CW_USEDEFAULT;
     m_nFacesDlgX = m_nFacesDlgY = CW_USEDEFAULT;
 
-    m_bEnableFaces = FALSE;
+    m_bEnableFaces = TRUE;
     m_nFPSx100 = UINT(DEFAULT_FPS * 100);
     m_bDrawCursor = TRUE;
     m_bNoSound = FALSE;
