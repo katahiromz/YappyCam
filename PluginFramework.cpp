@@ -366,3 +366,17 @@ INT PF_FindFileName(const std::vector<PLUGIN>& pis, const WCHAR *filename)
 
     return -1;
 }
+
+void PF_RefreshAll(std::vector<PLUGIN>& pis)
+{
+    BOOL bUseFaces = FALSE;
+    for (auto& plugin : pis)
+    {
+        if (plugin.bEnabled && (plugin.dwInfo & PLUGIN_INFO_USEFACES))
+        {
+            bUseFaces = TRUE;
+            break;
+        }
+    }
+    g_settings.m_bUseFaces = bUseFaces;
+}

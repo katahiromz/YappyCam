@@ -17,10 +17,10 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
         SendMessage(hwnd, DM_REPOSITION, 0, 0);
     }
 
-    if (g_settings.m_bEnableFaces)
-        CheckDlgButton(hwnd, chx1, BST_CHECKED);
-    else
-        CheckDlgButton(hwnd, chx1, BST_UNCHECKED);
+    //if (g_settings.m_bUseFaces)
+    //    CheckDlgButton(hwnd, chx1, BST_CHECKED);
+    //else
+    //    CheckDlgButton(hwnd, chx1, BST_UNCHECKED);
 
     WCHAR szPath[MAX_PATH];
     GetModuleFileNameW(NULL, szPath, ARRAYSIZE(szPath));
@@ -54,11 +54,11 @@ static void OnChx1(HWND hwnd)
 {
     if (IsDlgButtonChecked(hwnd, chx1) == BST_CHECKED)
     {
-        g_settings.m_bEnableFaces = TRUE;
+        g_settings.m_bUseFaces = TRUE;
     }
     else
     {
-        g_settings.m_bEnableFaces = FALSE;
+        g_settings.m_bUseFaces = FALSE;
     }
 }
 
@@ -79,12 +79,12 @@ static void OnCmb1(HWND hwnd)
 
     cv::CascadeClassifier cc(ansi_from_wide(szPath));
 
-    BOOL bEnableFaces = g_settings.m_bEnableFaces;
-    g_settings.m_bEnableFaces = FALSE;
+    BOOL bEnableFaces = g_settings.m_bUseFaces;
+    g_settings.m_bUseFaces = FALSE;
     g_face_lock.lock(__LINE__);
     g_cascade = std::move(cc);
     g_face_lock.unlock(__LINE__);
-    g_settings.m_bEnableFaces = bEnableFaces;
+    g_settings.m_bUseFaces = bEnableFaces;
 }
 
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
@@ -95,9 +95,9 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     case IDCANCEL:
         DestroyWindow(hwnd);
         break;
-    case chx1:
-        OnChx1(hwnd);
-        break;
+    //case chx1:
+    //    OnChx1(hwnd);
+    //    break;
     case cmb1:
         switch (codeNotify)
         {

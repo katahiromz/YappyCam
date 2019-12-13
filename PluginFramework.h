@@ -17,5 +17,6 @@ BOOL PF_UnloadOne(PLUGIN *pi);
 BOOL PF_UnloadAll(std::vector<PLUGIN>& pis);
 INT PF_FindFileName(const std::vector<PLUGIN>& pis, const WCHAR *filename);
 LRESULT PF_DriverFunc(PLUGIN *pi, UINT uFunc, WPARAM wParam, LPARAM lParam);
+void PF_RefreshAll(std::vector<PLUGIN>& pis);
 
 #endif  // ndef PLUGIN_FRAMEWORK_H_

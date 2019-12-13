@@ -290,6 +290,8 @@ static void OnListViewItemChanges(HWND hwnd, BOOL bState, INT iItem = -1)
             s_bInit = TRUE;
         }
     }
+
+    PF_RefreshAll(s_plugins);
 }
 
 static void OnListViewClick(HWND hwnd)

@@ -78,7 +78,7 @@ struct Settings
     INT m_nPluginsDlgY;
     INT m_nFacesDlgX;
     INT m_nFacesDlgY;
-    BOOL m_bEnableFaces;
+    BOOL m_bUseFaces;
     UINT m_nFPSx100;
     BOOL m_bDrawCursor;
     BOOL m_bNoSound;

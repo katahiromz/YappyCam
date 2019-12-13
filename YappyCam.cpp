@@ -148,6 +148,8 @@ void DoRefreshPlugins(BOOL bReset)
     {
         PF_ActOne(&plugin, PLUGIN_ACTION_REFRESH, bReset, 0);
     }
+
+    PF_RefreshAll(s_plugins);
 }
 
 unsigned __stdcall PictureConsumerThreadProc(void *pContext)
@@ -361,7 +363,7 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
 
         g_face_lock.lock(__LINE__);
 
-        if (g_settings.m_bEnableFaces)
+        if (g_settings.m_bUseFaces)
         {
             g_cascade.detectMultiScale(image, g_faces, 1.1, 3, 0, cv::Size(20, 20));
         }
@@ -466,7 +468,7 @@ void Settings::init()
     m_nPluginsDlgX = m_nPluginsDlgY = CW_USEDEFAULT;
     m_nFacesDlgX = m_nFacesDlgY = CW_USEDEFAULT;
 
-    m_bEnableFaces = TRUE;
+    //m_bUseFaces = FALSE;
     m_nFPSx100 = UINT(DEFAULT_FPS * 100);
     m_bDrawCursor = TRUE;
     m_bNoSound = FALSE;
@@ -573,7 +575,6 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"FacesDlgX", (DWORD&)m_nFacesDlgX);
     app_key.QueryDword(L"FacesDlgY", (DWORD&)m_nFacesDlgY);
 
-    app_key.QueryDword(L"EnableFaces", (DWORD&)m_bEnableFaces);
     app_key.QueryDword(L"FPSx100", (DWORD&)m_nFPSx100);
     app_key.QueryDword(L"DrawCursor", (DWORD&)m_bDrawCursor);
     app_key.QueryDword(L"NoSound", (DWORD&)m_bNoSound);
@@ -750,7 +751,6 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"FacesDlgX", m_nFacesDlgX);
     app_key.SetDword(L"FacesDlgY", m_nFacesDlgY);
 
-    app_key.SetDword(L"EnableFaces", m_bEnableFaces);
     app_key.SetDword(L"FPSx100", m_nFPSx100);
     app_key.SetDword(L"DrawCursor", m_bDrawCursor);
     app_key.SetDword(L"NoSound", m_bNoSound);
@@ -868,6 +868,7 @@ void DoReorderPlugins(HWND hwnd)
     }
 
     PF_ActAll(s_plugins, PLUGIN_ACTION_REFRESH, FALSE, 0);
+    PF_RefreshAll(s_plugins);
 }
 
 static void OnTimer(HWND hwnd, UINT id);
@@ -1325,7 +1326,8 @@ BOOL DoLoadPlugins(HWND hwnd)
     TCHAR szPath[MAX_PATH];
     GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
     PathRemoveFileSpec(szPath);
-    return PF_LoadAll(s_plugins, szPath);
+    PF_LoadAll(s_plugins, szPath);
+    return TRUE;
 }
 
 BOOL DoUnloadPlugins(HWND hwnd)
