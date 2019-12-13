@@ -372,12 +372,21 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
             g_faces.clear();
         }
 
-        DoPass1Frame(image);
-        DoPass2Frame(image);
+        if (g_settings.m_bUsePass1)
+        {
+            DoPass1Frame(image);
+        }
+        if (g_settings.m_bUsePass2)
+        {
+            DoPass2Frame(image);
+        }
 
         g_face_lock.unlock(__LINE__);
 
-        DoBoardcastFrame(image);
+        if (g_settings.m_bUseBroadcast)
+        {
+            DoBoardcastFrame(image);
+        }
 
         if (s_bWriting)
         {

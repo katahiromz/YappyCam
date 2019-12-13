@@ -370,13 +370,34 @@ INT PF_FindFileName(const std::vector<PLUGIN>& pis, const WCHAR *filename)
 void PF_RefreshAll(std::vector<PLUGIN>& pis)
 {
     BOOL bUseFaces = FALSE;
+    BOOL bUsePass1 = FALSE;
+    BOOL bUsePass2 = FALSE;
+    BOOL bUseBroadcast = FALSE;
     for (auto& plugin : pis)
     {
-        if (plugin.bEnabled && (plugin.dwInfo & PLUGIN_INFO_USEFACES))
+        if (plugin.bEnabled)
         {
-            bUseFaces = TRUE;
-            break;
+            if (plugin.dwInfo & PLUGIN_INFO_USEFACES)
+            {
+                bUseFaces = TRUE;
+            }
+            switch (plugin.dwInfo & PLUGIN_INFO_TYPEMASK)
+            {
+            case PLUGIN_INFO_PASS:
+                if (plugin.dwState & PLUGIN_STATE_PASS2)
+                    bUsePass2 = TRUE;
+                else
+                    bUsePass1 = TRUE;
+                break;
+            case PLUGIN_INFO_BROADCASTER:
+                bUseBroadcast = TRUE;
+                break;
+            }
         }
     }
+
     g_settings.m_bUseFaces = bUseFaces;
+    g_settings.m_bUsePass1 = bUsePass1;
+    g_settings.m_bUsePass2 = bUsePass2;
+    g_settings.m_bUseBroadcast = bUseBroadcast;
 }

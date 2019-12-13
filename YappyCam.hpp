@@ -79,6 +79,9 @@ struct Settings
     INT m_nFacesDlgX;
     INT m_nFacesDlgY;
     BOOL m_bUseFaces;
+    BOOL m_bUsePass1;
+    BOOL m_bUsePass2;
+    BOOL m_bUseBroadcast;
     UINT m_nFPSx100;
     BOOL m_bDrawCursor;
     BOOL m_bNoSound;
