@@ -73,6 +73,7 @@ Source: "..\msys2\x64\opencv_videoio_ffmpeg412_64.dll"; DestDir: "{app}"; Flags:
 Source: "..\msys2\x64\openh264-1.8.0-win64.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\tbb.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\zlib1.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "haarcascade_frontalface_default.xml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "haarcascade_frontalface_alt.xml"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
