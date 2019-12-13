@@ -74,6 +74,7 @@ Source: "..\msys2\x86\tbb.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x86\zlib1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "haarcascade_frontalface_default.xml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "haarcascade_frontalface_alt.xml"; DestDir: "{app}"; Flags: ignoreversion
+Source: "lbpcascade_frontalface_improved.xml"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

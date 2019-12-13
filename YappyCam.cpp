@@ -523,8 +523,8 @@ void Settings::init()
     m_strInputFileName.clear();
     m_strInputFileNameA.clear();
 
-    m_strCascadeClassifierA = "haarcascade_frontalface_alt.xml";
-    m_strCascadeClassifierW = L"haarcascade_frontalface_alt.xml";
+    m_strCascadeClassifierW = L"lbpcascade_frontalface_improved.xml";
+    m_strCascadeClassifierA = ansi_from_wide(m_strCascadeClassifierW.c_str());
 
     m_strStatusText = TEXT("No image");
 
