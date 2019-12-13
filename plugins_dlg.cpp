@@ -148,6 +148,7 @@ static void OnPsh1(HWND hwnd)
 
     EnableWindow(GetDlgItem(hwnd, psh1), iItem - 1 > 0);
     EnableWindow(GetDlgItem(hwnd, psh2), TRUE);
+    PF_RefreshAll(s_plugins);
 }
 
 static void OnPsh2(HWND hwnd)
@@ -172,6 +173,7 @@ static void OnPsh2(HWND hwnd)
 
     EnableWindow(GetDlgItem(hwnd, psh1), TRUE);
     EnableWindow(GetDlgItem(hwnd, psh2), iItem + 1 < INT(s_plugins.size() - 1));
+    PF_RefreshAll(s_plugins);
 }
 
 static void OnPsh3(HWND hwnd)
@@ -186,6 +188,7 @@ static void OnPsh3(HWND hwnd)
         return;
 
     PF_ActOne(&plugin, PLUGIN_ACTION_SHOWDIALOG, (WPARAM)g_hMainWnd, TRUE);
+    PF_RefreshAll(s_plugins);
 }
 
 static void OnPsh4(HWND hwnd)
@@ -203,6 +206,7 @@ static void OnPsh4(HWND hwnd)
               PLUGIN_STATE_PASS1, PLUGIN_STATE_PASS1 | PLUGIN_STATE_PASS2);
 
     Lst1_SetItem(hLst1, plugin, iItem);
+    PF_RefreshAll(s_plugins);
 }
 
 static void OnPsh5(HWND hwnd)
@@ -220,6 +224,7 @@ static void OnPsh5(HWND hwnd)
               PLUGIN_STATE_PASS2, PLUGIN_STATE_PASS1 | PLUGIN_STATE_PASS2);
 
     Lst1_SetItem(hLst1, plugin, iItem);
+    PF_RefreshAll(s_plugins);
 }
 
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
