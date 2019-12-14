@@ -89,6 +89,9 @@ static void OnCmb1(HWND hwnd)
 
 static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
+    if (!s_bInit)
+        return;
+
     switch (id)
     {
     case IDOK:
