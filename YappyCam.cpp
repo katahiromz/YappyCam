@@ -502,7 +502,7 @@ void Settings::init()
     m_nHotKey[5] = MAKEWORD('X', HOTKEYF_ALT);
     m_nHotKey[6] = MAKEWORD('T', HOTKEYF_ALT);
 
-    m_nAspectMode = ASPECT_IGNORE;
+    m_nAspectMode = ASPECT_EXTEND_WHITE;
 
     TCHAR szPath[MAX_PATH];
 
