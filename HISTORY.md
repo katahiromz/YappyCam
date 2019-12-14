@@ -32,10 +32,11 @@
     - Implemented Left/Middle/Right double click.
     - Made MAX_FPS 20.0.
     - Able to input from movie file or image file sequence.
-- 20XX.YY.ZZ ver.0.9.2
+- 2019.12.15 ver.0.9.2
     - Upgraded DLL files.
     - Fixed recording failure upon no plugins.
     - Fixed division by zero.
     - Implement facial recognition.
     - FaceDetection, DecoFace, DecoFrame plugins added.
     - Following display change.
+    - Keeping aspect ratio upon finalizing.
