@@ -43,6 +43,14 @@ enum PictureType
     PT_IMAGEFILE
 };
 
+enum ASPECT_MODE
+{
+    ASPECT_IGNORE = 0,
+    ASPECT_CUT,
+    ASPECT_EXTEND_BLACK,
+    ASPECT_EXTEND_WHITE
+};
+
 struct Settings
 {
     DisplayMode m_nDisplayMode;
@@ -92,6 +100,7 @@ struct Settings
     INT m_nContrast;
     DWORD m_dwFOURCC;
     UINT m_nHotKey[7];
+    ASPECT_MODE m_nAspectMode;
     std::wstring m_strDir;
     std::wstring m_strMovieDir;
     std::wstring m_strImageFileName;
@@ -186,7 +195,6 @@ BOOL DoSetupHotkeys(HWND hwnd, BOOL bSetup);
 
 typedef std::unordered_map<DWORD, DWORD> RESO_MAP;
 DWORD DoMultiResoDialogBox(HWND hwndParent, const RESO_MAP& map);
-
 
 inline void dprint(const char *fmt, ...)
 {

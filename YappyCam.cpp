@@ -92,6 +92,12 @@ cv::CascadeClassifier g_cascade;
 std::vector<cv::Rect> g_faces;
 mutex_debug g_face_lock("g_face_lock");
 
+// screen info
+static INT s_cxScreen;
+static INT s_cyScreen;
+static INT s_cxFullScreen;
+static INT s_cyFullScreen;
+
 void DoPass1Frame(const cv::Mat& image)
 {
     for (auto& plugin : s_plugins)
@@ -496,6 +502,8 @@ void Settings::init()
     m_nHotKey[5] = MAKEWORD('X', HOTKEYF_ALT);
     m_nHotKey[6] = MAKEWORD('T', HOTKEYF_ALT);
 
+    m_nAspectMode = ASPECT_IGNORE;
+
     TCHAR szPath[MAX_PATH];
 
     SHGetSpecialFolderPath(NULL, szPath, CSIDL_MYVIDEO, TRUE);
@@ -603,6 +611,8 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"HotKey4", (DWORD&)m_nHotKey[4]);
     app_key.QueryDword(L"HotKey5", (DWORD&)m_nHotKey[5]);
     app_key.QueryDword(L"HotKey6", (DWORD&)m_nHotKey[6]);
+
+    app_key.QueryDword(L"AspectMode", (DWORD&)m_nAspectMode);
 
     WCHAR szText[MAX_PATH];
 
@@ -779,6 +789,8 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"HotKey4", m_nHotKey[4]);
     app_key.SetDword(L"HotKey5", m_nHotKey[5]);
     app_key.SetDword(L"HotKey6", m_nHotKey[6]);
+
+    app_key.SetDword(L"AspectMode", m_nAspectMode);
 
     app_key.SetSz(L"Dir", m_strDir.c_str());
     app_key.SetSz(L"MovieDir", m_strMovieDir.c_str());
@@ -1644,6 +1656,121 @@ BOOL DoShrinkSoundFile(const std::wstring& strSoundTempFile, DWORD dwBytes)
     return TRUE;
 }
 
+cv::Mat
+DoResizeKeepAspectRatio(const cv::Mat& input, const cv::Size& size,
+                        const cv::Scalar& bgcolor)
+{
+    cv::Mat output;
+
+    double h1 = size.width * (input.rows / (double)input.cols);
+    double w2 = size.height * (input.cols / (double)input.rows);
+
+    if (h1 <= size.height)
+        cv::resize(input, output, cv::Size(size.width, h1));
+    else
+        cv::resize(input, output, cv::Size(w2, size.height));
+
+    int top = (size.height - output.rows) / 2;
+    int down = (size.height - output.rows + 1) / 2;
+    int left = (size.width - output.cols) / 2;
+    int right = (size.width - output.cols + 1) / 2;
+
+    cv::copyMakeBorder(output, output, top, down, left, right, cv::BORDER_CONSTANT, bgcolor);
+
+    return output;
+}
+
+cv::Mat
+DoPasteFrame(const cv::Mat& back, const cv::Mat& target,
+             const cv::Point2f& p0, const cv::Point2f& p1)
+{
+    cv::Mat ret;
+    back.copyTo(ret);
+
+    std::vector<cv::Point2f> from, to;
+    from.push_back(cv::Point2f(0, 0));
+    from.push_back(cv::Point2f(target.cols, 0));
+    from.push_back(cv::Point2f(target.cols, target.rows));
+
+    to.push_back(p0);
+    to.push_back(cv::Point2f(p1.x, p0.y));
+    to.push_back(p1);
+
+    cv::Mat mat = cv::getAffineTransform(from, to);
+
+    cv::warpAffine(target, ret, mat, ret.size(), cv::INTER_LINEAR, cv::BORDER_TRANSPARENT);
+    return ret;
+}
+
+cv::Mat
+DoCropByAspectRatio(const cv::Mat& input, const cv::Size& size)
+{
+    cv::Mat back(size, CV_8UC3);
+    auto green = cv::Scalar(0, 255, 0);
+    back = green;
+
+    INT cx1 = input.cols;
+    INT cy1 = input.rows;
+    INT cx2 = size.width;
+    INT cy2 = size.height;
+    int px = cx2 / 2;
+    int py = cy2 / 2;
+    if (cy1 * cx2 < cy2 * cx1)  // cy1 / cx1 < cy2 / cx2
+    {
+        int height = cy2;
+        int width = cy2 * cx1 / cy1;
+        cv::Point2f p0(px - width / 2, py - height / 2);
+        cv::Point2f p1(px + width / 2, py + height / 2);
+        cv::Mat output = DoPasteFrame(back, input, p0, p1);
+        return output;
+    }
+    else
+    {
+        int width = cx2;
+        int height = cx2 * cy1 / cx1;
+        cv::Point2f p0(px - width / 2, py - height / 2);
+        cv::Point2f p1(px + width / 2, py + height / 2);
+        cv::Mat output = DoPasteFrame(back, input, p0, p1);
+        return output;
+    }
+}
+
+void DoResizeFrame(cv::Mat& frame, int width, int height, ASPECT_MODE mode)
+{
+    if (width <= 0 || height <= 0)
+        return;
+
+    int cx = frame.cols;
+    int cy = frame.rows;
+
+    switch (mode)
+    {
+    case ASPECT_IGNORE:
+        cv::resize(frame, frame, cv::Size(width, height));
+        return;
+    case ASPECT_CUT:
+        {
+            cv::Mat back = DoCropByAspectRatio(frame, cv::Size(width, height));
+            frame = back;
+        }
+        break;
+    case ASPECT_EXTEND_BLACK:
+        {
+            auto black = cv::Scalar(0, 0, 0);
+            cv::Mat back = DoResizeKeepAspectRatio(frame, cv::Size(width, height), black);
+            frame = back;
+        }
+        break;
+    case ASPECT_EXTEND_WHITE:
+        {
+            auto white = cv::Scalar(255, 255, 255);
+            cv::Mat back = DoResizeKeepAspectRatio(frame, cv::Size(width, height), white);
+            frame = back;
+        }
+        break;
+    }
+}
+
 static unsigned __stdcall FinalizingThreadFunction(void *pContext)
 {
     DPRINT("FinalizingThreadFunction started");
@@ -1876,7 +2003,7 @@ static unsigned __stdcall FinalizingThreadFunction(void *pContext)
         int cy = frame.rows;
         if (cx != width || cy != height)
         {
-            cv::resize(frame, frame, cv::Size(width, height));
+            DoResizeFrame(frame, width, height, g_settings.m_nAspectMode);
         }
 
         // update status text
@@ -3044,6 +3171,25 @@ static void OnTimer(HWND hwnd, UINT id)
             SendDlgItemMessage(hwnd, scr1, PBM_SETPOS, nValue, 0);
         }
         break;
+    }
+
+    if (g_settings.m_bFollowChange)
+    {
+        INT cxScreen = GetSystemMetrics(SM_CXSCREEN);
+        INT cyScreen = GetSystemMetrics(SM_CYSCREEN);
+        INT cxFullScreen = GetSystemMetrics(SM_CXFULLSCREEN);
+        INT cyFullScreen = GetSystemMetrics(SM_CYFULLSCREEN);
+        if (cxScreen != s_cxScreen ||
+            cyScreen != s_cyScreen ||
+            cxFullScreen != s_cxFullScreen ||
+            cyFullScreen != s_cyFullScreen)
+        {
+            s_cxScreen = cxScreen;
+            s_cyScreen = cyScreen;
+            s_cxFullScreen = cxFullScreen;
+            s_cyFullScreen = cyFullScreen;
+            g_settings.follow_display_change(hwnd);
+        }
     }
 }
 

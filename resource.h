@@ -71,6 +71,10 @@
 #define IDS_BROADCASTER                     136
 #define IDS_UNKNOWN                         137
 #define IDS_TYPE                            138
+#define IDS_ASPECT_IGNORE                   139
+#define IDS_ASPECT_CUT                      140
+#define IDS_ASPECT_BLACK                    141
+#define IDS_ASPECT_WHITE                    142
 
 #define ID_PICTUREINPUT                     100
 #define ID_SOUNDINPUT                       101

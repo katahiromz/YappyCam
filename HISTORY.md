@@ -38,3 +38,4 @@
     - Fixed division by zero.
     - Implement facial recognition.
     - FaceDetection, DecoFace, DecoFrame plugins added.
+    - Following display change.

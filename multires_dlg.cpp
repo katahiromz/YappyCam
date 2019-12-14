@@ -2,10 +2,19 @@
 #include "YappyCam.hpp"
 
 static RESO_MAP s_map;
+static ASPECT_MODE s_mode;
 
 static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
+    s_mode = g_settings.m_nAspectMode;
     SendDlgItemMessage(hwnd, lst1, LB_RESETCONTENT, 0, 0);
+
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+    ComboBox_AddString(hCmb1, LoadStringDx(IDS_ASPECT_IGNORE));
+    ComboBox_AddString(hCmb1, LoadStringDx(IDS_ASPECT_CUT));
+    ComboBox_AddString(hCmb1, LoadStringDx(IDS_ASPECT_BLACK));
+    ComboBox_AddString(hCmb1, LoadStringDx(IDS_ASPECT_WHITE));
+    ComboBox_SetCurSel(hCmb1, s_mode);
 
     for (auto& pair : s_map)
     {
@@ -78,6 +87,9 @@ static void OnOK(HWND hwnd)
 
     INT cx = _wtoi(str1.c_str());
     INT cy = _wtoi(str2.c_str());
+
+    HWND hCmb1 = GetDlgItem(hwnd, cmb1);
+    g_settings.m_nAspectMode = static_cast<ASPECT_MODE>(ComboBox_GetCurSel(hCmb1));
 
     EndDialog(hwnd, MAKELONG(cx, cy));
 }
