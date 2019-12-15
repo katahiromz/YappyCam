@@ -269,8 +269,8 @@ STRINGTABLE
     IDS_TYPE, "種類"
     IDS_ASPECT_IGNORE, "アスペクト比を無視する"
     IDS_ASPECT_CUT, "アスペクト比を保つ (刈り取り)"
-    IDS_ASPECT_BLACK, "アスペクト比を保つ (黒拡張)"
-    IDS_ASPECT_WHITE, "アスペクト比を保つ (白拡張)"
+    IDS_ASPECT_BLACK, "アスペクト比を保つ (黒で拡張)"
+    IDS_ASPECT_WHITE, "アスペクト比を保つ (白で拡張)"
 }
 
 //////////////////////////////////////////////////////////////////////////////
