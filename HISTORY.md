@@ -40,3 +40,4 @@
     - FaceDetection, DecoFace, DecoFrame plugins added.
     - Following display change.
     - Keeping aspect ratio upon finalizing.
+- 20XX.YY.ZZ ver.0.9.3
