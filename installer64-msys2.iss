@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "YappyCam"
-#define MyAppVersion "0.9.3"
+#define MyAppVersion "0.9.2"
 #define MyAppPublisher "Katayama Hirofumi MZ"
 #define MyAppURL "https://katahiromz.web.fc2.com"
 #define MyAppExeName "YappyCam.exe"
@@ -22,7 +22,7 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf64}\{#MyAppName}
 DisableProgramGroupPage=yes
 LicenseFile=LICENSE.txt
-OutputBaseFilename=YappyCam64-0.9.3-setup
+OutputBaseFilename=YappyCam64-0.9.2-setup
 Compression=lzma
 SolidCompression=yes
 OutputDir=.
@@ -36,10 +36,10 @@ Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
-Source: "YappyCam.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "finalize.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "sound2wav.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "silent.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\YappyCam.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\finalize.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\sound2wav.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\silent.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "READMEJP.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
@@ -76,6 +76,30 @@ Source: "..\msys2\x64\zlib1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "haarcascade_frontalface_default.xml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "haarcascade_frontalface_alt.xml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "lbpcascade_frontalface_improved.xml"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\Brightness.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\ChromaKey.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\Clock.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\ColorInvert.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\DecoFace.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\DecoFrame.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\FaceDetection.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\GaussianBlur.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\Monochrome.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\Mosaic.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\Noize.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\Quadruple.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\Quarter.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\Resizing.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\Rotation.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\Sepia.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\Trimming.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\medianBlur.yap"; DestDir: "{app}"; Flags: ignoreversion
+Source: "plugins\DecoFace\CatEar.png"; DestDir: "{app}\DecoFace"; Flags: ignoreversion
+Source: "plugins\DecoFace\FaceModel.png"; DestDir: "{app}\DecoFace"; Flags: ignoreversion
+Source: "plugins\DecoFrame\GoldFrame.png"; DestDir: "{app}\DecoFrame"; Flags: ignoreversion
+Source: "plugins\DecoFrame\SilverFrame.png"; DestDir: "{app}\DecoFrame"; Flags: ignoreversion
+Source: "plugins\DecoFrame\Stars.png"; DestDir: "{app}\DecoFrame"; Flags: ignoreversion
+Source: "plugins\DecoFrame\WoodFrame.png"; DestDir: "{app}\DecoFrame"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

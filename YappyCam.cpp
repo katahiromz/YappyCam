@@ -93,10 +93,10 @@ std::vector<cv::Rect> g_faces;
 mutex_debug g_face_lock("g_face_lock");
 
 // screen info
-static INT s_cxScreen = GetSystemMetrics(SM_CXSCREEN);
-static INT s_cyScreen = GetSystemMetrics(SM_CYSCREEN);
-static INT s_cxFullScreen = GetSystemMetrics(SM_CXFULLSCREEN);
-static INT s_cyFullScreen = GetSystemMetrics(SM_CYFULLSCREEN);
+static INT s_cxScreen;
+static INT s_cyScreen;
+static INT s_cxFullScreen;
+static INT s_cyFullScreen;
 
 void DoPass1Frame(const cv::Mat& image)
 {
@@ -1742,9 +1742,6 @@ void DoResizeFrame(cv::Mat& frame, int width, int height, ASPECT_MODE mode)
 
     int cx = frame.cols;
     int cy = frame.rows;
-
-    if (cx == width && cy == height)
-        return;
 
     switch (mode)
     {

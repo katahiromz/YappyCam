@@ -59,25 +59,21 @@ static LRESULT APIENTRY driver(struct PLUGIN *pi, UINT uFunc, WPARAM wParam, LPA
                     return (LRESULT)NULL;
                 return PF_ActOne(&s_plugins[i], PLUGIN_ACTION_GETBANGLIST, (WPARAM)pnBangCount, 0);
             }
-            return PF_ActOne(NULL, PLUGIN_ACTION_GETBANGLIST, (WPARAM)pnBangCount, 0);
+            return PF_ActOne(pi, PLUGIN_ACTION_GETBANGLIST, (WPARAM)pnBangCount, 0);
         }
         break;
     case DRIVERFUNC_DOBANG:
         {
-            BANG_TARGET *pTarget = reinterpret_cast<BANG_TARGET *>(wParam);
-            LPCWSTR filename = reinterpret_cast<LPCWSTR>(lParam);
+            INT nBangID = (INT)wParam;
+            LPCWSTR filename = (LPCWSTR)lParam;
             if (filename)
             {
                 INT i = PF_FindFileName(s_plugins, filename);
                 if (i < 0)
                     return (LRESULT)NULL;
-                return PF_ActOne(&s_plugins[i], PLUGIN_ACTION_DOBANG,
-                                 MAKELONG(pTarget->nBangID, pTarget->nType),
-                                 (LPARAM)pTarget->pszString);
+                return PF_ActOne(&s_plugins[i], PLUGIN_ACTION_DOBANG, nBangID, 0);
             }
-            return PF_ActOne(NULL, PLUGIN_ACTION_DOBANG,
-                             MAKELONG(pTarget->nBangID, pTarget->nType),
-                             (LPARAM)pTarget->pszString);
+            return PF_ActOne(pi, PLUGIN_ACTION_DOBANG, nBangID, 0);
         }
         break;
     case DRIVERFUNC_GETFACES:
@@ -202,24 +198,7 @@ BOOL PF_IsEnabled(const PLUGIN *pi)
 
 LRESULT PF_ActOne(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lParam)
 {
-    if (!pi)
-    {
-        switch (uAction)
-        {
-        case PLUGIN_ACTION_DOBANG:
-            // TODO: Do global action.
-            return FALSE;
-
-        case PLUGIN_ACTION_GETBANGLIST:
-            // TODO: Retrieve global action list.
-            return FALSE;
-
-        default:
-            return FALSE;
-        }
-    }
-
-    if (!pi->framework_impl || !pi->framework_impl->act)
+    if (!pi || !pi->framework_impl || !pi->framework_impl->act)
     {
         assert(0);
         return FALSE;

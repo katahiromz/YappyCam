@@ -4,17 +4,19 @@
 ##############################################################################
 
 # CMake minimum version
-cmake_minimum_required(VERSION 2.4)
+cmake_minimum_required(VERSION 3.0)
 
 if(COMMAND cmake_policy)
     cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-# project name and language
-project(YappyCam CXX)
+# project name and languages
+project(YappyCam CXX RC)
 
-# enable Win32 resource
-enable_language(RC)
+# set output directory (build/)
+set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # using Clang
@@ -94,7 +96,7 @@ target_link_libraries(finalize ${OpenCV_LIBS} winmm vfw32 shlwapi)
 add_executable(silent silent.cpp silent_res.rc)
 target_link_libraries(silent winmm)
 
-# tests
-subdirs(tests)
+# tests and plugins
+subdirs(tests plugins)
 
 ##############################################################################

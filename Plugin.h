@@ -22,7 +22,7 @@
 
 // TODO: Change me!
 #ifndef FRAMEWORK_VERSION
-    #define FRAMEWORK_VERSION 2
+    #define FRAMEWORK_VERSION 1
 #endif
 
 struct PLUGIN;
@@ -41,28 +41,15 @@ typedef enum BANGID
     BANGID_ENABLE,
     BANGID_DISABLE,
     BANGID_TOGGLE,
-    BANGID_GETPARAM,
-    BANGID_SETPARAM,
     BANGID_SOUND_0 = 100,
     BANGID_TRIGGER_0 = 200
 } BANGID;
 
 typedef struct BANG_INFO
 {
-    WORD nBangID;
+    INT nBangID;
     LPCWSTR name;
 } BANG_INFO;
-
-typedef struct BANG_TARGET
-{
-    WORD nBangID;
-    WORD nType;
-    union
-    {
-        WORD nValue;
-        LPWSTR pszString;
-    };
-} BANG_TARGET;
 
 // Driver: DRIVERFUNC_LISTPLUGINS (1)
 //      Meaning: Get the plugin from filename.
@@ -94,7 +81,7 @@ typedef struct BANG_TARGET
 // Driver: DRIVERFUNC_DOBANG (4)
 //      Meaning: Do something.
 //      Parameters:
-//         wParam: BANG_TARGET *pTarget;
+//         wParam: INT nBangID;
 //         lParam: LPCWSTR filename;
 //      Return value:
 //         TRUE or FALSE;
@@ -240,16 +227,10 @@ LRESULT APIENTRY Plugin_Act(PLUGIN *pi, UINT uAction, WPARAM wParam, LPARAM lPar
 // Action: PLUGIN_ACTION_DOBANG (9)
 //      Meaning: Do something.
 //      Parameters:
-//         wParam: MAKELONG(nBangID, nType);
-//         lParam: WORD nValue or LPWSTR pszString or zero;
+//         wParam: INT nBangID;
+//         lParam: zero;
 //      Return value:
 //         TRUE to continue;
-//      Note:
-//         The meaning of nType is defined by the plugin.
-//         If nType is meaningless, it must be zero. End if.
-//         If lParam is a integer value, then HIWORD(wParam) is zero. End if.
-//         If lParam is a string, then HIWORD(wParam) is non-zero. End if.
-//         If lParam is meaningless, it must be zero. End if.
 #define PLUGIN_ACTION_DOBANG 9
 
 // Action: PLUGIN_ACTION_GETBANGLIST (10)
