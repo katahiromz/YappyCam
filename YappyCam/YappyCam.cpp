@@ -980,26 +980,41 @@ INT GetWidthFromHeight(INT cy)
     return cy * g_settings.m_nWidth / g_settings.m_nHeight;
 }
 
-static BOOL OnSizing(HWND hwnd, DWORD fwSide, LPRECT prc)
+static void AdjustRect(HWND hwnd, LPRECT prc, BOOL bExpand)
 {
     RECT rc;
     DWORD style = GetWindowStyle(hwnd);
     DWORD exstyle = GetWindowExStyle(hwnd);
     BOOL bMenu = FALSE;
+    INT padding_right = s_button_width + s_progress_width;
 
-    SetRectEmpty(&rc);
-    AdjustWindowRectEx(&rc, style, bMenu, exstyle);
-    INT dx0 = rc.left, dy0 = rc.top;
-    INT dx1 = rc.right, dy1 = rc.bottom;
+    if (bExpand)
+    {
+        AdjustWindowRectEx(prc, style, bMenu, exstyle);
+        prc->right += padding_right;
+    }
+    else
+    {
+        SetRectEmpty(&rc);
+        AdjustWindowRectEx(&rc, style, bMenu, exstyle);
+        INT dx0 = rc.left, dy0 = rc.top;
+        INT dx1 = rc.right, dy1 = rc.bottom;
+        rc = *prc;
+        rc.left -= dx0;
+        rc.top -= dy0;
+        rc.right -= dx1;
+        rc.bottom -= dy1;
+        rc.right -= padding_right;
+        *prc = rc;
+    }
+}
+
+static BOOL OnSizing(HWND hwnd, DWORD fwSide, LPRECT prc)
+{
+    RECT rc;
 
     rc = *prc;
-    rc.left -= dx0;
-    rc.top -= dy0;
-    rc.right -= dx1;
-    rc.bottom -= dy1;
-
-    INT padding_right = s_button_width + s_progress_width;
-    rc.right -= padding_right;
+    AdjustRect(hwnd, &rc, FALSE);
 
     int x = rc.left;
     int y = rc.top;
@@ -1072,9 +1087,8 @@ static BOOL OnSizing(HWND hwnd, DWORD fwSide, LPRECT prc)
         break;
     }
 
-    AdjustWindowRectEx(&rc, style, bMenu, exstyle);
+    AdjustRect(hwnd, &rc, TRUE);
     *prc = rc;
-    prc->right += padding_right;
 
     if (!IsMinimized(hwnd))
         InvalidateRect(hwnd, &rc, TRUE);
