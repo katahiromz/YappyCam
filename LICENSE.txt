@@ -4,7 +4,7 @@ Copyright (c) 2009-2016, NVIDIA Corporation
 Copyright (c) 2010-2013, Advanced Micro Devices, Inc.
 Copyright (c) 2015-2016, OpenCV Foundation
 Copyright (c) 2015-2016, Itseez Inc.
-Copyright (c) 2019, Katayama Hirofumi MZ
+Copyright (c) 2019-2021 Katayama Hirofumi MZ
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
