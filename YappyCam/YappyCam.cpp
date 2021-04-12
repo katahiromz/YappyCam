@@ -2521,7 +2521,7 @@ void OnRecStop(HWND hwnd)
     PF_ActAll(s_plugins, PLUGIN_ACTION_STARTREC, 0, 0);
 
     // play sound
-    PlaySound(MAKEINTRESOURCE(IDR_STARTREC), g_hInst, SND_ASYNC | SND_NODEFAULT | SND_RESOURCE);
+    //PlaySound(MAKEINTRESOURCE(IDR_STARTREC), g_hInst, SND_ASYNC | SND_NODEFAULT | SND_RESOURCE);
 
     // build image file path
     TCHAR szPath[MAX_PATH];
