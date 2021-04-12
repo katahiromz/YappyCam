@@ -74,9 +74,6 @@ Source: "..\msys2\x64\opencv_videoio_ffmpeg412_64.dll"; DestDir: "{app}"; Flags:
 Source: "..\msys2\x64\openh264-1.8.0-win64.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\tbb.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\zlib1.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "haarcascade_frontalface_default.xml"; DestDir: "{app}"; Flags: ignoreversion
-Source: "haarcascade_frontalface_alt.xml"; DestDir: "{app}"; Flags: ignoreversion
-Source: "lbpcascade_frontalface_improved.xml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\Brightness.yap"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\ChromaKey.yap"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\Clock.yap"; DestDir: "{app}"; Flags: ignoreversion
@@ -97,6 +94,9 @@ Source: "build\Trimming.yap"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\medianBlur.yap"; DestDir: "{app}"; Flags: ignoreversion
 Source: "plugins\DecoFace\CatEar.png"; DestDir: "{app}\DecoFace"; Flags: ignoreversion
 Source: "plugins\DecoFace\FaceModel.png"; DestDir: "{app}\DecoFace"; Flags: ignoreversion
+Source: "plugins\DecoFace\haarcascade_frontalface_default.xml"; DestDir: "{app}"; Flags: ignoreversion
+Source: "plugins\DecoFace\haarcascade_frontalface_alt.xml"; DestDir: "{app}"; Flags: ignoreversion
+Source: "plugins\DecoFace\lbpcascade_frontalface_improved.xml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "plugins\DecoFrame\GoldFrame.png"; DestDir: "{app}\DecoFrame"; Flags: ignoreversion
 Source: "plugins\DecoFrame\SilverFrame.png"; DestDir: "{app}\DecoFrame"; Flags: ignoreversion
 Source: "plugins\DecoFrame\Stars.png"; DestDir: "{app}\DecoFrame"; Flags: ignoreversion

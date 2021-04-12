@@ -1,0 +1,1 @@
+#define IDR_SILENT_WAV 1

@@ -58,45 +58,11 @@ find_package(OpenCV REQUIRED)
 
 add_definitions(-DUNICODE -D_UNICODE)
 
+include_directories(.)
+
 ##############################################################################
+# sub-directories
 
-# YappyCam.exe
-add_executable(YappyCam WIN32
-    YappyCam.cpp
-    PluginFramework.cpp
-    faces_dlg.cpp
-    hotkeys_dlg.cpp
-    misc.cpp
-    multires_dlg.cpp
-    sound.cpp
-    sound_dlg.cpp
-    pic_dlg.cpp
-    plugins_dlg.cpp
-    save_to_dlg.cpp
-    YappyCam_res.rc)
-target_link_libraries(YappyCam
-    ${OpenCV_LIBS}
-    comctl32
-    shlwapi
-    winmm
-    vfw32
-    ole32
-    avrt
-    ksuser)
-
-# sound2wav.exe
-add_executable(sound2wav sound2wav.cpp misc.cpp)
-target_link_libraries(sound2wav winmm vfw32)
-
-# finalize.exe
-add_executable(finalize finalize.cpp misc.cpp)
-target_link_libraries(finalize ${OpenCV_LIBS} winmm vfw32 shlwapi)
-
-# silent.exe
-add_executable(silent silent.cpp silent_res.rc)
-target_link_libraries(silent winmm)
-
-# tests and plugins
-subdirs(tests plugins)
+subdirs(YappyCam sound2wav finalize silent tests plugins)
 
 ##############################################################################

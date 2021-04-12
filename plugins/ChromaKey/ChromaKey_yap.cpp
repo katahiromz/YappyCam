@@ -3,7 +3,7 @@
 // This file is public domain software.
 #include "../../Plugin.h"
 #include <shlwapi.h>
-#include "../mregkey.hpp"
+#include "../../mregkey.hpp"
 #include "../color_value.h"
 #include "../color_button.hpp"
 #include <windowsx.h>
