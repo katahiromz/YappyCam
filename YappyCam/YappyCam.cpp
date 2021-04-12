@@ -3416,6 +3416,22 @@ static void OnInitMenuPopup(HWND hwnd, HMENU hMenu, UINT item, BOOL fSystemMenu)
     if (fSystemMenu)
         return;
 
+    switch (g_settings.m_nPictureType)
+    {
+    case PT_SCREENCAP:
+        CheckMenuRadioItem(hMenu, ID_CAMERA, ID_IMAGEFILE, ID_SCREEN, 0);
+        break;
+    case PT_VIDEOCAP:
+        CheckMenuRadioItem(hMenu, ID_CAMERA, ID_IMAGEFILE, ID_CAMERA, 0);
+        break;
+    case PT_IMAGEFILE:
+        CheckMenuRadioItem(hMenu, ID_CAMERA, ID_IMAGEFILE, ID_IMAGEFILE, 0);
+        break;
+    default:
+        CheckMenuRadioItem(hMenu, ID_CAMERA, ID_IMAGEFILE, (UINT)-1, 0);
+        break;
+    }
+
     if (s_bWriting)
     {
         EnableMenuItem(hMenu, ID_PICTUREINPUT, MF_BYCOMMAND | MF_GRAYED);
