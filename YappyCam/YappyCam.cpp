@@ -1237,6 +1237,8 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         break;
     case PT_FINALIZING:
         SetDisplayMode(DM_TEXT);
+        cx = m_nWidth = 320;
+        cy = m_nHeight = 240;
         break;
     case PT_IMAGEFILE:
         SetDisplayMode(DM_IMAGEFILE);
