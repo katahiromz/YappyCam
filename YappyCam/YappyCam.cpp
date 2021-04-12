@@ -549,8 +549,7 @@ bool Settings::load(HWND hwnd)
     if (!app_key)
         return false;
 
-    PictureType type;
-    app_key.QueryDword(L"PicType", (DWORD&)type);
+    app_key.QueryDword(L"PicType", (DWORD&)m_nPictureType);
 
     app_key.QueryDword(L"Width", (DWORD&)m_nWidth);
     app_key.QueryDword(L"Height", (DWORD&)m_nHeight);
@@ -694,10 +693,8 @@ bool Settings::load(HWND hwnd)
         break;
     }
 
-    if (type == PT_FINALIZING)
-        type = PT_SCREENCAP;
-
-    SetPictureType(hwnd, type);
+    if (m_nPictureType == PT_FINALIZING)
+        m_nPictureType = PT_SCREENCAP;
 
     for (INT i = m_nMovieID; i <= 999; ++i)
     {
@@ -708,6 +705,15 @@ bool Settings::load(HWND hwnd)
             break;
         }
     }
+
+    // move
+    MoveWindow(hwnd, m_nWindowX, m_nWindowY, m_nWindowCX, m_nWindowCY, TRUE);
+
+    // update picture type
+    SetPictureType(hwnd);
+
+    // fix size
+    fix_size(hwnd, m_nArea);
 
     return true;
 }
@@ -1093,8 +1099,6 @@ static BOOL OnSizing(HWND hwnd, DWORD fwSide, LPRECT prc)
     if (!IsMinimized(hwnd))
         InvalidateRect(hwnd, &rc, TRUE);
 
-    g_settings.m_nArea = GetImageArea(hwnd);
-
     return TRUE;
 }
 
@@ -1134,7 +1138,6 @@ void Settings::fix_size(HWND hwnd, INT nArea)
     s_bManualSizing = FALSE;
 
     PostMessageW(hwnd, DM_REPOSITION, 0, 0);
-    m_nArea = nArea;
 }
 
 void Settings::recreate_bitmap(HWND hwnd)
@@ -1183,7 +1186,7 @@ void Settings::recreate_bitmap(HWND hwnd)
     s_bitmap_lock.unlock(__LINE__);
 }
 
-BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
+BOOL Settings::SetPictureType(HWND hwnd, PictureType type, INT nArea)
 {
     assert(!s_bWatching);
 
@@ -1191,7 +1194,7 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
     s_frame.release();
     s_image_cap.release();
 
-    INT nArea = GetImageArea(hwnd);
+    nArea = nArea ? nArea : GetImageArea(hwnd);
     INT cx, cy;
     switch (type)
     {
@@ -1435,9 +1438,6 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
     // load settings
     g_settings.load(hwnd);
-
-    // fix window size
-    g_settings.fix_size(hwnd, g_settings.m_nArea);
 
     if (g_settings.m_strvecPluginNames.size())
         DoReorderPlugins(hwnd);
@@ -3081,6 +3081,7 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
         INT cyWnd = rcWnd.bottom - rcWnd.top;
         g_settings.m_nWindowCX = cxWnd;
         g_settings.m_nWindowCY = cyWnd;
+        g_settings.m_nArea = GetImageArea(hwnd);
     }
 
     // trigger to redraw

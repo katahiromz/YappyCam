@@ -135,7 +135,11 @@ struct Settings
     {
         return m_nPictureType;
     }
-    BOOL SetPictureType(HWND hwnd, PictureType type);
+    BOOL SetPictureType(HWND hwnd, PictureType type, INT nArea = 0);
+    BOOL SetPictureType(HWND hwnd)
+    {
+        return SetPictureType(hwnd, m_nPictureType, m_nArea);
+    }
 
 protected:
     void SetDisplayMode(DisplayMode mode)
