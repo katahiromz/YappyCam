@@ -86,6 +86,7 @@ struct Settings
     INT m_nPluginsDlgY;
     INT m_nFacesDlgX;
     INT m_nFacesDlgY;
+    INT m_nArea;
     BOOL m_bUseFaces;
     BOOL m_bUsePass1;
     BOOL m_bUsePass2;
@@ -130,8 +131,7 @@ struct Settings
     void change_dirs(const WCHAR *dir);
     void update(HWND hwnd);
     void update(HWND hwnd, PictureType type);
-    void fix_size(HWND hwnd);
-    void fix_size0(HWND hwnd);
+    void fix_size(HWND hwnd, INT nArea);
     void follow_display_change(HWND hwnd);
 
     DisplayMode GetDisplayMode() const

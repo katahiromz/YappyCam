@@ -465,7 +465,8 @@ void Settings::init()
     m_cxCap = GetSystemMetrics(SM_CXSCREEN);
     m_cyCap = GetSystemMetrics(SM_CYSCREEN);
 
-    m_nWindowX = m_nWindowY = CW_USEDEFAULT;
+    m_nWindowX = m_cxCap / 2;
+    m_nWindowY = m_cyCap / 2;
 
     m_nWindow1CX = 250;
     m_nWindow1CY = 160;
@@ -482,6 +483,7 @@ void Settings::init()
     m_nHotKeysDlgX = m_nHotKeysDlgY = CW_USEDEFAULT;
     m_nPluginsDlgX = m_nPluginsDlgY = CW_USEDEFAULT;
     m_nFacesDlgX = m_nFacesDlgY = CW_USEDEFAULT;
+    m_nArea = 1000;
 
     //m_bUseFaces = FALSE;
     m_nFPSx100 = UINT(DEFAULT_FPS * 100);
@@ -591,6 +593,7 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"PluginsDlgY", (DWORD&)m_nPluginsDlgY);
     app_key.QueryDword(L"FacesDlgX", (DWORD&)m_nFacesDlgX);
     app_key.QueryDword(L"FacesDlgY", (DWORD&)m_nFacesDlgY);
+    app_key.QueryDword(L"Area", (DWORD&)m_nArea);
 
     app_key.QueryDword(L"FPSx100", (DWORD&)m_nFPSx100);
     app_key.QueryDword(L"DrawCursor", (DWORD&)m_bDrawCursor);
@@ -769,6 +772,7 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"PluginsDlgY", m_nPluginsDlgY);
     app_key.SetDword(L"FacesDlgX", m_nFacesDlgX);
     app_key.SetDword(L"FacesDlgY", m_nFacesDlgY);
+    app_key.SetDword(L"Area", m_nArea);
 
     app_key.SetDword(L"FPSx100", m_nFPSx100);
     app_key.SetDword(L"DrawCursor", m_bDrawCursor);
@@ -913,6 +917,43 @@ void Settings::update(HWND hwnd)
     update(hwnd, GetPictureType());
 }
 
+static void AdjustRect(HWND hwnd, LPRECT prc, BOOL bExpand)
+{
+    RECT rc;
+    DWORD style = GetWindowStyle(hwnd);
+    DWORD exstyle = GetWindowExStyle(hwnd);
+    BOOL bMenu = FALSE;
+    INT padding_right = s_button_width + s_progress_width;
+
+    if (bExpand)
+    {
+        AdjustWindowRectEx(prc, style, bMenu, exstyle);
+        prc->right += padding_right;
+    }
+    else
+    {
+        SetRectEmpty(&rc);
+        AdjustWindowRectEx(&rc, style, bMenu, exstyle);
+        INT dx0 = rc.left, dy0 = rc.top;
+        INT dx1 = rc.right, dy1 = rc.bottom;
+        rc = *prc;
+        rc.left -= dx0;
+        rc.top -= dy0;
+        rc.right -= dx1;
+        rc.bottom -= dy1;
+        rc.right -= padding_right;
+        *prc = rc;
+    }
+}
+
+static INT GetImageArea(HWND hwnd)
+{
+    RECT rc;
+    GetWindowRect(hwnd, &rc);
+    AdjustRect(hwnd, &rc, FALSE);
+    return (rc.right - rc.left) * (rc.bottom - rc.top);
+}
+
 void Settings::update(HWND hwnd, PictureType type)
 {
     BOOL bWatching = s_bWatching;
@@ -920,9 +961,11 @@ void Settings::update(HWND hwnd, PictureType type)
     if (bWatching)
         DoStartStopTimers(hwnd, FALSE);
 
+    INT nArea = GetImageArea(hwnd);
+
     SetPictureType(hwnd, type);
 
-    fix_size(hwnd);
+    fix_size(hwnd, nArea);
 
     if (bWatching)
         DoStartStopTimers(hwnd, TRUE);
@@ -980,37 +1023,12 @@ INT GetWidthFromHeight(INT cy)
     return cy * g_settings.m_nWidth / g_settings.m_nHeight;
 }
 
-static void AdjustRect(HWND hwnd, LPRECT prc, BOOL bExpand)
-{
-    RECT rc;
-    DWORD style = GetWindowStyle(hwnd);
-    DWORD exstyle = GetWindowExStyle(hwnd);
-    BOOL bMenu = FALSE;
-    INT padding_right = s_button_width + s_progress_width;
-
-    if (bExpand)
-    {
-        AdjustWindowRectEx(prc, style, bMenu, exstyle);
-        prc->right += padding_right;
-    }
-    else
-    {
-        SetRectEmpty(&rc);
-        AdjustWindowRectEx(&rc, style, bMenu, exstyle);
-        INT dx0 = rc.left, dy0 = rc.top;
-        INT dx1 = rc.right, dy1 = rc.bottom;
-        rc = *prc;
-        rc.left -= dx0;
-        rc.top -= dy0;
-        rc.right -= dx1;
-        rc.bottom -= dy1;
-        rc.right -= padding_right;
-        *prc = rc;
-    }
-}
+static BOOL s_bManualSizing = FALSE;
 
 static BOOL OnSizing(HWND hwnd, DWORD fwSide, LPRECT prc)
 {
+    if (s_bManualSizing)
+        return TRUE;
     RECT rc;
 
     rc = *prc;
@@ -1093,66 +1111,48 @@ static BOOL OnSizing(HWND hwnd, DWORD fwSide, LPRECT prc)
     if (!IsMinimized(hwnd))
         InvalidateRect(hwnd, &rc, TRUE);
 
+    g_settings.m_nArea = GetImageArea(hwnd);
+
     return TRUE;
 }
 
-void Settings::fix_size0(HWND hwnd)
+void Settings::fix_size(HWND hwnd, INT nArea)
 {
+    INT x = m_nWindowX, y = m_nWindowY;
+    SetWindowPos(hwnd, NULL, x, y, 0, 0,
+                 SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+
+    RECT rcWnd;
+    GetWindowRect(hwnd, &rcWnd);
+    INT px = (rcWnd.left + rcWnd.right) / 2;
+    INT py = (rcWnd.top + rcWnd.bottom) / 2;
+
+    if (m_nWidth == 0)
+        m_nWidth = 1;
+    if (m_nHeight == 0)
+        m_nHeight = 1;
+    float aspect_ratio = float(m_nWidth) / float(m_nHeight);
+    float square = nArea * aspect_ratio;
+    INT cx = INT(std::sqrt(square));
+    INT cy = INT(cx / aspect_ratio);
+
     RECT rc;
-    GetWindowRect(hwnd, &rc);
-    OnSizing(hwnd, WMSZ_BOTTOMRIGHT, &rc);
-    SetWindowPos(hwnd, NULL,
-                 rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
-                 SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOZORDER);
-    SendMessage(hwnd, DM_REPOSITION, 0, 0);
-}
+    SetRect(&rc, x, y, x + cx, y + cy);
+    AdjustRect(hwnd, &rc, TRUE);
+    cx = rc.right - rc.left;
+    cy = rc.bottom - rc.top;
+    x = px - cx / 2;
+    y = py - cy / 2;
 
-void Settings::fix_size(HWND hwnd)
-{
-    INT x, y, cx, cy;
-    switch (GetPictureType())
-    {
-    case PT_BLACK:
-    case PT_WHITE:
-        x = m_nWindowX;
-        y = m_nWindowY;
-        cx = m_nWindow1CX;
-        cy = m_nWindow1CY;
-        break;
-    case PT_SCREENCAP:
-        x = m_nWindowX;
-        y = m_nWindowY;
-        cx = m_nWindow2CX;
-        cy = m_nWindow2CY;
-        break;
-    case PT_VIDEOCAP:
-        x = m_nWindowX;
-        y = m_nWindowY;
-        cx = m_nWindow3CX;
-        cy = m_nWindow3CY;
-        break;
-    case PT_FINALIZING:
-        return;
-    case PT_IMAGEFILE:
-        x = m_nWindowX;
-        y = m_nWindowY;
-        cx = m_nWindow4CX;
-        cy = m_nWindow4CY;
-        break;
-    }
+    s_bManualSizing = TRUE;
+    SetWindowPos(hwnd, NULL, x, y, 0, 0,
+                 SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+    SetWindowPos(hwnd, NULL, 0, 0, cx, cy,
+                 SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+    s_bManualSizing = FALSE;
 
-    if (x != CW_USEDEFAULT && y != CW_USEDEFAULT)
-    {
-        SetWindowPos(hwnd, NULL, x, y, 0, 0,
-                     SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER);
-    }
-    if (cx != CW_USEDEFAULT && cy != CW_USEDEFAULT)
-    {
-        SetWindowPos(hwnd, NULL, 0, 0, cx, cy,
-                     SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
-    }
-
-    fix_size0(hwnd);
+    PostMessageW(hwnd, DM_REPOSITION, 0, 0);
+    m_nArea = nArea;
 }
 
 void Settings::recreate_bitmap(HWND hwnd)
@@ -1209,18 +1209,20 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
     s_frame.release();
     s_image_cap.release();
 
+    INT nArea = GetImageArea(hwnd);
+    INT cx, cy;
     switch (type)
     {
     case PT_BLACK:
     case PT_WHITE:
         SetDisplayMode(DM_BITMAP);
-        m_nWidth = 320;
-        m_nHeight = 240;
+        cx = m_nWidth = 320;
+        cy = m_nHeight = 240;
         break;
     case PT_SCREENCAP:
         SetDisplayMode(DM_BITMAP);
-        m_nWidth = m_cxCap;
-        m_nHeight = m_cyCap;
+        cx = m_nWidth = m_cxCap;
+        cy = m_nHeight = m_cyCap;
         break;
     case PT_VIDEOCAP:
         SetDisplayMode(DM_CAPFRAME);
@@ -1230,8 +1232,8 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
             DoStartStopTimers(hwnd, TRUE);
             return FALSE;
         }
-        m_nWidth = (int)s_camera.get(cv::CAP_PROP_FRAME_WIDTH);
-        m_nHeight = (int)s_camera.get(cv::CAP_PROP_FRAME_HEIGHT);
+        cx = m_nWidth = (int)s_camera.get(cv::CAP_PROP_FRAME_WIDTH);
+        cy = m_nHeight = (int)s_camera.get(cv::CAP_PROP_FRAME_HEIGHT);
         break;
     case PT_FINALIZING:
         SetDisplayMode(DM_TEXT);
@@ -1241,22 +1243,22 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
         s_image_cap.open(m_strInputFileNameA.c_str());
         if (s_image_cap.isOpened())
         {
-            m_nWidth = (int)s_image_cap.get(cv::CAP_PROP_FRAME_WIDTH);
-            m_nHeight = (int)s_image_cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+            cx = m_nWidth = (int)s_image_cap.get(cv::CAP_PROP_FRAME_WIDTH);
+            cy = m_nHeight = (int)s_image_cap.get(cv::CAP_PROP_FRAME_HEIGHT);
         }
         else
         {
             cv::Mat image = cv::imread(m_strInputFileNameA.c_str());
             if (image.data)
             {
-                m_nWidth = image.cols;
-                m_nHeight = image.rows;
+                cx = m_nWidth = image.cols;
+                cy = m_nHeight = image.rows;
             }
         }
         if (m_nWidth <= 1 || m_nHeight <= 1)
         {
-            m_nWidth = 320;
-            m_nHeight = 240;
+            cx = m_nWidth = 320;
+            cy = m_nHeight = 240;
         }
         break;
     }
@@ -1266,7 +1268,14 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
     s_black_mat = cv::Mat::zeros(cv::Size(m_nWidth, m_nHeight), CV_8UC3);
     recreate_bitmap(hwnd);
 
-    fix_size(hwnd);
+    if (cx != m_nWidth || cy != m_nHeight)
+    {
+        m_nWidth = cx;
+        m_nHeight = cy;
+        recreate_bitmap(hwnd);
+    }
+
+    fix_size(hwnd, nArea);
 
     assert(!s_bWatching);
 
@@ -1451,7 +1460,7 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     CheckDlgButton(hwnd, psh2, BST_UNCHECKED);
 
     // fix window size
-    g_settings.fix_size(hwnd);
+    g_settings.fix_size(hwnd, g_settings.m_nArea);
 
     // ?
     PostMessage(hwnd, WM_SIZE, 0, 0);
@@ -2774,24 +2783,16 @@ static void OnRButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFl
 {
     if (fDoubleClick)
     {
-        static INT s_nLock = 0;
-        if (!s_nLock)
-        {
-            ++s_nLock;
+        BOOL bPicDlgOpen = IsWindow(g_hwndPictureInput);
+        if (bPicDlgOpen)
+            SendMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
 
-            BOOL bPicDlgOpen = IsWindow(g_hwndPictureInput);
-            if (bPicDlgOpen)
-                SendMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
+        DoStartStopTimers(hwnd, FALSE);
+        g_settings.SetPictureType(hwnd, PT_VIDEOCAP);
+        DoStartStopTimers(hwnd, TRUE);
 
-            DoStartStopTimers(hwnd, FALSE);
-            g_settings.SetPictureType(hwnd, PT_VIDEOCAP);
-            DoStartStopTimers(hwnd, TRUE);
-
-            if (bPicDlgOpen)
-                DoPictureInputDialogBox(hwnd);
-
-            --s_nLock;
-        }
+        if (bPicDlgOpen)
+            DoPictureInputDialogBox(hwnd);
     }
 }
 

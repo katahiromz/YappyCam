@@ -42,3 +42,4 @@
     - Keeping aspect ratio upon finalizing.
 - 2021.XX.YY ver.0.9.3
     - Don't play sound when recoding started.
+    - Correctly remembering the display size.
