@@ -2506,24 +2506,24 @@ inline BOOL IsPluginDialogMessage(HWND hwnd, LPMSG lpMsg)
 void DoClosePopups(HWND hwnd, BOOL bAll = FALSE)
 {
     if (IsWindow(g_hwndSoundInput))
-        PostMessage(g_hwndSoundInput, WM_CLOSE, 0, 0);
+        DestroyWindow(g_hwndSoundInput);
     if (IsWindow(g_hwndPictureInput))
-        PostMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
+        DestroyWindow(g_hwndPictureInput);
     if (IsWindow(g_hwndSaveTo))
-        PostMessage(g_hwndSaveTo, WM_CLOSE, 0, 0);
+        DestroyWindow(g_hwndSaveTo);
     if (IsWindow(g_hwndHotKeys))
-        PostMessage(g_hwndHotKeys, WM_CLOSE, 0, 0);
+        DestroyWindow(g_hwndHotKeys);
     if (bAll)
     {
         if (IsWindow(g_hwndFaces))
-            PostMessage(g_hwndFaces, WM_CLOSE, 0, 0);
+            DestroyWindow(g_hwndFaces);
         if (IsWindow(g_hwndPlugins))
-            PostMessage(g_hwndPlugins, WM_CLOSE, 0, 0);
+            DestroyWindow(g_hwndPlugins);
         for (auto& plugin : s_plugins)
         {
             HWND hPlugin = plugin.plugin_window;
             if (IsWindow(hPlugin))
-                PostMessage(hPlugin, WM_CLOSE, 0, 0);
+                DestroyWindow(hPlugin);
         }
     }
 }
@@ -2746,14 +2746,15 @@ static void OnFaces(HWND hwnd)
     DoFacesDialogBox(hwnd);
 }
 
-static void OnLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFlags)
+static void DoSetPictureType(HWND hwnd, PictureType type)
 {
-    if (fDoubleClick)
-    {
-        BOOL bPicDlgOpen = IsWindow(g_hwndPictureInput);
-        if (bPicDlgOpen)
-            SendMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
+    BOOL bPicDlgOpen = IsWindow(g_hwndPictureInput);
+    if (bPicDlgOpen)
+        DestroyWindow(g_hwndPictureInput);
 
+    switch (type)
+    {
+    case PT_SCREENCAP:
         DoStartStopTimers(hwnd, FALSE);
         g_settings.m_xCap = 0;
         g_settings.m_yCap = 0;
@@ -2761,9 +2762,30 @@ static void OnLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFl
         g_settings.m_cyCap = GetSystemMetrics(SM_CYSCREEN);
         g_settings.SetPictureType(hwnd, PT_SCREENCAP);
         DoStartStopTimers(hwnd, TRUE);
+        break;
+    case PT_IMAGEFILE:
+        DoStartStopTimers(hwnd, FALSE);
+        g_settings.SetPictureType(hwnd, PT_IMAGEFILE);
+        DoStartStopTimers(hwnd, TRUE);
+        break;
+    case PT_VIDEOCAP:
+        DoStartStopTimers(hwnd, FALSE);
+        g_settings.SetPictureType(hwnd, PT_VIDEOCAP);
+        DoStartStopTimers(hwnd, TRUE);
+        break;
+    default:
+        break;
+    }
 
-        if (bPicDlgOpen)
-            DoPictureInputDialogBox(hwnd);
+    if (bPicDlgOpen)
+        DoPictureInputDialogBox(hwnd);
+}
+
+static void OnLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFlags)
+{
+    if (fDoubleClick)
+    {
+        DoSetPictureType(hwnd, PT_SCREENCAP);
     }
 }
 
@@ -2771,16 +2793,7 @@ static void OnMButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFl
 {
     if (fDoubleClick)
     {
-        BOOL bPicDlgOpen = IsWindow(g_hwndPictureInput);
-        if (bPicDlgOpen)
-            SendMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
-
-        DoStartStopTimers(hwnd, FALSE);
-        g_settings.SetPictureType(hwnd, PT_IMAGEFILE);
-        DoStartStopTimers(hwnd, TRUE);
-
-        if (bPicDlgOpen)
-            DoPictureInputDialogBox(hwnd);
+        DoSetPictureType(hwnd, PT_IMAGEFILE);
     }
 }
 
@@ -2788,16 +2801,7 @@ static void OnRButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFl
 {
     if (fDoubleClick)
     {
-        BOOL bPicDlgOpen = IsWindow(g_hwndPictureInput);
-        if (bPicDlgOpen)
-            SendMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
-
-        DoStartStopTimers(hwnd, FALSE);
-        g_settings.SetPictureType(hwnd, PT_VIDEOCAP);
-        DoStartStopTimers(hwnd, TRUE);
-
-        if (bPicDlgOpen)
-            DoPictureInputDialogBox(hwnd);
+        DoSetPictureType(hwnd, PT_VIDEOCAP);
     }
 }
 
@@ -2909,13 +2913,13 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         OnFaces(hwnd);
         break;
     case ID_CAMERA:
-        g_settings.SetPictureType(hwnd, PT_VIDEOCAP);
+        DoSetPictureType(hwnd, PT_VIDEOCAP);
         break;
     case ID_SCREEN:
-        g_settings.SetPictureType(hwnd, PT_SCREENCAP);
+        DoSetPictureType(hwnd, PT_SCREENCAP);
         break;
     case ID_IMAGEFILE:
-        g_settings.SetPictureType(hwnd, PT_IMAGEFILE);
+        DoSetPictureType(hwnd, PT_IMAGEFILE);
         break;
     }
 }
@@ -3391,7 +3395,7 @@ static void OnDropFiles(HWND hwnd, HDROP hdrop)
 {
     BOOL bPicDlgOpen = IsWindow(g_hwndPictureInput);
     if (bPicDlgOpen)
-        SendMessage(g_hwndPictureInput, WM_CLOSE, 0, 0);
+        DestroyWindow(g_hwndPictureInput);
 
     TCHAR szPath[MAX_PATH];
     DragQueryFile(hdrop, 0, szPath, ARRAYSIZE(szPath));
