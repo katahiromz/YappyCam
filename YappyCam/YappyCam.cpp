@@ -449,7 +449,7 @@ unsigned __stdcall PictureProducerThreadProc(void *pContext)
     return 0;
 }
 
-void Settings::init()
+void Settings::init(HWND hwnd)
 {
     m_nDisplayMode = DM_BITMAP;
     m_nPictureType = PT_SCREENCAP;
@@ -465,17 +465,11 @@ void Settings::init()
     m_cxCap = GetSystemMetrics(SM_CXSCREEN);
     m_cyCap = GetSystemMetrics(SM_CYSCREEN);
 
-    m_nWindowX = m_cxCap / 2;
-    m_nWindowY = m_cyCap / 2;
+    m_nWindowX = 0;
+    m_nWindowY = 0;
 
-    m_nWindow1CX = 250;
-    m_nWindow1CY = 160;
-    m_nWindow2CX = 250;
-    m_nWindow2CY = 160;
-    m_nWindow3CX = 250;
-    m_nWindow3CY = 160;
-    m_nWindow4CX = 250;
-    m_nWindow4CY = 160;
+    m_nWindowCX = 300;
+    m_nWindowCY = 240;
 
     m_nSoundDlgX = m_nSoundDlgY = CW_USEDEFAULT;
     m_nPicDlgX = m_nPicDlgY = CW_USEDEFAULT;
@@ -483,7 +477,7 @@ void Settings::init()
     m_nHotKeysDlgX = m_nHotKeysDlgY = CW_USEDEFAULT;
     m_nPluginsDlgX = m_nPluginsDlgY = CW_USEDEFAULT;
     m_nFacesDlgX = m_nFacesDlgY = CW_USEDEFAULT;
-    m_nArea = 1000;
+    m_nArea = 200 * 150;
 
     //m_bUseFaces = FALSE;
     m_nFPSx100 = UINT(DEFAULT_FPS * 100);
@@ -545,7 +539,7 @@ void Settings::init()
 
 bool Settings::load(HWND hwnd)
 {
-    init();
+    init(hwnd);
 
     MRegKey author_key(HKEY_CURRENT_USER, L"Software\\Katayama Hirofumi MZ", FALSE);
     if (!author_key)
@@ -572,14 +566,8 @@ bool Settings::load(HWND hwnd)
     app_key.QueryDword(L"WindowX", (DWORD&)m_nWindowX);
     app_key.QueryDword(L"WindowY", (DWORD&)m_nWindowY);
 
-    app_key.QueryDword(L"Window1CX", (DWORD&)m_nWindow1CX);
-    app_key.QueryDword(L"Window1CY", (DWORD&)m_nWindow1CY);
-    app_key.QueryDword(L"Window2CX", (DWORD&)m_nWindow2CX);
-    app_key.QueryDword(L"Window2CY", (DWORD&)m_nWindow2CY);
-    app_key.QueryDword(L"Window3CX", (DWORD&)m_nWindow3CX);
-    app_key.QueryDword(L"Window3CY", (DWORD&)m_nWindow3CY);
-    app_key.QueryDword(L"Window4CX", (DWORD&)m_nWindow4CX);
-    app_key.QueryDword(L"Window4CY", (DWORD&)m_nWindow4CY);
+    app_key.QueryDword(L"WindowCX", (DWORD&)m_nWindowCX);
+    app_key.QueryDword(L"WindowCY", (DWORD&)m_nWindowCY);
 
     app_key.QueryDword(L"SoundDlgX", (DWORD&)m_nSoundDlgX);
     app_key.QueryDword(L"SoundDlgY", (DWORD&)m_nSoundDlgY);
@@ -751,14 +739,8 @@ bool Settings::save(HWND hwnd) const
     app_key.SetDword(L"WindowX", m_nWindowX);
     app_key.SetDword(L"WindowY", m_nWindowY);
 
-    app_key.SetDword(L"Window1CX", m_nWindow1CX);
-    app_key.SetDword(L"Window1CY", m_nWindow1CY);
-    app_key.SetDword(L"Window2CX", m_nWindow2CX);
-    app_key.SetDword(L"Window2CY", m_nWindow2CY);
-    app_key.SetDword(L"Window3CX", m_nWindow3CX);
-    app_key.SetDword(L"Window3CY", m_nWindow3CY);
-    app_key.SetDword(L"Window4CX", m_nWindow4CX);
-    app_key.SetDword(L"Window4CY", m_nWindow4CY);
+    app_key.SetDword(L"WindowCX", m_nWindowCX);
+    app_key.SetDword(L"WindowCY", m_nWindowCY);
 
     app_key.SetDword(L"SoundDlgX", m_nSoundDlgX);
     app_key.SetDword(L"SoundDlgY", m_nSoundDlgY);
@@ -1454,6 +1436,9 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     // load settings
     g_settings.load(hwnd);
 
+    // fix window size
+    g_settings.fix_size(hwnd, g_settings.m_nArea);
+
     if (g_settings.m_strvecPluginNames.size())
         DoReorderPlugins(hwnd);
 
@@ -1465,9 +1450,6 @@ static BOOL OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     // uncheck some buttons
     CheckDlgButton(hwnd, psh1, BST_UNCHECKED);
     CheckDlgButton(hwnd, psh2, BST_UNCHECKED);
-
-    // fix window size
-    g_settings.fix_size(hwnd, g_settings.m_nArea);
 
     // ?
     PostMessage(hwnd, WM_SIZE, 0, 0);
@@ -2697,7 +2679,7 @@ static void OnInitSettings(HWND hwnd)
     if (nID == IDYES)
     {
         DoClosePopups(hwnd, TRUE);
-        g_settings.init();
+        g_settings.init(hwnd);
         g_settings.save(hwnd);
         g_settings.update(hwnd);
 
@@ -3097,27 +3079,8 @@ static void OnSize(HWND hwnd, UINT state, int cx, int cy)
         GetWindowRect(hwnd, &rcWnd);
         INT cxWnd = rcWnd.right - rcWnd.left;
         INT cyWnd = rcWnd.bottom - rcWnd.top;
-        switch (g_settings.GetPictureType())
-        {
-        case PT_BLACK:
-        case PT_WHITE:
-        case PT_FINALIZING:
-            g_settings.m_nWindow1CX = cxWnd;
-            g_settings.m_nWindow1CY = cyWnd;
-            break;
-        case PT_SCREENCAP:
-            g_settings.m_nWindow2CX = cxWnd;
-            g_settings.m_nWindow2CY = cyWnd;
-            break;
-        case PT_VIDEOCAP:
-            g_settings.m_nWindow3CX = cxWnd;
-            g_settings.m_nWindow3CY = cyWnd;
-            break;
-        case PT_IMAGEFILE:
-            g_settings.m_nWindow4CX = cxWnd;
-            g_settings.m_nWindow4CY = cyWnd;
-            break;
-        }
+        g_settings.m_nWindowCX = cxWnd;
+        g_settings.m_nWindowCY = cyWnd;
     }
 
     // trigger to redraw
