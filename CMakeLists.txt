@@ -58,7 +58,7 @@ find_package(OpenCV REQUIRED)
 
 add_definitions(-DUNICODE -D_UNICODE)
 
-include_directories(.)
+include_directories(include)
 
 ##############################################################################
 # sub-directories

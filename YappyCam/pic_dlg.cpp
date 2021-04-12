@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "YappyCam.hpp"
-#include "SetDlgItemDouble/SetDlgItemDouble.h"
+#include "SetDlgItemDouble.h"
 
 ////////////////////////////////////////////////////////////////////////////
 // monitor info

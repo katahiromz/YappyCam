@@ -1,8 +1,8 @@
 // Brightness_yap.cpp --- PluginFramework Plugin #2
 // Copyright (C) 2019 Katayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>
 // This file is public domain software.
-#include "../../Plugin.h"
-#include "../../mregkey.hpp"
+#include "Plugin.h"
+#include "mregkey.hpp"
 #include <windowsx.h>
 #include <commctrl.h>
 #include <string>
