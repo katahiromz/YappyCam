@@ -1,6 +1,6 @@
 # CMakeLists.txt --- CMake project settings
-#    ex) cmake -G "Visual Studio 9 2008"
-#    ex) cmake -DCMAKE_BUILD_TYPE=Release -G "MSYS Makefiles"
+#    ex) cmake -G "Visual Studio 9 2008" .
+#    ex) cmake -DCMAKE_BUILD_TYPE=Release -G "MSYS Makefiles" .
 ##############################################################################
 
 # CMake minimum version
@@ -56,12 +56,11 @@ endif()
 
 find_package(OpenCV REQUIRED)
 
+##############################################################################
+
 add_definitions(-DUNICODE -D_UNICODE)
 
 include_directories(include)
-
-##############################################################################
-# sub-directories
 
 subdirs(YappyCam sound2wav finalize silent tests plugins)
 
