@@ -2888,6 +2888,15 @@ static void OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     case ID_FACES:
         OnFaces(hwnd);
         break;
+    case ID_CAMERA:
+        g_settings.SetPictureType(hwnd, PT_VIDEOCAP);
+        break;
+    case ID_SCREEN:
+        g_settings.SetPictureType(hwnd, PT_SCREENCAP);
+        break;
+    case ID_IMAGEFILE:
+        g_settings.SetPictureType(hwnd, PT_IMAGEFILE);
+        break;
     }
 }
 

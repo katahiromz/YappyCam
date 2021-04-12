@@ -14,6 +14,10 @@ IDR_MAINMENU MENU
     {
         MENUITEM "写真を撮る(&T)", ID_TAKEASHOT
         MENUITEM SEPARATOR
+        MENUITEM "カメラ(&C)", ID_CAMERA
+        MENUITEM "スクリーン(&R)", ID_SCREEN
+        MENUITEM "画像ファイル(&M)", ID_IMAGEFILE
+        MENUITEM SEPARATOR
         MENUITEM "映像入力(&P)...", ID_PICTUREINPUT
         MENUITEM "音声入力(&S)...", ID_SOUNDINPUT
         MENUITEM SEPARATOR
