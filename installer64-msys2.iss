@@ -42,6 +42,7 @@ Source: "build\sound2wav.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\silent.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "README.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "READMEJP.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "HISTORY.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libgcc_s_seh-1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msys2\x64\libgfortran-5.dll"; DestDir: "{app}"; Flags: ignoreversion
