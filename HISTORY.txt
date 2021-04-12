@@ -40,6 +40,6 @@
     - FaceDetection, DecoFace, DecoFrame plugins added.
     - Following display change.
     - Keeping aspect ratio upon finalizing.
-- 2021.XX.YY ver.0.9.3
+- 2021.04.12 ver.0.9.3
     - Don't play sound when recoding started.
     - Correctly remembering the display size.
