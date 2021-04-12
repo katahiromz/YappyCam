@@ -248,7 +248,7 @@ STRINGTABLE
     IDS_FINALIZEDONE, "The movie file is completed at the following location:\n\n%s\n\nWanna browse?"
     IDS_FINALIZECANCELLED, "Finalizing is cancelled. Delete unnecessary files manually."
     IDS_SETLOCATION, "Specify the folder location to save in:"
-    IDS_VERSIONTEXT, "YappyCam Version 0.9.2\n\nhttps://katahiromz.web.fc2.com/yappycam/en\n\nKatayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>\n\nLicense: 3-clause BSD"
+    IDS_VERSIONTEXT, "YappyCam Version 0.9.3\n\nhttps://katahiromz.web.fc2.com/yappycam/en\n\nKatayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>\n\nLicense: 3-clause BSD"
     IDS_VERSIONCAPTION, "About YappyCam"
     IDS_QUERYINIT, "Do you want to initialize this application settings?"
     IDS_SCANNING, "Scanning... - %u%%"
