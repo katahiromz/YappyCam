@@ -14,8 +14,8 @@ IDR_MAINMENU MENU
     {
         MENUITEM "&Take a shot", ID_TAKEASHOT
         MENUITEM SEPARATOR
-        MENUITEM "&Camera", ID_CAMERA
         MENUITEM "Sc&reen", ID_SCREEN
+        MENUITEM "&Camera", ID_CAMERA
         MENUITEM "I&mage file", ID_IMAGEFILE
         MENUITEM SEPARATOR
         MENUITEM "&Picture Input...", ID_PICTUREINPUT

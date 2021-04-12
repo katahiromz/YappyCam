@@ -91,8 +91,8 @@
 #define ID_TAKEASHOT                        113
 #define ID_PLUGINS                          114
 #define ID_FACES                            115
-#define ID_CAMERA                           116
-#define ID_SCREEN                           117
+#define ID_SCREEN                           116
+#define ID_CAMERA                           117
 #define ID_IMAGEFILE                        118
 
 #ifdef APSTUDIO_INVOKED
