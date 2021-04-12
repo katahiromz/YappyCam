@@ -1254,6 +1254,11 @@ BOOL Settings::SetPictureType(HWND hwnd, PictureType type)
                 cx = m_nWidth = image.cols;
                 cy = m_nHeight = image.rows;
             }
+            else
+            {
+                cx = m_nWidth = 320;
+                cy = m_nHeight = 240;
+            }
         }
         if (m_nWidth <= 1 || m_nHeight <= 1)
         {
